@@ -10,21 +10,25 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // 获取 API Key 并设置状态
   const apiKey = await configService.getApiKey();
+  console.log(apiKey);
+
   await vscode.commands.executeCommand(
     "setContext",
     "pawsql:hasApiKey",
     !!apiKey
   );
 
-  // 注册未配置 API Key 时的提示命令
-  context.subscriptions.push(
-    vscode.commands.registerCommand("pawsql.noApiKeyHint", async () => {
-      await vscode.commands.executeCommand(
-        "workbench.action.openSettings",
-        "pawsql.apiKey"
-      );
-    })
-  );
+  registerConfigureApiKeyCommand(context);
+
+  // // 注册未配置 API Key 时的提示命令
+  // context.subscriptions.push(
+  //   vscode.commands.registerCommand("pawsql.noApiKeyHint", async () => {
+  //     await vscode.commands.executeCommand(
+  //       "workbench.action.openSettings",
+  //       "pawsql.apiKey"
+  //     );
+  //   })
+  // );
 
   // 注册优化 SQL 的命令
   registerOptimizeWithWorkspaceCommand(context, optimizationService);
