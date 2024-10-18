@@ -1,10 +1,10 @@
 {
   "name": "pawsql",
   "displayName": "PawSQL",
-  "description": "PawSQL integrates the best practices of query optimization in the database industry and provides powerful SQL audit and rewrite optimization functions. ",
+  "description": "SQL Optimization Extension for VS Code",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.94.0"
+    "vscode": "^1.80.0"
   },
   "categories": [
     "Other"
@@ -14,56 +14,83 @@
   "contributes": {
     "commands": [
       {
-        "command": "pawsql.optimizeSql",
-        "title": "PawSQL 优化"
+        "command": "pawsql.configureApiKey",
+        "title": "配置 API Key"
+      },
+      {
+        "command": "pawsql.optimizeWithWorkspace",
+        "title": "在工作空间中优化"
+      },
+      {
+        "command": "pawsql.notConfigured",
+        "title": "未配置 API Key，点击配置"
+      },
+      {
+        "command": "pawsql.workspace.error",
+        "title": "获取工作空间失败，请检查 API Key"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "pawsql.optimizeSql",
-          "when": "editorTextFocus && editorLangId == 'sql'",
-          "group": "navigation"
+          "when": "editorHasSelection",
+          "submenu": "pawsql.mainMenu"
         }
       ],
-      "explorer/context": [
+      "pawsql.mainMenu": [
         {
-          "command": "pawsql.optimizeSql",
-          "when": "resourceLangId == 'sql'",
-          "group": "navigation"
+          "command": "pawsql.configureApiKey",
+          "group": "1_config"
+        },
+        {
+          "submenu": "pawsql.workspaceMenu",
+          "group": "2_workspace"
         }
-      ]
+      ],
+      "pawsql.workspaceMenu": []
+    },
+    "submenus": [
+      {
+        "id": "pawsql.mainMenu",
+        "label": "PawSQL 优化"
+      },
+      {
+        "id": "pawsql.workspaceMenu",
+        "label": "选择工作空间"
+      }
+    ],
+    "configuration": {
+      "title": "PawSQL",
+      "properties": {
+        "pawsql.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "PawSQL API Key"
+        },
+        "pawsql.selectedWorkspace": {
+          "type": "string",
+          "default": "",
+          "description": "Selected Workspace ID"
+        }
+      }
     }
   },
-  "extensionDependencies": [
-    "mtxr.sqltools"
-  ],
   "scripts": {
     "vscode:prepublish": "npm run package",
     "compile": "webpack",
     "watch": "webpack --watch",
     "package": "webpack --mode production --devtool hidden-source-map",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "lint": "eslint src",
-    "test": "vscode-test"
+    "lint": "eslint src --ext ts"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.8",
-    "@types/node": "20.x",
-    "@types/vscode": "^1.94.0",
-    "@typescript-eslint/eslint-plugin": "^8.7.0",
-    "@typescript-eslint/parser": "^8.7.0",
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
-    "eslint": "^9.11.1",
-    "ts-loader": "^9.5.1",
-    "typescript": "^5.6.2",
-    "webpack": "^5.95.0",
-    "webpack-cli": "^5.1.4"
-  },
-  "dependencies": {
-    "axios": "^1.7.7"
+    "@types/node": "^16.0.0",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.0",
+    "ts-loader": "^9.0.0",
+    "typescript": "^4.0.0",
+    "webpack": "^5.0.0",
+    "webpack-cli": "^4.0.0"
   }
 }
