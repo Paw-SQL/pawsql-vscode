@@ -8,44 +8,117 @@ export async function activate(context: vscode.ExtensionContext) {
   const configService = new ConfigurationService();
   const optimizationService = new OptimizationService(apiService);
 
-  // 获取 API Key 并立即设置上下文
+  // 获取 API Key 并设置状态
   const apiKey = await configService.getApiKey();
-  console.log(apiKey);
-
   await vscode.commands.executeCommand(
     "setContext",
     "pawsql:hasApiKey",
     !!apiKey
   );
 
-  // 注册配置 API Key 的命令
-  registerConfigureApiKeyCommand(context);
+  // 注册未配置 API Key 时的提示命令
+  context.subscriptions.push(
+    vscode.commands.registerCommand("pawsql.noApiKeyHint", async () => {
+      await vscode.commands.executeCommand(
+        "workbench.action.openSettings",
+        "pawsql.apiKey"
+      );
+    })
+  );
 
   // 注册优化 SQL 的命令
   registerOptimizeWithWorkspaceCommand(context, optimizationService);
 
-  // 如果有 API Key，立即获取工作空间
+  // 如果有 API Key，初始化工作空间菜单
   if (apiKey) {
-    try {
-      const workspaces = await apiService.getWorkspaces();
-      context.subscriptions.push(
-        ...workspaces.map((workspace) =>
-          registerWorkspaceCommand(workspace, context)
-        )
-      );
-    } catch (error: any) {
-      vscode.window.showErrorMessage("工作空间更新失败：" + error.message);
-    }
+    await updateWorkspaceMenu(apiService, context);
   }
 
   // 监听 API Key 配置的变化
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((e) => {
+    vscode.workspace.onDidChangeConfiguration(async (e) => {
       if (e.affectsConfiguration("pawsql.apiKey")) {
-        updateWorkspaceMenu(configService, apiService, context);
+        const newApiKey = await configService.getApiKey();
+        await vscode.commands.executeCommand(
+          "setContext",
+          "pawsql:hasApiKey",
+          !!newApiKey
+        );
+
+        if (newApiKey) {
+          await updateWorkspaceMenu(apiService, context);
+        }
       }
     })
   );
+}
+
+async function updateWorkspaceMenu(
+  apiService: ApiService,
+  context: vscode.ExtensionContext
+) {
+  try {
+    const workspaces = await apiService.getWorkspaces();
+
+    // 注册每个工作空间的命令
+    workspaces.forEach((workspace) => {
+      const commandId = `pawsql.workspace.${workspace.id}`;
+
+      // 注册工作空间命令
+      const disposable = vscode.commands.registerCommand(
+        commandId,
+        async () => {
+          const editor = vscode.window.activeTextEditor;
+          if (!editor) {
+            vscode.window.showErrorMessage("未找到活动编辑器");
+            return;
+          }
+
+          const selection = editor.selection;
+          const text = editor.document.getText(selection);
+
+          if (!text) {
+            vscode.window.showErrorMessage("请选择SQL文本");
+            return;
+          }
+
+          vscode.window.showInformationMessage(
+            `正在使用工作空间 "${workspace.name}" 优化SQL...`
+          );
+
+          try {
+            const optimizedSql = await apiService.optimizeSql(
+              text,
+              workspace.id
+            );
+            await showOptimizationResult(optimizedSql);
+          } catch (error: any) {
+            vscode.window.showErrorMessage("SQL优化失败：" + error.message);
+          }
+        }
+      );
+
+      context.subscriptions.push(disposable);
+
+      // 添加到工作空间菜单
+      const menuItem = {
+        command: commandId,
+        group: "workspace",
+        when: "pawsql:hasApiKey",
+      };
+
+      // 动态添加菜单项
+      vscode.commands.executeCommand("setContext", `pawsql:workspaceMenu`, [
+        ...((context.workspaceState.get("workspaceMenu") as any[]) || []),
+        {
+          command: commandId,
+          title: workspace.name,
+        },
+      ]);
+    });
+  } catch (error: any) {
+    vscode.window.showErrorMessage("工作空间更新失败：" + error.message);
+  }
 }
 
 // 注册配置 API Key 的命令
@@ -100,36 +173,6 @@ function registerOptimizeWithWorkspaceCommand(
     }
   );
   context.subscriptions.push(optimizeWithWorkspaceCommand);
-}
-
-// 动态更新工作空间菜单
-async function updateWorkspaceMenu(
-  configService: ConfigurationService,
-  apiService: ApiService,
-  context: vscode.ExtensionContext
-) {
-  try {
-    const apiKey = await configService.getApiKey();
-
-    // 更新 API Key 状态
-    await vscode.commands.executeCommand(
-      "setContext",
-      "pawsql:hasApiKey",
-      !!apiKey
-    );
-
-    if (!apiKey) return;
-
-    // 获取工作空间并注册相应的命令
-    const workspaces = await apiService.getWorkspaces();
-    context.subscriptions.push(
-      ...workspaces.map((workspace) =>
-        registerWorkspaceCommand(workspace, context)
-      )
-    );
-  } catch (error: any) {
-    vscode.window.showErrorMessage("工作空间更新失败：" + error.message);
-  }
 }
 
 // 注册特定工作空间的命令

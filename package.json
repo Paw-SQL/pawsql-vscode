@@ -20,35 +20,14 @@
         "title": "配置 API Key"
       },
       {
+        "command": "pawsql.noApiKeyHint",
+        "title": "尚未配置 API Key，点击进行配置"
+      },
+      {
         "command": "pawsql.optimizeWithWorkspace",
         "title": "在工作空间中优化"
       }
     ],
-    "menus": {
-      "editor/context": [
-        {
-          "when": "editorHasSelection",
-          "submenu": "pawsql.mainMenu"
-        }
-      ],
-      "pawsql.mainMenu": [
-        {
-          "command": "pawsql.configureApiKey",
-          "group": "1_config"
-        },
-        {
-          "submenu": "pawsql.workspaceMenu",
-          "group": "2_workspace"
-        }
-      ],
-      "pawsql.workspaceMenu": [
-        {
-          "command": "pawsql.optimizeWithWorkspace",
-          "group": "workspace",
-          "when": "pawsql:hasApiKey"
-        }
-      ]
-    },
     "submenus": [
       {
         "id": "pawsql.mainMenu",
@@ -73,6 +52,32 @@
           "description": "Selected Workspace ID"
         }
       }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "when": "editorHasSelection",
+          "submenu": "pawsql.mainMenu"
+        }
+      ],
+      "pawsql.mainMenu": [
+        {
+          "submenu": "pawsql.workspaceMenu",
+          "group": "1_workspace",
+          "title": "选择工作空间"
+        }
+      ],
+      "pawsql.workspaceMenu": [
+        {
+          "command": "pawsql.optimizeWithWorkspace",
+          "group": "workspace",
+          "when": "pawsql:hasApiKey"
+        },
+        {
+          "command": "pawsql.noApiKeyHint",
+          "when": "!pawsql:hasApiKey"
+        }
+      ]
     }
   },
   "scripts": {
