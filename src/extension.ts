@@ -3,16 +3,34 @@ import { ApiService } from "./services/apiService";
 import { ConfigurationService } from "./services/configurationService";
 import { OptimizationService } from "./services/optimizationService";
 
-export function activate(context: vscode.ExtensionContext) {
+// 激活扩展时的入口函数
+export async function activate(context: vscode.ExtensionContext) {
   const apiService = new ApiService();
   const configService = new ConfigurationService();
   const optimizationService = new OptimizationService(apiService);
 
-  // Store workspace command disposables for cleanup
-  let workspaceCommandDisposables: vscode.Disposable[] = [];
+  // **第一时间**更新工作空间菜单
+  await updateWorkspaceMenu(configService, apiService, context);
 
-  // 配置 API Key 命令
-  let configureApiKeyCommand = vscode.commands.registerCommand(
+  // 注册配置 API Key 的命令
+  registerConfigureApiKeyCommand(context);
+
+  // 注册优化 SQL 的命令
+  registerOptimizeWithWorkspaceCommand(context, optimizationService);
+
+  // 监听 API Key 配置的变化并动态更新工作空间菜单
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("pawsql.apiKey")) {
+        updateWorkspaceMenu(configService, apiService, context);
+      }
+    })
+  );
+}
+
+// 注册配置 API Key 的命令
+function registerConfigureApiKeyCommand(context: vscode.ExtensionContext) {
+  const configureApiKeyCommand = vscode.commands.registerCommand(
     "pawsql.configureApiKey",
     async () => {
       await vscode.commands.executeCommand(
@@ -21,21 +39,20 @@ export function activate(context: vscode.ExtensionContext) {
       );
     }
   );
+  context.subscriptions.push(configureApiKeyCommand);
+}
 
-  // 未配置提示命令
-  let notConfiguredCommand = vscode.commands.registerCommand(
-    "pawsql.notConfigured",
-    () => {
-      vscode.window.showInformationMessage("请先配置 API Key");
-    }
-  );
-
-  // 使用工作空间优化命令
-  let optimizeWithWorkspaceCommand = vscode.commands.registerCommand(
+// 注册优化 SQL 的命令
+function registerOptimizeWithWorkspaceCommand(
+  context: vscode.ExtensionContext,
+  optimizationService: OptimizationService
+) {
+  const optimizeWithWorkspaceCommand = vscode.commands.registerCommand(
     "pawsql.optimizeWithWorkspace",
     async (workspaceId: string, workspaceName: string) => {
       const editor = vscode.window.activeTextEditor;
       if (!editor) {
+        vscode.window.showErrorMessage("未找到活动编辑器");
         return;
       }
 
@@ -47,10 +64,11 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
+      vscode.window.showInformationMessage(
+        `正在使用工作空间 "${workspaceName}" 优化SQL...`
+      );
+
       try {
-        vscode.window.showInformationMessage(
-          `正在使用工作空间 "${workspaceName}" 优化SQL...`
-        );
         const optimizedSql = await optimizationService.optimizeSql(
           text,
           workspaceId
@@ -61,237 +79,160 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }
   );
+  context.subscriptions.push(optimizeWithWorkspaceCommand);
+}
 
-  // 清理工作空间命令
-  function disposeWorkspaceCommands() {
-    workspaceCommandDisposables.forEach((d) => d.dispose());
-    workspaceCommandDisposables = [];
-  }
-
-  // 动态更新工作空间菜单
-  async function updateWorkspaceMenu() {
+// 动态更新工作空间菜单
+async function updateWorkspaceMenu(
+  configService: ConfigurationService,
+  apiService: ApiService,
+  context: vscode.ExtensionContext
+) {
+  try {
     const apiKey = await configService.getApiKey();
 
-    // 更新 API Key 状态上下文
+    // 更新 API Key 状态
     await vscode.commands.executeCommand(
       "setContext",
       "pawsql:hasApiKey",
-      Boolean(apiKey)
+      !!apiKey
     );
 
-    // 清理现有的工作空间命令
-    disposeWorkspaceCommands();
+    if (!apiKey) return;
 
-    if (!apiKey) {
-      // 注册未配置提示命令
-      const notConfiguredDisposable = vscode.commands.registerCommand(
-        "pawsql.workspace.notConfigured",
-        () => vscode.commands.executeCommand("pawsql.notConfigured")
-      );
-      workspaceCommandDisposables.push(notConfiguredDisposable);
-
-      // 添加未配置提示菜单项
-      const extension = vscode.extensions.getExtension("your-publisher.pawsql");
-      if (extension) {
-        const packageJson = extension.packageJSON;
-        packageJson.contributes.menus["pawsql.workspaceMenu"] = [
-          {
-            command: "pawsql.workspace.notConfigured",
-            group: "workspace",
-            title: "未配置 API Key，点击配置",
-          },
-        ];
-      }
-      return;
-    }
-
-    try {
-      const workspaces = await apiService.getWorkspaces();
-
-      // 为每个工作空间创建命令
-      const workspaceCommands = workspaces.map((workspace) => {
-        const commandId = `pawsql.workspace.${workspace.id}`;
-
-        // 注册工作空间特定的命令
-        const disposable = vscode.commands.registerCommand(commandId, () =>
-          vscode.commands.executeCommand(
-            "pawsql.optimizeWithWorkspace",
-            workspace.id,
-            workspace.name
-          )
-        );
-
-        return {
-          disposable,
-          menuItem: {
-            command: commandId,
-            group: "workspace",
-            title: workspace.name,
-            when: "pawsql:hasApiKey",
-          },
-        };
-      });
-
-      // 添加命令到disposables
-      workspaceCommandDisposables = workspaceCommands.map(
-        (wc) => wc.disposable
-      );
-      context.subscriptions.push(...workspaceCommandDisposables);
-
-      // 更新菜单配置
-      const extension = vscode.extensions.getExtension("your-publisher.pawsql");
-      if (extension) {
-        const packageJson = extension.packageJSON;
-        packageJson.contributes.menus["pawsql.workspaceMenu"] =
-          workspaceCommands.map((wc) => wc.menuItem);
-      }
-    } catch (error: any) {
-      vscode.window.showErrorMessage("获取工作空间列表失败：" + error.message);
-
-      // 错误时显示错误提示菜单项
-      const extension = vscode.extensions.getExtension("your-publisher.pawsql");
-      if (extension) {
-        const packageJson = extension.packageJSON;
-        packageJson.contributes.menus["pawsql.workspaceMenu"] = [
-          {
-            command: "pawsql.workspace.error",
-            group: "workspace",
-            title: "获取工作空间失败，请检查 API Key",
-          },
-        ];
-      }
-    }
+    // 获取工作空间并注册相应的命令
+    const workspaces = await apiService.getWorkspaces();
+    context.subscriptions.push(
+      ...workspaces.map((workspace) =>
+        registerWorkspaceCommand(workspace, context)
+      )
+    );
+  } catch (error: any) {
+    vscode.window.showErrorMessage("工作空间更新失败：" + error.message);
   }
-
-  // 监听配置变化
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration(async (e) => {
-      if (e.affectsConfiguration("pawsql.apiKey")) {
-        await updateWorkspaceMenu();
-      }
-    })
-  );
-
-  // 初始化时更新菜单
-  updateWorkspaceMenu();
-
-  context.subscriptions.push(
-    configureApiKeyCommand,
-    notConfiguredCommand,
-    optimizeWithWorkspaceCommand
-  );
 }
+
+// 注册特定工作空间的命令
+function registerWorkspaceCommand(
+  workspace: { id: string; name: string },
+  context: vscode.ExtensionContext
+) {
+  const commandId = `pawsql.workspace.${workspace.id}`;
+  const disposable = vscode.commands.registerCommand(commandId, () =>
+    vscode.commands.executeCommand(
+      "pawsql.optimizeWithWorkspace",
+      workspace.id,
+      workspace.name
+    )
+  );
+  context.subscriptions.push(disposable);
+
+  return disposable;
+}
+
+// 显示优化结果
 function showOptimizationResult(result: any) {
+  const panel = vscode.window.createWebviewPanel(
+    "pawsqlOptimizationResult",
+    "SQL优化结果",
+    vscode.ViewColumn.One,
+    {}
+  );
+
+  const htmlContent = generateOptimizationResultHTML(result);
+  panel.webview.html = htmlContent;
+}
+
+// 生成优化结果的 HTML 页面
+function generateOptimizationResultHTML(result: any): string {
   return `
-		  <!DOCTYPE html>
-		  <html>
-			  <head>
-				  <meta charset="UTF-8">
-				  <style>
-					  body {
-						  padding: 20px;
-						  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-						  line-height: 1.6;
-					  }
-					  .section {
-						  margin-bottom: 24px;
-						  padding: 16px;
-						  border-radius: 8px;
-						  background: #f8f9fa;
-					  }
-					  .sql-box {
-						  background: #2d2d2d;
-						  color: #fff;
-						  padding: 16px;
-						  border-radius: 4px;
-						  overflow-x: auto;
-					  }
-					  .improvement {
-						  padding: 8px 16px;
-						  margin: 8px 0;
-						  border-left: 4px solid #ffd700;
-						  background: #fff;
-					  }
-					  .metrics {
-						  display: grid;
-						  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-						  gap: 16px;
-					  }
-					  .metric-card {
-						  background: #fff;
-						  padding: 16px;
-						  border-radius: 4px;
-						  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-					  }
-					  .suggestion {
-						  background: #e9ecef;
-						  padding: 12px;
-						  margin: 8px 0;
-						  border-radius: 4px;
-					  }
-				  </style>
-			  </head>
-			  <body>
-				  <h2>SQL优化结果</h2>
-				  
-				  <div class="section">
-					  <h3>原始SQL</h3>
-					  <pre class="sql-box">${result.originalSql}</pre>
-					  
-					  <h3>优化后SQL</h3>
-					  <pre class="sql-box">${result.optimizedSql}</pre>
-				  </div>
-  
-				  <div class="section">
-					  <h3>改进建议</h3>
-					  ${result.improvements
-              .map(
-                (imp: { message: any; impact: any }) => `
-						  <div class="improvement">
-							  <strong>${imp.message}</strong>
-							  <p>影响: ${imp.impact}</p>
-						  </div>
-					  `
-              )
-              .join("")}
-				  </div>
-  
-				  <div class="section">
-					  <h3>性能指标</h3>
-					  <div class="metrics">
-						  <div class="metric-card">
-							  <strong>预估成本</strong>
-							  <p>${result.performance.estimatedCost.toFixed(2)}</p>
-						  </div>
-						  <div class="metric-card">
-							  <strong>预估行数</strong>
-							  <p>${result.performance.estimatedRows}</p>
-						  </div>
-						  <div class="metric-card">
-							  <strong>执行时间</strong>
-							  <p>${result.performance.executionTime.toFixed(2)}s</p>
-						  </div>
-						  <div class="metric-card">
-							  <strong>索引使用率</strong>
-							  <p>${result.performance.indexUsage.toFixed(2)}%</p>
-						  </div>
-					  </div>
-				  </div>
-  
-				  <div class="section">
-					  <h3>优化建议</h3>
-					  ${result.suggestions
-              .map(
-                (sug: { message: any; example: any }) => `
-						  <div class="suggestion">
-							  <strong>${sug.message}</strong>
-							  <pre>${sug.example}</pre>
-						  </div>
-					  `
-              )
-              .join("")}
-				  </div>
-			  </body>
-		  </html>
-	  `;
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body { padding: 20px; font-family: sans-serif; }
+        .section { margin-bottom: 24px; }
+        .sql-box { background: #2d2d2d; color: #fff; padding: 16px; border-radius: 4px; }
+        .improvement { background: #f0f0f0; margin: 8px 0; padding: 8px; border-left: 4px solid #ffd700; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .metric-card { background: #fff; padding: 16px; border-radius: 4px; }
+        .suggestion { background: #e9ecef; padding: 12px; margin: 8px 0; border-radius: 4px; }
+      </style>
+    </head>
+    <body>
+      <h2>SQL优化结果</h2>
+
+      <div class="section">
+        <h3>原始SQL</h3>
+        <pre class="sql-box">${escapeHtml(result.originalSql)}</pre>
+        <h3>优化后SQL</h3>
+        <pre class="sql-box">${escapeHtml(result.optimizedSql)}</pre>
+      </div>
+
+      <div class="section">
+        <h3>改进建议</h3>
+        ${result.improvements
+          .map(
+            (imp: { message: any; impact: any }) => `
+          <div class="improvement">
+            <strong>${imp.message}</strong>
+            <p>影响: ${imp.impact}</p>
+          </div>
+        `
+          )
+          .join("")}
+      </div>
+
+      <div class="section">
+        <h3>性能指标</h3>
+        <div class="metrics">
+          <div class="metric-card">
+            <strong>预估成本</strong>
+            <p>${result.performance.estimatedCost.toFixed(2)}</p>
+          </div>
+          <div class="metric-card">
+            <strong>预估行数</strong>
+            <p>${result.performance.estimatedRows}</p>
+          </div>
+          <div class="metric-card">
+            <strong>执行时间</strong>
+            <p>${result.performance.executionTime.toFixed(2)}s</p>
+          </div>
+          <div class="metric-card">
+            <strong>索引使用率</strong>
+            <p>${result.performance.indexUsage.toFixed(2)}%</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>优化建议</h3>
+        ${result.suggestions
+          .map(
+            (sug: { message: any; example: any }) => `
+          <div class="suggestion">
+            <strong>${sug.message}</strong>
+            <pre>${escapeHtml(sug.example)}</pre>
+          </div>
+        `
+          )
+          .join("")}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// HTML转义
+function escapeHtml(unsafe: string) {
+  return unsafe.replace(/[&<"']/g, (match) => {
+    const escapeMap: { [key: string]: string } = {
+      "&": "&amp;",
+      "<": "&lt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+    return escapeMap[match];
+  });
 }
