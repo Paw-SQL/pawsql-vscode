@@ -3,14 +3,20 @@ import { ApiService } from "./services/apiService";
 import { ConfigurationService } from "./services/configurationService";
 import { OptimizationService } from "./services/optimizationService";
 
-// 激活扩展时的入口函数
 export async function activate(context: vscode.ExtensionContext) {
   const apiService = new ApiService();
   const configService = new ConfigurationService();
   const optimizationService = new OptimizationService(apiService);
 
-  // **第一时间**更新工作空间菜单
-  await updateWorkspaceMenu(configService, apiService, context);
+  // 获取 API Key 并立即设置上下文
+  const apiKey = await configService.getApiKey();
+  console.log(apiKey);
+
+  await vscode.commands.executeCommand(
+    "setContext",
+    "pawsql:hasApiKey",
+    !!apiKey
+  );
 
   // 注册配置 API Key 的命令
   registerConfigureApiKeyCommand(context);
@@ -18,7 +24,21 @@ export async function activate(context: vscode.ExtensionContext) {
   // 注册优化 SQL 的命令
   registerOptimizeWithWorkspaceCommand(context, optimizationService);
 
-  // 监听 API Key 配置的变化并动态更新工作空间菜单
+  // 如果有 API Key，立即获取工作空间
+  if (apiKey) {
+    try {
+      const workspaces = await apiService.getWorkspaces();
+      context.subscriptions.push(
+        ...workspaces.map((workspace) =>
+          registerWorkspaceCommand(workspace, context)
+        )
+      );
+    } catch (error: any) {
+      vscode.window.showErrorMessage("工作空间更新失败：" + error.message);
+    }
+  }
+
+  // 监听 API Key 配置的变化
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("pawsql.apiKey")) {
