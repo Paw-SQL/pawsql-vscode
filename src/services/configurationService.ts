@@ -1,7 +1,10 @@
 import * as vscode from "vscode";
 
 export class ConfigurationService {
-  private config = vscode.workspace.getConfiguration("pawsql");
+  // 每次获取配置时调用 getConfiguration，确保获取到最新值
+  private get config() {
+    return vscode.workspace.getConfiguration("pawsql");
+  }
 
   async getApiKey(): Promise<string | undefined> {
     return this.config.get("apiKey");
