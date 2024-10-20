@@ -1,0 +1,15 @@
+{
+  "workload.only.support.single.query": "只支持单个查询。",
+  "workload.has.no.query": "工作负载没有查询。",
+  "unknown.error": "发生了一个未知错误，请稍后重试。",
+  "extension.activation.failed": "扩展激活失败",
+  "initialize.commands.failed": "初始化命令失败",
+  "configuration.update.failed": "配置更新失败",
+  "menu.update.failed": "更新菜单失败",
+  "workspace.operation.failed": "工作空间操作失败",
+  "sql.optimization.failed": "SQL优化失败",
+  "no.active.editor": "未找到活动编辑器",
+  "invalid.sql.text": "请选择有效的SQL文本。",
+  "api.key.not.configured": "API密钥未配置",
+  "license.code.not.exist": "许可证代码不存在，请联系管理员获取。"
+}

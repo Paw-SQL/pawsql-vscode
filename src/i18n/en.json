@@ -1,0 +1,15 @@
+{
+  "workload.only.support.single.query": "Only single query is supported.",
+  "workload.has.no.query": "The workload has no queries.",
+  "unknown.error": "An unknown error occurred, please try again later.",
+  "extension.activation.failed": "Extension activation failed.",
+  "initialize.commands.failed": "Failed to initialize commands.",
+  "configuration.update.failed": "Configuration update failed.",
+  "menu.update.failed": "Failed to update the menu.",
+  "workspace.operation.failed": "Workspace operation failed.",
+  "sql.optimization.failed": "SQL optimization failed.",
+  "no.active.editor": "No active editor found.",
+  "invalid.sql.text": "Please select valid SQL text.",
+  "api.key.not.configured": "API key is not configured.",
+  "license.code.not.exist": "License code does not exist. Please contact the administrator to obtain it."
+}
