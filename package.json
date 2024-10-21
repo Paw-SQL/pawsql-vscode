@@ -103,6 +103,7 @@
   },
   "dependencies": {
     "axios": "^1.7.7",
+    "supports-color": "^9.4.0",
     "vscode-nls": "^5.2.0"
   }
 }
