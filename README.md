@@ -1,71 +1,46 @@
-# pawsql README
+# PawSQL VSCode 插件
 
-This is the README for your extension "pawsql". After writing up a brief description, we recommend including the following sections.
+## 简介
 
-## Features
+PawSQL 是一款为 Visual Studio Code 提供的插件，旨在帮助开发者优化 SQL 查询并管理工作空间。通过与 PawSQL API 的集成，用户可以方便地执行 SQL 优化，查看优化结果。
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## 功能
 
-For example if there is an image subfolder under your extension project workspace:
+- **SQL 优化**：选择 SQL 查询并使用 PawSQL API 进行优化。
+- **工作空间管理**：连接到 PawSQL 工作空间，方便地切换和管理。
+- **错误处理**：提供详细的错误信息和友好的提示。
 
-\!\[feature X\]\(images/feature-x.png\)
+## 安装
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+1. 打开 Visual Studio Code。
+2. 转到扩展视图 (`Ctrl+Shift+X` 或 `Cmd+Shift+X`)。
+3. 搜索 “PawSQL” 并点击安装。
 
-## Requirements
+## 使用说明
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+### 配置 API 密钥
 
-## Extension Settings
+在使用插件之前，您需要配置 PawSQL API 密钥：
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+1. 打开设置 (`Ctrl+,` 或 `Cmd+,`)。
+2. 搜索 “PawSQL”。
+3. 输入您的 API 密钥并保存。
 
-For example:
+### 优化 SQL 查询
 
-This extension contributes the following settings:
+1. 在编辑器中选择需要优化的 SQL 查询。
+2. 右键单击，选择 “优化 SQL” 或使用命令面板 (`Ctrl+Shift+P` 或 `Cmd+Shift+P`) 输入 “优化 SQL”。
+3. 点击选择工作空间获取，点击执行优化。
+3. 等待优化结果，并根据提示查看报告。
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+### 管理工作空间
 
-## Known Issues
+1. 使用命令面板 (`Ctrl+Shift+P` 或 `Cmd+Shift+P`) 输入 “选择工作空间”。
+2. 从列表中选择一个工作空间进行连接。
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+## 错误处理
 
-## Release Notes
+在使用过程中，如果遇到任何问题，插件会显示详细的错误信息和解决提示。例如：
 
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+- API 密钥未配置：请在设置中添加 API 密钥。
+- SQL 查询无效：请选择有效的 SQL 文本进行优化。
