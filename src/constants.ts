@@ -1,13 +1,9 @@
 import * as vscode from "vscode";
 
-const config = vscode.workspace.getConfiguration("pawsql");
-const frontendUrl =
-  config.get<string>("frontendUrl") || "https://www.pawsql.com";
-const backendUrl = config.get<string>("backendUrl") || "https://www.pawsql.com";
-
 export const COMMANDS = {
   NO_API_KEY_HINT: "pawsql.noApiKeyHint",
   CONFIGURE_API_KEY: "pawsql.configureApiKey",
+  CONFIGURE_API_URL: "pawsql.configureApiURL",
   SELECT_WORKSPACE: "pawsql.selectWorkspace",
 } as const;
 
@@ -25,13 +21,21 @@ export const UI_MESSAGES = {
   OPTIMIZING_SQL: "$(sync~spin) 正在优化SQL...",
 } as const;
 
-export const DOMAIN = {
-  // Backend: "http://localhost:8002",
-  // Frontend: "http://localhost:3000",
-  Backend: backendUrl,
-  Frontend: frontendUrl,
-} as const;
-export const URLS = {
-  NEW_WORKSPACE: `${DOMAIN.Frontend}/app/workspaces/new-workspace`,
-  STATEMENT_BASE: `${DOMAIN.Frontend}/statement`,
-} as const;
+export function getUrls() {
+  const config = vscode.workspace.getConfiguration("pawsql.url");
+  const frontendUrl =
+    config.get<string>("frontendUrl") || "https://www.pawsql.com";
+  const backendUrl =
+    config.get<string>("backendUrl") || "https://www.pawsql.com";
+
+  return {
+    DOMAIN: {
+      Backend: backendUrl,
+      Frontend: frontendUrl,
+    },
+    URLS: {
+      NEW_WORKSPACE: `${frontendUrl}/app/workspaces/new-workspace`,
+      STATEMENT_BASE: `${frontendUrl}/query`,
+    },
+  };
+}

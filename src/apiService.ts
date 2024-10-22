@@ -1,5 +1,5 @@
 import axios from "axios";
-import { DOMAIN } from "./constants";
+import { getUrls } from "./constants";
 
 // 定义接口请求参数和返回数据类型
 interface ListWorkspacesParams {
@@ -82,7 +82,8 @@ interface GetStatementDetailsResponse {
 export const getWorkspaces = async (
   userKey: string
 ): Promise<ListWorkspacesResponse> => {
-  const url = `${DOMAIN.Backend}/api/v1/listWorkspaces`; // 替换为实际的 URL
+  const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
+  const url = `${DOMAIN.Backend}/api/v1/listWorkspaces`;
   const response = await axios.post<ListWorkspacesResponse>(url, { userKey });
   return response.data;
 };
@@ -91,7 +92,8 @@ export const getWorkspaces = async (
 export const createAnalysis = async (
   params: CreateAnalysisParams
 ): Promise<CreateAnalysisResponse> => {
-  const url = `${DOMAIN.Backend}/api/v1/createAnalysis`; // 替换为实际的 URL
+  const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
+  const url = `${DOMAIN.Backend}/api/v1/createAnalysis`;
   const response = await axios.post<CreateAnalysisResponse>(url, params);
   return response.data;
 };
@@ -100,7 +102,8 @@ export const createAnalysis = async (
 export const getAnalysisSummary = async (
   params: GetAnalysisSummaryParams
 ): Promise<GetAnalysisSummaryResponse> => {
-  const url = `${DOMAIN.Backend}/api/v1/getAnalysisSummary`; // 替换为实际的 URL
+  const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
+  const url = `${DOMAIN.Backend}/api/v1/getAnalysisSummary`;
   const response = await axios.post<GetAnalysisSummaryResponse>(url, params);
   return response.data;
 };
@@ -109,7 +112,8 @@ export const getAnalysisSummary = async (
 export const getStatementDetails = async (
   params: GetStatementDetailsParams
 ): Promise<GetStatementDetailsResponse> => {
-  const url = `${DOMAIN.Backend}/api/v1/getStatementDetails`; // 替换为实际的 URL
+  const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
+  const url = `${DOMAIN.Backend}/api/v1/getStatementDetails`;
   const response = await axios.post<GetStatementDetailsResponse>(url, params);
   return response.data;
 };

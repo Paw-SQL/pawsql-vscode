@@ -26,6 +26,10 @@
         "title": "配置 API Key"
       },
       {
+        "command": "pawsql.configureApiURL",
+        "title": "配置 API URL"
+      },
+      {
         "command": "pawsql.noApiKeyHint",
         "title": "尚未配置 API Key，点击进行配置"
       },
@@ -48,12 +52,12 @@
           "default": "",
           "description": "PawSQL API Key"
         },
-        "pawsql.frontendUrl": {
+        "pawsql.url.frontendUrl": {
           "type": "string",
           "default": "https://www.pawsql.com",
           "description": "PawSQL Frontend URL"
         },
-        "pawsql.backendUrl": {
+        "pawsql.url.backendUrl": {
           "type": "string",
           "default": "https://www.pawsql.com",
           "description": "PawSQL Backend URL"
@@ -69,16 +73,22 @@
       ],
       "pawsql.mainMenu": [
         {
+          "command": "pawsql.selectWorkspace",
+          "when": "pawsql:hasApiKey",
+          "group": "1_workspace",
+          "title": "选择工作空间进行优化"
+        },
+        {
           "command": "pawsql.configureApiKey",
           "when": "pawsql:hasApiKey",
-          "group": "1_config",
+          "group": "2_config",
           "title": "配置 API Key"
         },
         {
-          "command": "pawsql.selectWorkspace",
+          "command": "pawsql.configureApiURL",
           "when": "pawsql:hasApiKey",
-          "group": "2_workspace",
-          "title": "选择工作空间进行优化"
+          "group": "2_config",
+          "title": "配置 API URL"
         },
         {
           "command": "pawsql.noApiKeyHint",

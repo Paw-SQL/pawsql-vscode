@@ -5,7 +5,7 @@ import { OptimizationService } from "./optimizationService";
 import { ErrorHandler } from "./errorHandler";
 import { WorkspaceManager } from "./workspaceManager";
 import { WebviewProvider } from "./webviewProvider";
-import { COMMANDS, CONTEXTS, UI_MESSAGES, URLS } from "./constants";
+import { COMMANDS, CONTEXTS, UI_MESSAGES, getUrls } from "./constants";
 import type {
   SummaryResponse,
   WorkspaceItem,
@@ -59,6 +59,10 @@ export class PawSQLExtension {
         command: COMMANDS.CONFIGURE_API_KEY,
         callback: () => this.openApiKeySettings(),
       },
+      {
+        command: COMMANDS.CONFIGURE_API_URL,
+        callback: () => this.openApiURLSettings(),
+      },
     ];
 
     commands.forEach(({ command, callback }) => {
@@ -74,6 +78,12 @@ export class PawSQLExtension {
     );
   }
 
+  private async openApiURLSettings(): Promise<void> {
+    await vscode.commands.executeCommand(
+      "workbench.action.openSettings",
+      "pawsql.url"
+    );
+  }
   private registerConfigurationListener(): void {
     const disposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
       try {
@@ -152,6 +162,7 @@ export class PawSQLExtension {
   }
 
   private async handleEmptyWorkspaces(): Promise<void> {
+    const { URLS } = getUrls();
     const choice = await vscode.window.showInformationMessage(
       UI_MESSAGES.NO_WORKSPACE,
       UI_MESSAGES.CREATE_WORKSPACE
@@ -258,6 +269,7 @@ export class PawSQLExtension {
   }
 
   private async showOptimizationResult(result: SummaryResponse): Promise<void> {
+    const { URLS } = getUrls();
     const panel = WebviewProvider.createResultPanel(result.data);
     // Panel disposal is handled by VS Code
 
