@@ -1,3 +1,10 @@
+import * as vscode from "vscode";
+
+const config = vscode.workspace.getConfiguration("pawsql");
+const frontendUrl =
+  config.get<string>("frontendUrl") || "https://www.pawsql.com";
+const backendUrl = config.get<string>("backendUrl") || "https://www.pawsql.com";
+
 export const COMMANDS = {
   NO_API_KEY_HINT: "pawsql.noApiKeyHint",
   CONFIGURE_API_KEY: "pawsql.configureApiKey",
@@ -21,8 +28,8 @@ export const UI_MESSAGES = {
 export const DOMAIN = {
   // Backend: "http://localhost:8002",
   // Frontend: "http://localhost:3000",
-  Backend: "https://www.pawsql.com",
-  Frontend: "https://www.pawsql.com",
+  Backend: backendUrl,
+  Frontend: frontendUrl,
 } as const;
 export const URLS = {
   NEW_WORKSPACE: `${DOMAIN.Frontend}/app/workspaces/new-workspace`,

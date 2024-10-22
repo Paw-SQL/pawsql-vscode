@@ -11,5 +11,7 @@
   "no.active.editor": "No active editor found.",
   "invalid.sql.text": "Please select valid SQL text.",
   "api.key.not.configured": "API key is not configured.",
-  "license.code.not.exist": "License code does not exist. Please contact the administrator to obtain it."
+  "license.code.not.exist": "License code does not exist. Please contact the administrator to obtain it.",
+  "beta.analysis.over.limit": "The number of optimizations exceeds the limit for beta users.",
+  "analysis.over.limit": "The number of optimizations exceeds the limit."
 }

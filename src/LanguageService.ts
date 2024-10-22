@@ -8,6 +8,6 @@ export class LanguageService {
 
   public static getMessage(key: string): string {
     // 查找对应的消息，如果找不到，则返回默认的未知错误提示
-    return this.messages[key] || this.messages["unknown.error"];
+    return this.messages[key] || key || this.messages["unknown.error"];
   }
 }

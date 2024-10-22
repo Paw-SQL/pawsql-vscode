@@ -11,5 +11,7 @@
   "no.active.editor": "未找到活动编辑器",
   "invalid.sql.text": "请选择有效的SQL文本。",
   "api.key.not.configured": "API密钥未配置",
-  "license.code.not.exist": "许可证代码不存在，请联系管理员获取。"
+  "license.code.not.exist": "许可证代码不存在，请联系管理员获取。",
+  "beta.analysis.over.limit": "beta用户优化次数超过限制",
+  "analysis.over.limit": "优化次数超过限制"
 }

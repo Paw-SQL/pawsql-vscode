@@ -2,7 +2,7 @@
   "name": "pawsql",
   "displayName": "PawSQL",
   "description": "SQL Optimization Extension for VS Code",
-  "publisher": "hyliang", 
+  "publisher": "hyliang",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.80.0"
@@ -48,10 +48,15 @@
           "default": "",
           "description": "PawSQL API Key"
         },
-        "pawsql.selectedWorkspace": {
+        "pawsql.frontendUrl": {
           "type": "string",
-          "default": "",
-          "description": "Selected Workspace ID"
+          "default": "https://www.pawsql.com",
+          "description": "PawSQL Frontend URL"
+        },
+        "pawsql.backendUrl": {
+          "type": "string",
+          "default": "https://www.pawsql.com",
+          "description": "PawSQL Backend URL"
         }
       }
     },
