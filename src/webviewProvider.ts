@@ -19,6 +19,19 @@ export class WebviewProvider {
     const analysisStmtId = result.summaryStatementInfo[0]?.analysisStmtId || "";
     panel.webview.html = this.getWebviewContent(analysisStmtId);
 
+    // 监听来自 Webview 的消息
+    panel.webview.onDidReceiveMessage(
+      (message) => {
+        switch (message.command) {
+          case "showError":
+            vscode.window.showErrorMessage(message.text);
+            break;
+        }
+      },
+      undefined,
+      [] // 如果没有其他需要清理的订阅，可以传入空数组
+    );
+
     return panel;
   }
 
@@ -59,6 +72,27 @@ export class WebviewProvider {
             allowfullscreen>
         </iframe>
     </div>
+    <script>
+        // 检查 iframe 是否能够加载
+        const iframe = document.querySelector('iframe');
+        fetch('${statementUrl}', { method: 'HEAD' })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('无法加载页面，状态码：' + response.status);
+                }
+            })
+            .catch(error => {
+                // 发送错误信息到 VS Code
+                vscode.postMessage({ command: 'showError', text: error.message });
+            });
+
+        window.addEventListener('message', event => {
+            const message = event.data;
+            if (message.command === 'loaded') {
+                console.log('页面加载成功');
+            }
+        });
+    </script>
 </body>
 </html>`;
   }

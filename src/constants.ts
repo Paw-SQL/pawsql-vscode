@@ -5,6 +5,7 @@ export const COMMANDS = {
   CONFIGURE_API_KEY: "pawsql.configureApiKey",
   CONFIGURE_API_URL: "pawsql.configureApiURL",
   SELECT_WORKSPACE: "pawsql.selectWorkspace",
+  OPTIMIZE_LAST_WORKSPACE: "pawsql.recentWorkspace", // 添加此行
 } as const;
 
 export const CONTEXTS = {

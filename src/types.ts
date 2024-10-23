@@ -1,6 +1,7 @@
 export interface WorkspaceItem {
   label: string;
   workspaceId: string;
+  workspaceName: string;
 }
 
 export interface AnalysisStatement {

@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import { Selection } from "vscode";
+
 import { ConfigurationService } from "./configurationService";
 import { ApiService } from "./apiService";
 import { OptimizationService } from "./optimizationService";
@@ -12,11 +14,28 @@ import type {
   WorkspacesResponse,
 } from "./types";
 import { LanguageService } from "./LanguageService";
+import { getEditorQueryDetails } from "./utils/pawsqlUtils";
+import { SqlCodeLensProvider } from "./SqlCodeLensProvider";
+
+// 获取颜色配置
+const currentQueryBg = new vscode.ThemeColor("pawsql.currentQueryBg");
+const currentQueryOutline = new vscode.ThemeColor("pawsql.currentQueryOutline");
 
 export class PawSQLExtension {
-  private workspaceManager = new WorkspaceManager();
+  private workspaceManager = new WorkspaceManager(this);
+  private highlightDecoration: vscode.TextEditorDecorationType;
+  private sqlCodeLensProvider: SqlCodeLensProvider; // 添加 CodeLens 提供者
 
-  constructor(private context: vscode.ExtensionContext) {}
+  constructor(private context: vscode.ExtensionContext) {
+    // 初始化高亮装饰器
+    this.highlightDecoration = vscode.window.createTextEditorDecorationType({
+      backgroundColor: currentQueryBg,
+      borderColor: currentQueryOutline,
+      borderWidth: "1px",
+      borderStyle: "solid",
+    });
+    this.sqlCodeLensProvider = new SqlCodeLensProvider(context); // 实例化 CodeLens 提供者
+  }
 
   async activate(): Promise<void> {
     try {
@@ -27,8 +46,95 @@ export class PawSQLExtension {
       await this.setApiKeyContext(apiKey);
       await this.initializeCommands(apiKey);
       this.registerConfigurationListener();
+
+      // 加载最近工作空间并设置上下文状态
+      this.updateRecentWorkspaceContext(this.workspaceManager, this.context);
+
+      // 监听配置变化
+      this.context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(() => {
+          this.updateRecentWorkspaceContext(
+            this.workspaceManager,
+            this.context
+          );
+        })
+      );
+
+      this.createDecorations(); // 注册高亮功能
+
+      // 注册 CodeLens 提供者
+      this.context.subscriptions.push(
+        vscode.languages.registerCodeLensProvider(
+          { scheme: "file", language: "sql" },
+          this.sqlCodeLensProvider
+        )
+      );
     } catch (error) {
       ErrorHandler.handle("extension.activation.failed", error);
+    }
+  }
+
+  private updateRecentWorkspaceContext(
+    workspaceManager: WorkspaceManager,
+    context: vscode.ExtensionContext
+  ) {
+    const count = workspaceManager.getRecentWorkspaces().length;
+    context.workspaceState.update("pawsql.recentWorkspacesCount", count);
+    vscode.commands.executeCommand(
+      "setContext",
+      "pawsql:recentWorkspacesCount",
+      count
+    );
+  }
+
+  private createDecorations(): void {
+    // 当活动编辑器更改时更新高亮
+    vscode.window.onDidChangeActiveTextEditor(
+      (editor) => {
+        if (editor) {
+          this.updateHighlight(editor);
+        }
+      },
+      null,
+      this.context.subscriptions
+    );
+
+    // 监听文本变化
+    vscode.workspace.onDidChangeTextDocument(
+      (event) => {
+        if (
+          vscode.window.activeTextEditor &&
+          event.document === vscode.window.activeTextEditor.document
+        ) {
+          this.updateHighlight(vscode.window.activeTextEditor);
+        }
+      },
+      null,
+      this.context.subscriptions
+    );
+
+    // 监听光标选择变化
+    vscode.window.onDidChangeTextEditorSelection(
+      (event) => {
+        if (event.textEditor === vscode.window.activeTextEditor) {
+          this.updateHighlight(vscode.window.activeTextEditor);
+        }
+      },
+      null,
+      this.context.subscriptions
+    );
+  }
+
+  private updateHighlight(editor: vscode.TextEditor): void {
+    // 检查文件的语言 ID 是否为 SQL
+    if (editor.document.languageId !== "sql") {
+      return; // 如果不是 SQL 文件，直接返回
+    }
+    const { currentQuery, range } = getEditorQueryDetails(editor); // 获取光标附近的 SQL 语句和范围
+    if (currentQuery) {
+      editor.setDecorations(this.highlightDecoration, [range]); // 设置高亮装饰
+    } else {
+      editor.setDecorations(this.highlightDecoration, []); // 清除高亮
     }
   }
 
@@ -84,12 +190,29 @@ export class PawSQLExtension {
       "pawsql.url"
     );
   }
+
+  private async registerRecentWorkspaceCommands(): Promise<void> {
+    try {
+      // 让 WorkspaceManager 处理命令注册
+      await this.workspaceManager.registerRecentWorkspaceCommands(this.context);
+
+      // 更新上下文状态
+      this.updateRecentWorkspaceContext(this.workspaceManager, this.context);
+    } catch (error) {
+      ErrorHandler.handle("register.recent.workspace.commands.failed", error);
+    }
+  }
+
   private registerConfigurationListener(): void {
     const disposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
       try {
         if (e.affectsConfiguration("pawsql.apiKey")) {
           const newApiKey = await ConfigurationService.getApiKey();
           await this.updateWorkspaceCommands(newApiKey);
+        }
+
+        if (e.affectsConfiguration("pawsql.recentWorkspaces")) {
+          await this.registerRecentWorkspaceCommands(); // 动态注册最近工作空间命令
         }
       } catch (error) {
         ErrorHandler.handle("configuration.update.failed", error);
@@ -107,6 +230,7 @@ export class PawSQLExtension {
       if (apiKey) {
         await this.registerWorkspaceCommand(apiKey);
         await this.setApiKeyContext(apiKey);
+        await this.registerRecentWorkspaceCommands(); // 注册最近工作空间命令
       } else {
         await this.setApiKeyContext(undefined);
       }
@@ -149,6 +273,9 @@ export class PawSQLExtension {
 
       // 如果用户选择了某个工作空间，执行优化操作
       if (selected) {
+        this.workspaceManager.addRecentWorkspace(selected); // 记录最近使用的工作空间
+        await this.registerRecentWorkspaceCommands(); // 重新注册命令
+
         await this.optimizeSql(selected.workspaceId);
       }
     } catch (error) {
@@ -179,6 +306,7 @@ export class PawSQLExtension {
     return workspaces.data.records.map((workspace) => ({
       label: workspace.workspaceName,
       workspaceId: workspace.workspaceId,
+      workspaceName: workspace.workspaceName,
     }));
   }
 
@@ -190,17 +318,24 @@ export class PawSQLExtension {
     });
   }
 
-  private async optimizeSql(workspaceId: string): Promise<void> {
+  public async optimizeSql(workspaceId: string): Promise<void> {
     try {
       const editor = vscode.window.activeTextEditor;
       if (!editor) {
         throw new Error("no.active.editor");
       }
 
-      const sql = editor.document.getText(editor.selection);
-      if (!sql.trim()) {
+      const { currentQuery, range } = getEditorQueryDetails(editor);
+      console.log("距离光标最近的SQL：" + currentQuery);
+
+      // const sql = editor.document.getText(editor.selection);
+      if (!currentQuery.trim()) {
         throw new Error("invalid.sql.text");
       }
+
+      // 自动选中（高亮）当前 SQL 语句
+      editor.selection = new Selection(range.start, range.end);
+      editor.revealRange(range); // 确保编辑器视图展示选中的内容
 
       // 创建状态栏提示并立即显示
       const statusBarItem = this.createStatusBarItem(
@@ -213,7 +348,10 @@ export class PawSQLExtension {
         statusBarItem.show();
 
         // 执行优化操作
-        const result = await this.performOptimization(workspaceId, sql);
+        const result = await this.performOptimization(
+          workspaceId,
+          currentQuery
+        );
 
         // SQL 优化成功，更新状态栏提示为“优化已完成”
         statusBarItem.text = UI_MESSAGES.SQL_OPTIMIZED;
@@ -291,6 +429,8 @@ export class PawSQLExtension {
   deactivate(): void {
     try {
       this.workspaceManager.clear();
+      this.workspaceManager.clearRecent();
+      this.highlightDecoration.dispose(); // 清理高亮装饰器
     } catch (error) {
       console.error("扩展停用时清理失败:", error);
     }

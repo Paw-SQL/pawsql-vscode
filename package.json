@@ -16,6 +16,26 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "colors": [
+      {
+        "id": "pawsql.currentQueryBg",
+        "description": "Background decoration color for current query",
+        "defaults": {
+          "dark": "#00a2ff20",
+          "light": "#00a2ff20",
+          "highContrast": "#00a2ff20"
+        }
+      },
+      {
+        "id": "pawsql.currentQueryOutline",
+        "description": "Background decoration color for current query",
+        "defaults": {
+          "dark": "#00a2ff20",
+          "light": "#00a2ff20",
+          "highContrast": "#00a2ff20"
+        }
+      }
+    ],
     "localization": {
       "zh-CN": "./i18n/zh-cn.json",
       "en": "./i18n/en.json"
@@ -36,6 +56,10 @@
       {
         "command": "pawsql.selectWorkspace",
         "title": "选择工作空间进行优化"
+      },
+      {
+        "command": "pawsql.recentWorkspace",
+        "title": "使用上次的工作空间执行优化"
       }
     ],
     "submenus": [
@@ -61,13 +85,28 @@
           "type": "string",
           "default": "https://www.pawsql.com",
           "description": "PawSQL Backend URL"
+        },
+        "pawsql.recentWorkspaces": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "properties": {
+              "workspaceId": {
+                "type": "string"
+              },
+              "workspaceName": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "最近使用的工作空间列表"
         }
       }
     },
     "menus": {
       "editor/context": [
         {
-          "when": "editorHasSelection",
           "submenu": "pawsql.mainMenu"
         }
       ],
@@ -95,6 +134,12 @@
           "when": "!pawsql:hasApiKey",
           "group": "3_config",
           "title": "尚未配置 API Key，点击进行配置"
+        },
+        {
+          "command": "pawsql.recentWorkspace",
+          "when": "pawsql:recentWorkspacesCount >= 1",
+          "group": "1_workspace",
+          "title": "最近使用的工作空间列表"
         }
       ]
     }

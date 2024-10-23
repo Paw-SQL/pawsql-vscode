@@ -13,5 +13,6 @@
   "api.key.not.configured": "API key is not configured.",
   "license.code.not.exist": "License code does not exist. Please contact the administrator to obtain it.",
   "beta.analysis.over.limit": "The number of optimizations exceeds the limit for beta users.",
-  "analysis.over.limit": "The number of optimizations exceeds the limit."
+  "analysis.over.limit": "The number of optimizations exceeds the limit.",
+  "workspace.not.exist": "Workspace does not exist."
 }
