@@ -52,11 +52,24 @@ export class PawSQLExtension {
 
       // 监听配置变化
       this.context.subscriptions.push(
-        vscode.workspace.onDidChangeConfiguration(() => {
-          this.updateRecentWorkspaceContext(
-            this.workspaceManager,
-            this.context
-          );
+        vscode.workspace.onDidChangeConfiguration(async (e) => {
+          // 检查特定配置是否发生变化
+          if (
+            e.affectsConfiguration("pawsql.apiKey") ||
+            e.affectsConfiguration("pawsql.url.frontendUrl") ||
+            e.affectsConfiguration("pawsql.url.backendUrl")
+          ) {
+            // 清空最近工作空间的内容
+            await this.workspaceManager.clearRecentWorkspaces();
+          }
+          if (e.affectsConfiguration("pawsql.recentWorkspaces")) {
+            console.log(123);
+
+            this.updateRecentWorkspaceContext(
+              this.workspaceManager,
+              this.context
+            );
+          }
         })
       );
 
@@ -79,6 +92,8 @@ export class PawSQLExtension {
     context: vscode.ExtensionContext
   ) {
     const count = workspaceManager.getRecentWorkspaces().length;
+    console.log(count);
+
     context.workspaceState.update("pawsql.recentWorkspacesCount", count);
     vscode.commands.executeCommand(
       "setContext",
@@ -118,6 +133,10 @@ export class PawSQLExtension {
       (event) => {
         if (event.textEditor === vscode.window.activeTextEditor) {
           this.updateHighlight(vscode.window.activeTextEditor);
+        }
+
+        if (event.textEditor.document.languageId === "sql") {
+          this.sqlCodeLensProvider.refresh(); // 触发更新
         }
       },
       null,
@@ -191,7 +210,7 @@ export class PawSQLExtension {
     );
   }
 
-  private async registerRecentWorkspaceCommands(): Promise<void> {
+  public async registerRecentWorkspaceCommands(): Promise<void> {
     try {
       // 让 WorkspaceManager 处理命令注册
       await this.workspaceManager.registerRecentWorkspaceCommands(this.context);
@@ -251,12 +270,12 @@ export class PawSQLExtension {
   private async handleWorkspaceSelection(apiKey: string): Promise<void> {
     // 创建状态栏提示并立即显示
     const statusBarItem = this.createStatusBarItem(
-      UI_MESSAGES.QUERYING_WORKSPACES
+      UI_MESSAGES.QUERYING_WORKSPACES()
     );
 
     try {
       // 显示“正在查询工作空间”的状态
-      statusBarItem.text = UI_MESSAGES.QUERYING_WORKSPACES;
+      statusBarItem.text = UI_MESSAGES.QUERYING_WORKSPACES();
       statusBarItem.show();
 
       // 查询工作空间
@@ -273,6 +292,7 @@ export class PawSQLExtension {
 
       // 如果用户选择了某个工作空间，执行优化操作
       if (selected) {
+        statusBarItem.dispose();
         this.workspaceManager.addRecentWorkspace(selected); // 记录最近使用的工作空间
         await this.registerRecentWorkspaceCommands(); // 重新注册命令
 
@@ -282,20 +302,17 @@ export class PawSQLExtension {
       // 如果查询失败，显示错误提示
       // vscode.window.showErrorMessage("查询工作空间失败，请重试。");
       ErrorHandler.handle("workspace.operation.failed", error);
-    } finally {
-      // 在操作完成后清理状态栏
-      statusBarItem.dispose();
     }
   }
 
   private async handleEmptyWorkspaces(): Promise<void> {
     const { URLS } = getUrls();
     const choice = await vscode.window.showInformationMessage(
-      UI_MESSAGES.NO_WORKSPACE,
-      UI_MESSAGES.CREATE_WORKSPACE
+      UI_MESSAGES.NO_WORKSPACE(),
+      UI_MESSAGES.CREATE_WORKSPACE()
     );
 
-    if (choice === UI_MESSAGES.CREATE_WORKSPACE) {
+    if (choice === UI_MESSAGES.CREATE_WORKSPACE()) {
       await vscode.env.openExternal(vscode.Uri.parse(URLS.NEW_WORKSPACE));
     }
   }
@@ -314,7 +331,7 @@ export class PawSQLExtension {
     items: WorkspaceItem[]
   ): Promise<WorkspaceItem | undefined> {
     return vscode.window.showQuickPick(items, {
-      placeHolder: UI_MESSAGES.WORKSPACE_SELECTOR_PLACEHOLDER,
+      placeHolder: UI_MESSAGES.WORKSPACE_SELECTOR_PLACEHOLDER(),
     });
   }
 
@@ -339,12 +356,12 @@ export class PawSQLExtension {
 
       // 创建状态栏提示并立即显示
       const statusBarItem = this.createStatusBarItem(
-        UI_MESSAGES.OPTIMIZING_SQL
+        UI_MESSAGES.OPTIMIZING_SQL()
       );
 
       try {
         // 显示“正在优化”提示
-        statusBarItem.text = UI_MESSAGES.OPTIMIZING_SQL;
+        statusBarItem.text = UI_MESSAGES.OPTIMIZING_SQL();
         statusBarItem.show();
 
         // 执行优化操作
@@ -354,7 +371,7 @@ export class PawSQLExtension {
         );
 
         // SQL 优化成功，更新状态栏提示为“优化已完成”
-        statusBarItem.text = UI_MESSAGES.SQL_OPTIMIZED;
+        statusBarItem.text = UI_MESSAGES.SQL_OPTIMIZED();
 
         // 显示优化结果
         await this.showOptimizationResult(result);
@@ -409,16 +426,22 @@ export class PawSQLExtension {
   private async showOptimizationResult(result: SummaryResponse): Promise<void> {
     const { URLS } = getUrls();
     const panel = WebviewProvider.createResultPanel(result.data);
-    // Panel disposal is handled by VS Code
+
+    // 获取通知和按钮文本
+    const messageKey = "sql.optimization.completed"; // 假设这个键在语言文件中
+    const buttonKey = "open.in.browser"; // 新增的按钮文本键
+
+    const notificationMessage = LanguageService.getMessage(messageKey);
+    const buttonText = LanguageService.getMessage(buttonKey);
 
     // 右下角显示通知，包含跳转按钮
     const choice = await vscode.window.showInformationMessage(
-      "SQL 优化已完成，您可以在 Web 浏览器中查看详细报告。",
-      "在浏览器中打开"
+      notificationMessage,
+      buttonText // 使用动态按钮文本
     );
 
-    // 如果用户点击了“在浏览器中打开”
-    if (choice === "在浏览器中打开") {
+    // 如果用户点击了按钮
+    if (choice === buttonText) {
       const analysisStmtId =
         result.data.summaryStatementInfo[0]?.analysisStmtId || "";
       const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;

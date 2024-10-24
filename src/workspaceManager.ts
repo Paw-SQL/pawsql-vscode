@@ -53,7 +53,7 @@ export class WorkspaceManager {
     await this.updateWorkspaceContext();
   }
 
-  private async updateWorkspaceContext(): Promise<void> {
+  public async updateWorkspaceContext(): Promise<void> {
     const count = this.recentWorkspaces.length;
 
     // 更新数量上下文
@@ -115,6 +115,9 @@ export class WorkspaceManager {
     return this.recentWorkspaces;
   }
   private async saveRecentWorkspaces(): Promise<void> {
+    console.log("保存最近工作空间");
+    console.log(this.recentWorkspaces);
+
     const configuration = vscode.workspace.getConfiguration("pawsql");
     try {
       await configuration.update(
@@ -127,7 +130,7 @@ export class WorkspaceManager {
     }
   }
 
-  private async loadRecentWorkspaces(): Promise<void> {
+  public async loadRecentWorkspaces(): Promise<void> {
     const configuration = vscode.workspace.getConfiguration("pawsql");
     try {
       const recentWorkspaces =

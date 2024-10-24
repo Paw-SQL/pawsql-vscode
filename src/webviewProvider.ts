@@ -37,7 +37,7 @@ export class WebviewProvider {
 
   private static getWebviewContent(analysisStmtId: string): string {
     const { URLS } = getUrls();
-    const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
+    const statementUrl = `${URLS.QUERY_BASE}/${analysisStmtId}`;
 
     return `<!DOCTYPE html>
 <html lang="zh">
@@ -60,7 +60,7 @@ export class WebviewProvider {
         .iframe-container {
             width: 100%;
             height: 100%;
-            transform: scale(1); /* 调整缩放比例，这里设置为 80% */
+            font-size: 30%; /* 调整字体大小到90% */
         }
     </style>
 </head>
