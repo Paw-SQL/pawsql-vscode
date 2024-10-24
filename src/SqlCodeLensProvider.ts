@@ -38,16 +38,11 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     if (activeEditor && activeEditor.document === document) {
       // 将 document 作为 editor 传递给 getEditorQueryDetails
       const { currentQuery, range } = getEditorQueryDetails(activeEditor);
-
-      console.log(currentQuery, range);
       // 获取 pawsql:recentWorkspacesCount 配置值
 
       const configuration = vscode.workspace.getConfiguration("pawsql");
       const recentWorkspaces =
         configuration.get<WorkspaceItem[]>("recentWorkspaces") || [];
-
-      console.log(recentWorkspaces);
-      console.log(currentQuery && range && recentWorkspaces.length >= 1);
 
       // 只有在最近工作空间数量 >= 1 时才添加 CodeLens
       if (currentQuery && range && recentWorkspaces.length >= 1) {

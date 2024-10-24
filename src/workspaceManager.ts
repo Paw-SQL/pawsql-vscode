@@ -77,12 +77,7 @@ export class WorkspaceManager {
   public async registerRecentWorkspaceCommands(
     context: vscode.ExtensionContext
   ): Promise<void> {
-    //
-    console.log(this.recentDisposables);
-    console.log("清除之前的命令");
-
     this.clearRecent();
-    console.log(this.recentDisposables);
 
     // 为每个最近的工作空间注册命令
     for (let i = 0; i < this.recentWorkspaces.length; i++) {
@@ -92,10 +87,7 @@ export class WorkspaceManager {
       const disposable = vscode.commands.registerCommand(
         commandId,
         async () => {
-          console.log(workspace.workspaceId);
-
           await this.pawSQLExtension.optimizeSql(workspace.workspaceId);
-          console.log("最近工作空间命令已执行");
         }
       );
 
@@ -115,9 +107,6 @@ export class WorkspaceManager {
     return this.recentWorkspaces;
   }
   private async saveRecentWorkspaces(): Promise<void> {
-    console.log("保存最近工作空间");
-    console.log(this.recentWorkspaces);
-
     const configuration = vscode.workspace.getConfiguration("pawsql");
     try {
       await configuration.update(

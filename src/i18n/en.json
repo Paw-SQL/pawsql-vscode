@@ -16,7 +16,7 @@
   "analysis.over.limit": "The number of optimizations exceeds the limit.",
   "workspace.not.exist": "Workspace does not exist.",
   "sql.optimization.completed": "SQL optimization is complete. You can view the detailed report in the web browser.",
-  "open.in.browser": "Open in browser",
+  "open.in.browser": "Browser to view detailed report",
   "SQL_OPTIMIZED": "SQL optimization is complete",
   "QUERYING_WORKSPACES": "Querying workspaces...",
   "NO_WORKSPACE": "There are currently no available workspaces. Please ensure you are logged in to the PawSQL website with the account associated with the configured API key to create a workspace.",

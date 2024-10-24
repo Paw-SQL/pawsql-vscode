@@ -63,8 +63,6 @@ export class PawSQLExtension {
             await this.workspaceManager.clearRecentWorkspaces();
           }
           if (e.affectsConfiguration("pawsql.recentWorkspaces")) {
-            console.log(123);
-
             this.updateRecentWorkspaceContext(
               this.workspaceManager,
               this.context
@@ -92,8 +90,6 @@ export class PawSQLExtension {
     context: vscode.ExtensionContext
   ) {
     const count = workspaceManager.getRecentWorkspaces().length;
-    console.log(count);
-
     context.workspaceState.update("pawsql.recentWorkspacesCount", count);
     vscode.commands.executeCommand(
       "setContext",
@@ -343,8 +339,6 @@ export class PawSQLExtension {
       }
 
       const { currentQuery, range } = getEditorQueryDetails(editor);
-      console.log("距离光标最近的SQL：" + currentQuery);
-
       // const sql = editor.document.getText(editor.selection);
       if (!currentQuery.trim()) {
         throw new Error("invalid.sql.text");
@@ -415,6 +409,7 @@ export class PawSQLExtension {
       workload: sql,
       queryMode: "plain_sql",
       singleQueryFlag: true,
+      validateFlag: true,
     });
 
     return await OptimizationService.getAnalysisSummary({
