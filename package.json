@@ -16,6 +16,23 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "pawsqlContainer",
+          "title": "PawSQL",
+          "icon": "./resources/paw.svg"
+        }
+      ]
+    },
+    "views": {
+      "pawsqlContainer": [
+        {
+          "id": "pawsqlSidebar",
+          "name": "PawSQL Sidebar"
+        }
+      ]
+    },
     "colors": [
       {
         "id": "pawsql.currentQueryBg",
@@ -60,6 +77,10 @@
       {
         "command": "pawsql.recentWorkspace",
         "title": "使用上次的工作空间执行优化"
+      },
+      {
+        "command": "pawsql.openSettings",
+        "title": "打开PawSQL设置"
       }
     ],
     "submenus": [

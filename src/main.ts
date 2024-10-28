@@ -17,6 +17,8 @@ import { LanguageService } from "./LanguageService";
 import { getEditorQueryDetails } from "./utils/pawsqlUtils";
 import { SqlCodeLensProvider } from "./SqlCodeLensProvider";
 
+import { PawSQLTreeProvider } from "./PawSQLSidebarProvider";
+
 // 获取颜色配置
 const currentQueryBg = new vscode.ThemeColor("pawsql.currentQueryBg");
 const currentQueryOutline = new vscode.ThemeColor("pawsql.currentQueryOutline");
@@ -27,6 +29,20 @@ export class PawSQLExtension {
   private sqlCodeLensProvider: SqlCodeLensProvider; // 添加 CodeLens 提供者
 
   constructor(private context: vscode.ExtensionContext) {
+    const pawSQLTreeProvider = new PawSQLTreeProvider();
+
+    // 注册树视图
+    vscode.window.createTreeView("pawsqlSidebar", {
+      treeDataProvider: pawSQLTreeProvider,
+    });
+
+    // 刷新树视图
+    context.subscriptions.push(
+      vscode.commands.registerCommand("pawsql.refresh", () =>
+        pawSQLTreeProvider.refresh()
+      )
+    );
+
     // 初始化高亮装饰器
     this.highlightDecoration = vscode.window.createTextEditorDecorationType({
       backgroundColor: currentQueryBg,
@@ -184,6 +200,10 @@ export class PawSQLExtension {
         command: COMMANDS.CONFIGURE_API_URL,
         callback: () => this.openApiURLSettings(),
       },
+      {
+        command: COMMANDS.PAWSQL_CONFIG,
+        callback: () => this.openPawSQLSettings(),
+      },
     ];
 
     commands.forEach(({ command, callback }) => {
@@ -203,6 +223,13 @@ export class PawSQLExtension {
     await vscode.commands.executeCommand(
       "workbench.action.openSettings",
       "pawsql.url"
+    );
+  }
+
+  private async openPawSQLSettings(): Promise<void> {
+    await vscode.commands.executeCommand(
+      "workbench.action.openSettings",
+      "pawsql"
     );
   }
 

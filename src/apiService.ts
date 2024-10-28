@@ -28,6 +28,18 @@ interface ListWorkspacesResponse {
   };
 }
 
+interface ListAnalysesResponse {
+  code: number;
+  message: string;
+  data: {
+    records: any[];
+    total: string;
+    size: string;
+    current: string;
+    pages: string;
+  };
+}
+
 interface CreateAnalysisParams {
   userKey: string;
   workspace: string;
@@ -87,6 +99,18 @@ export const getWorkspaces = async (
   const response = await axios.post<ListWorkspacesResponse>(url, { userKey });
   return response.data;
 };
+// 获取优化列表
+export const getAnalyses = async (
+  userKey: string,
+  workspaceId: string,
+  pageNumber: number,
+  pageSize: number
+): Promise<ListAnalysesResponse> => {
+  const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
+  const url = `${DOMAIN.Backend}/api/v1/listAnalyses`;
+  const response = await axios.post<ListAnalysesResponse>(url, { userKey });
+  return response.data;
+};
 
 // 创建优化任务
 export const createAnalysis = async (
@@ -121,6 +145,7 @@ export const getStatementDetails = async (
 // 组合服务以便于调用
 export const ApiService = {
   getWorkspaces,
+  getAnalyses,
   createAnalysis,
   getAnalysisSummary,
   getStatementDetails,

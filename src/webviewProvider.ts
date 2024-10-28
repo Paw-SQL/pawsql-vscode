@@ -39,6 +39,17 @@ export class WebviewProvider {
     return panel;
   }
 
+  static openOptimizationSummary(optimizationId: string) {
+    const panel = vscode.window.createWebviewPanel(
+      "pawsqlOptimizationResult",
+      "SQL优化结果",
+      vscode.ViewColumn.Two,
+      { enableScripts: true, retainContextWhenHidden: true }
+    );
+
+    panel.webview.html = WebviewProvider.getWebviewContent(optimizationId);
+  }
+
   private static getWebviewContent(analysisStmtId: string): string {
     const { URLS } = getUrls();
     const queryUrl = `${URLS.QUERY_BASE}/${analysisStmtId}`;
