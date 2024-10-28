@@ -29,7 +29,9 @@
       "pawsqlContainer": [
         {
           "id": "pawsqlSidebar",
-          "name": "PawSQL Sidebar"
+          "name": "PawSQL Sidebar",
+          "type": "tree",
+          "visibility": "visible"
         }
       ]
     },
@@ -81,6 +83,14 @@
       {
         "command": "pawsql.openSettings",
         "title": "打开PawSQL设置"
+      },
+      {
+        "command": "pawsql.refreshTree",
+        "title": "刷新配置信息",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
       }
     ],
     "submenus": [
@@ -129,6 +139,13 @@
       "editor/context": [
         {
           "submenu": "pawsql.mainMenu"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "pawsql.refreshTree",
+          "when": "view == pawsqlSidebar && viewItem == workspaceManager",
+          "group": "inline"
         }
       ],
       "pawsql.mainMenu": [

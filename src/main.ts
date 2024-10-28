@@ -29,18 +29,54 @@ export class PawSQLExtension {
   private sqlCodeLensProvider: SqlCodeLensProvider; // 添加 CodeLens 提供者
 
   constructor(private context: vscode.ExtensionContext) {
-    const pawSQLTreeProvider = new PawSQLTreeProvider();
+    // 创建树视图提供者
+    const treeProvider = new PawSQLTreeProvider(context);
 
     // 注册树视图
-    vscode.window.createTreeView("pawsqlSidebar", {
-      treeDataProvider: pawSQLTreeProvider,
+    const treeView = vscode.window.createTreeView("pawsqlSidebar", {
+      treeDataProvider: treeProvider,
+      showCollapseAll: true,
     });
 
-    // 刷新树视图
+    // 注册配置输入命令
     context.subscriptions.push(
-      vscode.commands.registerCommand("pawsql.refresh", () =>
-        pawSQLTreeProvider.refresh()
+      vscode.commands.registerCommand(
+        "pawsql.showConfigInput",
+        async (configKey: string) => {
+          const result = await vscode.window.showInputBox({
+            prompt: `请输入 ${configKey}`,
+            password: configKey === "apiKey",
+            value: vscode.workspace.getConfiguration("pawsql").get(configKey),
+          });
+
+          if (result !== undefined) {
+            await treeProvider.updateConfig(configKey, result);
+          }
+        }
       )
+    );
+
+    // 注册验证配置命令
+    context.subscriptions.push(
+      vscode.commands.registerCommand("pawsql.validateConfig", async () => {
+        await treeProvider.validateConfig();
+      })
+    );
+
+    // 注册显示语句详情命令
+    context.subscriptions.push(
+      vscode.commands.registerCommand(
+        "pawsql.showStatementDetail",
+        async (statementId: string) => {
+          await this.showStatementResult(statementId);
+        }
+      )
+    );
+    // 注册刷新命令
+    context.subscriptions.push(
+      vscode.commands.registerCommand("pawsql.refreshTree", () => {
+        treeProvider.refresh();
+      })
     );
 
     // 初始化高亮装饰器
@@ -447,7 +483,9 @@ export class PawSQLExtension {
 
   private async showOptimizationResult(result: SummaryResponse): Promise<void> {
     const { URLS } = getUrls();
-    const panel = WebviewProvider.createResultPanel(result.data);
+    const panel = WebviewProvider.createResultPanel(
+      result.data.summaryStatementInfo[0]?.analysisStmtId || ""
+    );
 
     // 获取通知和按钮文本
     const messageKey = "sql.optimization.completed"; // 假设这个键在语言文件中
@@ -466,6 +504,30 @@ export class PawSQLExtension {
     if (choice === buttonText) {
       const analysisStmtId =
         result.data.summaryStatementInfo[0]?.analysisStmtId || "";
+      const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
+      await vscode.env.openExternal(vscode.Uri.parse(statementUrl));
+    }
+  }
+
+  private async showStatementResult(analysisStmtId: string): Promise<void> {
+    const { URLS } = getUrls();
+    const panel = WebviewProvider.createResultPanel(analysisStmtId);
+
+    // 获取通知和按钮文本
+    const messageKey = "sql.optimization.completed"; // 假设这个键在语言文件中
+    const buttonKey = "open.in.browser"; // 新增的按钮文本键
+
+    const notificationMessage = LanguageService.getMessage(messageKey);
+    const buttonText = LanguageService.getMessage(buttonKey);
+
+    // 右下角显示通知，包含跳转按钮
+    const choice = await vscode.window.showInformationMessage(
+      notificationMessage,
+      buttonText // 使用动态按钮文本
+    );
+
+    // 如果用户点击了按钮
+    if (choice === buttonText) {
       const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
       await vscode.env.openExternal(vscode.Uri.parse(statementUrl));
     }

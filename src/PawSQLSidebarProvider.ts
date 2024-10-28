@@ -1,141 +1,298 @@
 import * as vscode from "vscode";
 import { ApiService } from "./apiService";
 
-// 定义工作空间项
+// 工作空间管理器节点
+class WorkspaceManagerItem extends vscode.TreeItem {
+  constructor() {
+    super("工作空间管理器", vscode.TreeItemCollapsibleState.Expanded);
+    this.contextValue = "workspaceManager";
+    this.iconPath = new vscode.ThemeIcon("folder");
+  }
+}
+
+// 工作空间项
 class WorkspaceItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
+    public readonly workspaceId: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState
   ) {
     super(label, collapsibleState);
+    this.contextValue = "workspaceItem";
+    this.iconPath = new vscode.ThemeIcon("workspace");
   }
-
-  contextValue = "workspaceItem"; // 上下文值
 }
 
-// 定义配置项
-class ConfigureItem extends vscode.TreeItem {
-  constructor() {
-    super("Configure PawSQL", vscode.TreeItemCollapsibleState.None);
+// 分析项
+class AnalysisItem extends vscode.TreeItem {
+  constructor(
+    public readonly label: string,
+    public readonly analysisId: string,
+    public readonly workspaceId: string
+  ) {
+    super(label, vscode.TreeItemCollapsibleState.Collapsed); // Changed to Collapsed
+    this.contextValue = "analysisItem";
+    this.iconPath = new vscode.ThemeIcon("graph");
+    // this.command = {
+    //   command: "pawsql.showAnalysisDetail",
+    //   title: "Show Analysis Detail",
+    //   arguments: [this.analysisId, this.workspaceId],
+    // };
+  }
+}
+
+// SQL语句项
+class StatementItem extends vscode.TreeItem {
+  constructor(
+    public readonly label: string,
+    public readonly statementId: string,
+    public readonly analysisId: string,
+    public readonly workspaceId: string,
+    public readonly sql: string
+  ) {
+    super(label, vscode.TreeItemCollapsibleState.None);
+    this.contextValue = "statementItem";
+    this.iconPath = new vscode.ThemeIcon("symbol-method");
     this.command = {
-      command: "pawsql.openSettings", // 绑定命令
-      title: "Configure PawSQL",
+      command: "pawsql.showStatementDetail",
+      title: "Show Statement Detail",
+      arguments: [
+        this.statementId,
+        this.analysisId,
+        this.workspaceId,
+        this.sql,
+      ],
     };
-    this.tooltip = "Click to configure PawSQL settings.";
+    this.tooltip = this.sql; // 悬停显示SQL语句
   }
-
-  contextValue = "configureItem"; // 上下文值
 }
 
-// PawSQL Tree Provider
+// 配置项和验证项保持不变...
+class ConfigurationItem extends vscode.TreeItem {
+  constructor(private config: "apiKey" | "url.frontendUrl" | "url.backendUrl") {
+    super(
+      config === "apiKey"
+        ? "API Key"
+        : config === "url.frontendUrl"
+        ? "Frontend URL"
+        : "Backend URL",
+      vscode.TreeItemCollapsibleState.None
+    );
+
+    const currentValue = vscode.workspace
+      .getConfiguration("pawsql")
+      .get<string>(`${config}`);
+
+    this.description = currentValue ? "已配置" : "未配置";
+    this.contextValue = "configItem";
+    this.iconPath = new vscode.ThemeIcon(currentValue ? "check" : "warning");
+    this.command = {
+      command: "pawsql.showConfigInput",
+      title: "Configure",
+      arguments: [this.config],
+    };
+  }
+}
+
+class ValidateConfigItem extends vscode.TreeItem {
+  constructor() {
+    super("验证配置", vscode.TreeItemCollapsibleState.None);
+    this.contextValue = "validateItem";
+    this.iconPath = new vscode.ThemeIcon("verify");
+    this.command = {
+      command: "pawsql.validateConfig",
+      title: "Validate Configuration",
+    };
+  }
+}
+
 export class PawSQLTreeProvider
-  implements vscode.TreeDataProvider<WorkspaceItem | ConfigureItem>
+  implements vscode.TreeDataProvider<vscode.TreeItem>
 {
   private _onDidChangeTreeData: vscode.EventEmitter<
-    WorkspaceItem | ConfigureItem | undefined
-  > = new vscode.EventEmitter<WorkspaceItem | ConfigureItem | undefined>();
-  readonly onDidChangeTreeData: vscode.Event<
-    WorkspaceItem | ConfigureItem | undefined
-  > = this._onDidChangeTreeData.event;
+    vscode.TreeItem | undefined
+  > = new vscode.EventEmitter();
+  readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined> =
+    this._onDidChangeTreeData.event;
 
-  private workspaces: WorkspaceItem[] = []; // 存储工作空间项
+  private workspaces: WorkspaceItem[] = [];
+  private isConfigValid: boolean = false;
+  private statementsCache: Map<string, StatementItem[]> = new Map(); // 缓存语句数据
 
-  constructor() {
-    this.loadWorkspaces(); // 初始化时加载工作空间
+  constructor(private context: vscode.ExtensionContext) {
+    this.validateConfiguration();
   }
 
-  // 刷新树视图
-  refresh() {
-    this.loadWorkspaces(); // 重新加载工作空间
-    this._onDidChangeTreeData.fire(undefined); // 通知树视图更新
+  async refresh(): Promise<void> {
+    this.statementsCache.clear();
+    await this.validateConfiguration();
+    this._onDidChangeTreeData.fire(undefined);
   }
 
-  async loadWorkspaces() {
-    const apiKey = vscode.workspace.getConfiguration("pawsql").get("apiKey");
-    const backendUrl = vscode.workspace
-      .getConfiguration("pawsql")
-      .get("url.backendUrl");
-
-    if (!apiKey || !backendUrl) {
-      // 如果 API Key 或 Backend URL 没有设置，添加配置项
-      this._onDidChangeTreeData.fire(new ConfigureItem());
-      return; // 终止加载
-    }
-
-    try {
-      const response = await ApiService.getWorkspaces(apiKey as string); // 获取工作空间
-      this.workspaces = response.data.records.map(
-        (workspace) =>
-          new WorkspaceItem(
-            workspace.workspaceName,
-            vscode.TreeItemCollapsibleState.Collapsed
-          )
-      );
-      this._onDidChangeTreeData.fire(undefined); // 更新树视图
-    } catch (error: any) {
-      vscode.window.showErrorMessage(
-        `Error fetching workspaces: ${error.message}`
-      );
-    }
-  }
-
-  // 获取树视图中的项
-  getTreeItem(element: WorkspaceItem | ConfigureItem): vscode.TreeItem {
+  getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
     return element;
   }
 
-  // 获取子项
-  getChildren(
-    element?: WorkspaceItem | ConfigureItem
-  ): Thenable<(WorkspaceItem | ConfigureItem)[]> {
-    if (element instanceof ConfigureItem) {
-      return Promise.resolve([]); // 如果是配置项，则没有子项
+  async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
+    if (!element) {
+      return [new WorkspaceManagerItem()];
     }
 
-    if (element) {
-      // 如果有父项，返回其子项（如优化列表）
-      return this.getOptimizationsForWorkspace(element.label);
+    if (element instanceof WorkspaceManagerItem) {
+      if (!this.isConfigValid) {
+        return [
+          new ConfigurationItem("apiKey"),
+          new ConfigurationItem("url.frontendUrl"),
+          new ConfigurationItem("url.backendUrl"),
+          new ValidateConfigItem(),
+        ];
+      }
+      return this.workspaces;
+    }
+
+    if (element instanceof WorkspaceItem) {
+      return this.getAnalysisItems(element.workspaceId);
+    }
+
+    if (element instanceof AnalysisItem) {
+      return this.getStatementItems(element.analysisId, element.workspaceId);
+    }
+
+    return [];
+  }
+
+  private async validateConfiguration(): Promise<void> {
+    const config = vscode.workspace.getConfiguration("pawsql");
+    const apiKey = config.get<string>("apiKey");
+    const frontendUrl = config.get<string>("url.frontendUrl");
+    const backendUrl = config.get<string>("url.backendUrl");
+
+    this.isConfigValid = Boolean(apiKey && frontendUrl && backendUrl);
+
+    if (this.isConfigValid) {
+      try {
+        // 尝试调用 API 进行实际验证
+        await this.loadWorkspaces();
+      } catch (error: any) {
+        this.isConfigValid = false;
+        vscode.window.showErrorMessage(`配置验证失败: ${error.message}`);
+      }
     } else {
-      // 如果没有父项，返回工作空间列表
-      return Promise.resolve(
-        this.workspaces.length > 0 ? this.workspaces : [new ConfigureItem()]
-      );
+      // 如果配置不完整，清空工作空间列表
+      this.workspaces = [];
     }
   }
 
-  // 获取某个工作空间的优化列表
-  private async getOptimizationsForWorkspace(
-    workspaceName: string
-  ): Promise<WorkspaceItem[]> {
-    const apiKey = vscode.workspace.getConfiguration("pawsql").get("apiKey");
-    const optimizations: WorkspaceItem[] = [];
-
-    if (!apiKey) {
-      vscode.window.showErrorMessage("API Key is not set.");
-      return optimizations; // 返回空数组
+  async loadWorkspaces(): Promise<void> {
+    if (!this.isConfigValid) {
+      this.workspaces = [];
+      return;
     }
+
+    const apiKey = vscode.workspace
+      .getConfiguration("pawsql")
+      .get<string>("apiKey");
+
+    try {
+      const response = await ApiService.getWorkspaces(apiKey!);
+      this.workspaces = response.data.records.map(
+        (workspace: any) =>
+          new WorkspaceItem(
+            workspace.workspaceName,
+            workspace.workspaceId,
+            vscode.TreeItemCollapsibleState.Collapsed
+          )
+      );
+    } catch (error: any) {
+      this.isConfigValid = false; // API 调用失败时也将配置标记为无效
+      vscode.window.showErrorMessage(`加载工作空间失败: ${error.message}`);
+      this.workspaces = [];
+    }
+  }
+
+  private async getAnalysisItems(workspaceId: string): Promise<AnalysisItem[]> {
+    const apiKey = vscode.workspace
+      .getConfiguration("pawsql")
+      .get<string>("apiKey");
 
     try {
       const response = await ApiService.getAnalyses(
-        apiKey as string,
-        workspaceName,
+        apiKey!,
+        workspaceId,
         1,
         10
-      ); // 假设获取第一页的数据
-      response.data.records.forEach((analysis: any) => {
-        optimizations.push(
-          new WorkspaceItem(
-            analysis.workspaceName,
-            vscode.TreeItemCollapsibleState.None
-          )
-        ); // 添加分析项
-      });
-    } catch (error: any) {
-      vscode.window.showErrorMessage(
-        `Error fetching optimizations for workspace "${workspaceName}": ${error.message}`
       );
+
+      return response.data.records.map(
+        (analysis: any) =>
+          new AnalysisItem(
+            analysis.analysisName,
+            analysis.analysisId,
+            workspaceId
+          )
+      );
+    } catch (error: any) {
+      vscode.window.showErrorMessage(`加载分析列表失败: ${error.message}`);
+      return [];
+    }
+  }
+
+  private async getStatementItems(
+    analysisId: string,
+    workspaceId: string
+  ): Promise<StatementItem[]> {
+    // 检查缓存
+    const cacheKey = `${analysisId}-${workspaceId}`;
+    if (this.statementsCache.has(cacheKey)) {
+      return this.statementsCache.get(cacheKey)!;
     }
 
-    return optimizations;
+    const apiKey = vscode.workspace
+      .getConfiguration("pawsql")
+      .get<string>("apiKey");
+
+    try {
+      const response = await ApiService.getAnalysisSummary({
+        userKey: apiKey!,
+        analysisId: analysisId,
+      });
+
+      const statements = response.data.summaryStatementInfo.map(
+        (stmt: any) =>
+          new StatementItem(
+            `语句 ${stmt.analysisStmtId}`,
+            stmt.analysisStmtId,
+            analysisId,
+            workspaceId,
+            stmt.sql
+          )
+      );
+
+      // 存入缓存
+      this.statementsCache.set(cacheKey, statements);
+      return statements;
+    } catch (error: any) {
+      vscode.window.showErrorMessage(`加载语句列表失败: ${error.message}`);
+      return [];
+    }
+  }
+
+  async updateConfig(key: string, value: string): Promise<void> {
+    await vscode.workspace.getConfiguration("pawsql").update(key, value, true);
+    await this.refresh(); // 使用 await 确保配置验证完成
+  }
+
+  async validateConfig(): Promise<boolean> {
+    try {
+      await this.validateConfiguration();
+      if (this.isConfigValid) {
+        vscode.window.showInformationMessage("配置验证成功！");
+        await this.refresh();
+        return true;
+      }
+    } catch (error: any) {
+      vscode.window.showErrorMessage(`配置验证失败: ${error.message}`);
+    }
+    return false;
   }
 }

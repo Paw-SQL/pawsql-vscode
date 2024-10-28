@@ -4,9 +4,7 @@ import { SummaryResponse } from "./types";
 import * as vscode from "vscode";
 
 export class WebviewProvider {
-  static createResultPanel(
-    result: SummaryResponse["data"]
-  ): vscode.WebviewPanel {
+  static createResultPanel(analysisStmtId: string): vscode.WebviewPanel {
     const panel = vscode.window.createWebviewPanel(
       "pawsqlOptimizationResult",
       "SQL优化结果",
@@ -17,7 +15,6 @@ export class WebviewProvider {
       }
     );
 
-    const analysisStmtId = result.summaryStatementInfo[0]?.analysisStmtId || "";
     panel.webview.html = this.getWebviewContent(analysisStmtId);
 
     // 监听来自 Webview 的消息
