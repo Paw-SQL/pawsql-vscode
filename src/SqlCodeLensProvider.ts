@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ConfigurationService } from "./configurationService";
 import parse from "./utils/parse";
+import { COMMANDS } from "./constants";
 
 export class SqlCodeLensProvider implements vscode.CodeLensProvider {
   private _onDidChangeCodeLenses: vscode.EventEmitter<void> =
@@ -73,10 +74,23 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
       new vscode.Position(1, 0)
     );
 
+    // 从配置中读取默认工作空间
+    const defaultWorkspace = vscode.workspace
+      .getConfiguration("pawsql")
+      .get<{ workspaceId: string; workspaceName: string }>("defaultWorkspace");
+
     if (fileWorkspace) {
       codeLenses.push(
         new vscode.CodeLens(separatorRange, {
-          title: `📁 当前工作空间: ${fileWorkspace.workspaceName}`,
+          title: `📁 当前工作空间: ${fileWorkspace.workspaceName} (编辑)`,
+          command: "pawsql.selectFileDefaultWorkspace",
+          arguments: [document.uri],
+        })
+      );
+    } else if (defaultWorkspace) {
+      codeLenses.push(
+        new vscode.CodeLens(separatorRange, {
+          title: `📁 默认工作空间: ${defaultWorkspace.workspaceName} (点击选择)`,
           command: "pawsql.selectFileDefaultWorkspace",
           arguments: [document.uri],
         })
@@ -143,8 +157,8 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     codeLenses.push(
       new vscode.CodeLens(queryRange, {
         title: "⚡ Optimize",
-        command: "pawsql.optimizeWithDefaultWorkspace",
-        arguments: [query, fileWorkspace?.workspaceId],
+        command: COMMANDS.OPTIMIZE_WITH_FILE_DEFAULT_WORKSPACE,
+        arguments: [query, fileWorkspace?.workspaceId, queryRange], // 传递范围
       })
     );
 
@@ -152,8 +166,8 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     codeLenses.push(
       new vscode.CodeLens(queryRange, {
         title: "⚡ Optimize...",
-        command: "pawsql.selectAndOptimize",
-        arguments: [query],
+        command: COMMANDS.OPTIMIZE_WITH_FILE_SELECTED_WORKSPACE,
+        arguments: [query, queryRange], // 传递范围
       })
     );
   }

@@ -4,11 +4,14 @@ import { COMMANDS, UI_MESSAGES, getUrls } from "./constants";
 import type { WorkspaceItem } from "./types";
 import { ApiService } from "./apiService";
 import { ErrorHandler } from "./errorHandler";
+import { SqlCodeLensProvider } from "./SqlCodeLensProvider";
+import { ConfigurationService } from "./configurationService";
 
 export class CommandManager {
   constructor(
     private readonly extension: PawSQLExtension,
-    private readonly context: vscode.ExtensionContext
+    private readonly context: vscode.ExtensionContext,
+    private readonly sqlCodeLensProvider: SqlCodeLensProvider // 接受 SqlCodeLensProvider 实例
   ) {}
 
   public async initializeCommands(apiKey: string | undefined): Promise<void> {
@@ -28,6 +31,12 @@ export class CommandManager {
       () => this.handleWorkspaceSelection(apiKey ?? "")
     );
     this.context.subscriptions.push(disposable);
+
+    const configFileDefaultDisposable = vscode.commands.registerCommand(
+      COMMANDS.CONFIG_FILE_DEFAULT_WORKSPACE,
+      () => this.handleFileDefaultWorkspaceSelection(apiKey ?? "")
+    );
+    this.context.subscriptions.push(configFileDefaultDisposable);
   }
 
   private registerApiKeyCommands(): void {
@@ -91,7 +100,56 @@ export class CommandManager {
     }
   }
 
-  private async handleEmptyWorkspaces(): Promise<void> {
+  public async handleFileDefaultWorkspaceSelection(
+    apiKey: string
+  ): Promise<void> {
+    const statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left
+    );
+    statusBarItem.text = UI_MESSAGES.CONFIG_File_DEFAULT_WORKSPACES();
+    statusBarItem.show();
+
+    try {
+      const workspaces = await ApiService.getWorkspaces(apiKey);
+
+      if (workspaces.data.total === "0") {
+        await this.handleEmptyWorkspaces();
+        return;
+      }
+
+      const workspaceItems = this.createWorkspaceItems(workspaces);
+      const selected = await this.showWorkspaceQuickPick(workspaceItems);
+
+      if (selected) {
+        // 更新配置
+        const currentFile =
+          vscode.window.activeTextEditor?.document.uri.toString();
+        if (currentFile) {
+          const config = vscode.workspace.getConfiguration("pawsql");
+
+          const mappings =
+            config.get<Record<string, WorkspaceItem>>(
+              "fileWorkspaceMappings"
+            ) || {};
+          mappings[currentFile] = selected; // 保存映射关系
+
+          // 更新配置
+          await config.update(
+            "fileWorkspaceMappings",
+            mappings,
+            vscode.ConfigurationTarget.Global
+          );
+          this.sqlCodeLensProvider.refresh();
+        }
+      }
+    } catch (error) {
+      ErrorHandler.handle("workspace.operation.failed", error);
+    } finally {
+      statusBarItem.dispose();
+    }
+  }
+
+  public async handleEmptyWorkspaces(): Promise<void> {
     const { URLS } = getUrls();
     const choice = await vscode.window.showInformationMessage(
       UI_MESSAGES.NO_WORKSPACE(),
@@ -103,7 +161,7 @@ export class CommandManager {
     }
   }
 
-  private createWorkspaceItems(workspaces: any): WorkspaceItem[] {
+  public createWorkspaceItems(workspaces: any): WorkspaceItem[] {
     return workspaces.data.records.map((workspace: any) => ({
       label: workspace.workspaceName,
       workspaceId: workspace.workspaceId,
@@ -111,7 +169,7 @@ export class CommandManager {
     }));
   }
 
-  private async showWorkspaceQuickPick(
+  public async showWorkspaceQuickPick(
     items: WorkspaceItem[]
   ): Promise<WorkspaceItem | undefined> {
     return vscode.window.showQuickPick(items, {

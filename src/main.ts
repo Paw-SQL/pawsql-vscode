@@ -17,6 +17,7 @@ import { ConfigurationService } from "./configurationService";
 import { ErrorHandler } from "./errorHandler";
 import { OptimizationService } from "./optimizationService";
 import { WebviewProvider } from "./webviewProvider";
+import { ApiService } from "./apiService";
 
 export class PawSQLExtension {
   private readonly workspaceManager: WorkspaceManager;
@@ -29,8 +30,13 @@ export class PawSQLExtension {
     // 初始化管理器和提供者
     this.workspaceManager = new WorkspaceManager(this);
     this.decorationManager = new DecorationManager(context);
-    this.commandManager = new CommandManager(this, context);
     this.sqlCodeLensProvider = registerSqlCodeLensProvider(context);
+
+    this.commandManager = new CommandManager(
+      this,
+      context,
+      this.sqlCodeLensProvider
+    );
 
     this.treeProvider = new PawSQLTreeProvider(context);
   }
@@ -61,13 +67,6 @@ export class PawSQLExtension {
   }
 
   private registerEventListeners(): void {
-    // 注册文档关闭事件
-    this.context.subscriptions.push(
-      vscode.workspace.onDidCloseTextDocument(
-        this.handleDocumentClose.bind(this)
-      )
-    );
-
     // 注册配置变更事件
     this.context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration(
@@ -134,8 +133,64 @@ export class PawSQLExtension {
       )
     );
 
+    this.context.subscriptions.push(
+      vscode.commands.registerCommand(
+        "pawsql.optimizeWithDefaultWorkspace",
+        this.optimizeSQLWithButton.bind(this)
+      )
+    );
+
+    this.context.subscriptions.push(
+      vscode.commands.registerCommand(
+        "pawsql.optimizeWithSelectedWorkspace",
+        this.handleWorkspaceSelectionWithRangeQuery.bind(this)
+      )
+    );
+
     // 注册编辑器事件
     this.decorationManager.registerDecorationListeners();
+  }
+
+  public async handleWorkspaceSelectionWithRangeQuery(
+    query: string,
+    range: vscode.Range
+  ): Promise<void> {
+    console.log("Selected Query:", query);
+
+    const statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left
+    );
+    statusBarItem.text = UI_MESSAGES.QUERYING_WORKSPACES();
+    statusBarItem.show();
+
+    try {
+      const apiKey = await ConfigurationService.getApiKey();
+      console.log("API Key:", apiKey);
+
+      const workspaces = await ApiService.getWorkspaces(apiKey ?? "");
+      if (workspaces.data.total === "0") {
+        await this.commandManager.handleEmptyWorkspaces();
+        return;
+      }
+
+      const workspaceItems =
+        this.commandManager.createWorkspaceItems(workspaces);
+      const selected = await this.commandManager.showWorkspaceQuickPick(
+        workspaceItems
+      );
+
+      if (selected) {
+        console.log("Selected Workspace:", selected);
+        await this.optimizeSQLWithButton(query, selected.workspaceId, range);
+      } else {
+        console.log("No workspace selected.");
+      }
+    } catch (error) {
+      console.error("Error in handleWorkspaceSelectionWithRangeQuery:", error);
+      ErrorHandler.handle("workspace.operation.failed", error);
+    } finally {
+      statusBarItem.dispose();
+    }
   }
 
   private async openBrowserCreateWorkspace(): Promise<void> {
@@ -173,21 +228,6 @@ export class PawSQLExtension {
       showCollapseAll: true,
     });
     this.context.subscriptions.push(treeView);
-  }
-
-  private async handleDocumentClose(
-    document: vscode.TextDocument
-  ): Promise<void> {
-    if (document.languageId === "sql") {
-      const config = vscode.workspace.getConfiguration("pawsql");
-      if (config.get("defaultWorkspace")) {
-        await config.update(
-          "defaultWorkspace",
-          undefined,
-          vscode.ConfigurationTarget.WorkspaceFolder
-        );
-      }
-    }
   }
 
   private async handleConfigurationChange(
@@ -237,6 +277,32 @@ export class PawSQLExtension {
     try {
       await this.selectAndRevealQuery(editor, range);
       const result = await this.executeOptimization(workspaceId, currentQuery);
+      await this.handleOptimizationResult(result);
+    } catch (error) {
+      ErrorHandler.handle("sql.optimization.failed", error);
+    } finally {
+      statusBarItem.dispose();
+    }
+  }
+
+  public async optimizeSQLWithButton(
+    query: string,
+    workspaceId: string,
+    range: vscode.Range
+  ): Promise<void> {
+    console.log(query);
+
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      throw new Error("no.active.editor");
+    }
+
+    const statusBarItem = this.createStatusBarItem(
+      UI_MESSAGES.OPTIMIZING_SQL()
+    );
+
+    try {
+      const result = await this.executeOptimization(workspaceId, query); // 使用获取到的 SQL 文本
       await this.handleOptimizationResult(result);
     } catch (error) {
       ErrorHandler.handle("sql.optimization.failed", error);

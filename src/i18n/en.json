@@ -19,6 +19,7 @@
   "open.in.browser": "Browser to view detailed report",
   "SQL_OPTIMIZED": "SQL optimization is complete",
   "QUERYING_WORKSPACES": "Querying workspaces...",
+  "config.file.default.workspace": "Setting file default workspace...",
   "NO_WORKSPACE": "There are currently no available workspaces. Please ensure you are logged in to the PawSQL website with the account associated with the configured API key to create a workspace.",
   "CREATE_WORKSPACE": "Go create a workspace",
   "WORKSPACE_SELECTOR_PLACEHOLDER": "Please select a workspace to optimize",

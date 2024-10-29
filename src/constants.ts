@@ -6,8 +6,11 @@ export const COMMANDS = {
   CONFIGURE_API_KEY: "pawsql.configureApiKey",
   CONFIGURE_API_URL: "pawsql.configureApiURL",
   SELECT_WORKSPACE: "pawsql.selectWorkspace",
+  CONFIG_FILE_DEFAULT_WORKSPACE: "pawsql.selectFileDefaultWorkspace",
+  OPTIMIZE_WITH_FILE_DEFAULT_WORKSPACE: "pawsql.optimizeWithDefaultWorkspace",
+  OPTIMIZE_WITH_FILE_SELECTED_WORKSPACE: "pawsql.optimizeWithSelectedWorkspace",
   OPTIMIZE_LAST_WORKSPACE: "pawsql.recentWorkspace", // 添加此行
-  PAWSQL_CONFIG: "pawsql.openSettings", 
+  PAWSQL_CONFIG: "pawsql.openSettings",
 } as const;
 
 export const CONTEXTS = {
@@ -17,6 +20,8 @@ export const CONTEXTS = {
 export const UI_MESSAGES = {
   SQL_OPTIMIZED: () => LanguageService.getMessage("SQL_OPTIMIZED"),
   QUERYING_WORKSPACES: () => LanguageService.getMessage("QUERYING_WORKSPACES"),
+  CONFIG_File_DEFAULT_WORKSPACES: () =>
+    LanguageService.getMessage("config.file.default.workspace"),
   NO_WORKSPACE: () => LanguageService.getMessage("NO_WORKSPACE"),
   CREATE_WORKSPACE: () => LanguageService.getMessage("CREATE_WORKSPACE"),
   WORKSPACE_SELECTOR_PLACEHOLDER: () =>

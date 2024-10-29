@@ -107,6 +107,10 @@
       {
         "command": "pawsql.setDefaultWorkspace",
         "title": "设置为默认工作空间"
+      },
+      {
+        "command": "selectFileDefaultWorkspace",
+        "title": "选择文件默认工作空间"
       }
     ],
     "submenus": [
@@ -165,6 +169,12 @@
           },
           "description": "最近使用的工作空间列表",
           "order": 5
+        },
+        "pawsql.fileWorkspaceMappings": {
+          "type": "object",
+          "default": {},
+          "description": "文件标识符与工作空间的映射关系",
+          "order": 6
         }
       }
     },
