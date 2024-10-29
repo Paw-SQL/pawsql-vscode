@@ -108,7 +108,10 @@ export const getAnalyses = async (
 ): Promise<ListAnalysesResponse> => {
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/listAnalyses`;
-  const response = await axios.post<ListAnalysesResponse>(url, { userKey });
+  const response = await axios.post<ListAnalysesResponse>(url, {
+    userKey: userKey,
+    workspaceId: workspaceId,
+  });
   return response.data;
 };
 
@@ -142,6 +145,33 @@ export const getStatementDetails = async (
   return response.data;
 };
 
+// 验证 userKey 的有效性和 backend URL 的连通性
+export const validateUserKey = async (userKey: string): Promise<boolean> => {
+  const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
+  const url = `${DOMAIN.Backend}/api/v1/validateUserKey`; // 假设你有这个验证接口
+  try {
+    // 发送请求以验证 userKey
+    const response = await axios.post(url, { userKey }, { timeout: 3000 });
+    return response.data.code === 200; // 假设返回码 200 表示有效
+  } catch (error: any) {
+    return false;
+  }
+};
+
+export const checkConnectivity = async (url: string): Promise<boolean> => {
+  try {
+    // 使用 HEAD 请求进行简单的连通性测试
+    await axios.head(url, { timeout: 3000 }); // 设置一个超时时间
+    return true;
+  } catch (error: any) {
+    if (error.code === "ECONNREFUSED") {
+      return false;
+    } else {
+      return true;
+    }
+  }
+};
+
 // 组合服务以便于调用
 export const ApiService = {
   getWorkspaces,
@@ -149,4 +179,6 @@ export const ApiService = {
   createAnalysis,
   getAnalysisSummary,
   getStatementDetails,
+  checkConnectivity,
+  validateUserKey,
 };

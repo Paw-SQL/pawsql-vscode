@@ -59,7 +59,7 @@ export class PawSQLExtension {
     // 注册验证配置命令
     context.subscriptions.push(
       vscode.commands.registerCommand("pawsql.validateConfig", async () => {
-        await treeProvider.validateConfig();
+        await treeProvider.validateConfiguration();
       })
     );
 
@@ -79,6 +79,23 @@ export class PawSQLExtension {
       })
     );
 
+    context.subscriptions.push(
+      vscode.commands.registerCommand("pawsql.createWorkspace", () => {
+        this.openBrowserCreateWorkspace();
+      })
+    );
+
+    context.subscriptions.push(
+      vscode.commands.registerCommand(
+        "pawsql.setDefaultWorkspace",
+        (item: WorkspaceItem) => {
+          treeProvider.setDefaultWorkspace(
+            item.workspaceName,
+            item.workspaceId
+          );
+        }
+      )
+    );
     // 初始化高亮装饰器
     this.highlightDecoration = vscode.window.createTextEditorDecorationType({
       backgroundColor: currentQueryBg,
@@ -248,13 +265,17 @@ export class PawSQLExtension {
     });
   }
 
+  private async openBrowserCreateWorkspace(): Promise<void> {
+    const { URLS } = getUrls();
+    await vscode.env.openExternal(vscode.Uri.parse(URLS.NEW_WORKSPACE));
+  }
+
   private async openApiKeySettings(): Promise<void> {
     await vscode.commands.executeCommand(
       "workbench.action.openSettings",
       "pawsql.apiKey"
     );
   }
-
   private async openApiURLSettings(): Promise<void> {
     await vscode.commands.executeCommand(
       "workbench.action.openSettings",
@@ -265,7 +286,7 @@ export class PawSQLExtension {
   private async openPawSQLSettings(): Promise<void> {
     await vscode.commands.executeCommand(
       "workbench.action.openSettings",
-      "pawsql"
+      "pawsql."
     );
   }
 
@@ -487,50 +508,50 @@ export class PawSQLExtension {
       result.data.summaryStatementInfo[0]?.analysisStmtId || ""
     );
 
-    // 获取通知和按钮文本
-    const messageKey = "sql.optimization.completed"; // 假设这个键在语言文件中
-    const buttonKey = "open.in.browser"; // 新增的按钮文本键
+    // // 获取通知和按钮文本
+    // const messageKey = "sql.optimization.completed"; // 假设这个键在语言文件中
+    // const buttonKey = "open.in.browser"; // 新增的按钮文本键
 
-    const notificationMessage = LanguageService.getMessage(messageKey);
-    const buttonText = LanguageService.getMessage(buttonKey);
+    // const notificationMessage = LanguageService.getMessage(messageKey);
+    // const buttonText = LanguageService.getMessage(buttonKey);
 
-    // 右下角显示通知，包含跳转按钮
-    const choice = await vscode.window.showInformationMessage(
-      notificationMessage,
-      buttonText // 使用动态按钮文本
-    );
+    // // 右下角显示通知，包含跳转按钮
+    // const choice = await vscode.window.showInformationMessage(
+    //   notificationMessage,
+    //   buttonText // 使用动态按钮文本
+    // );
 
-    // 如果用户点击了按钮
-    if (choice === buttonText) {
-      const analysisStmtId =
-        result.data.summaryStatementInfo[0]?.analysisStmtId || "";
-      const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
-      await vscode.env.openExternal(vscode.Uri.parse(statementUrl));
-    }
+    // // 如果用户点击了按钮
+    // if (choice === buttonText) {
+    //   const analysisStmtId =
+    //     result.data.summaryStatementInfo[0]?.analysisStmtId || "";
+    //   const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
+    //   await vscode.env.openExternal(vscode.Uri.parse(statementUrl));
+    // }
   }
 
   private async showStatementResult(analysisStmtId: string): Promise<void> {
     const { URLS } = getUrls();
     const panel = WebviewProvider.createResultPanel(analysisStmtId);
 
-    // 获取通知和按钮文本
-    const messageKey = "sql.optimization.completed"; // 假设这个键在语言文件中
-    const buttonKey = "open.in.browser"; // 新增的按钮文本键
+    // // 获取通知和按钮文本
+    // const messageKey = "sql.optimization.completed"; // 假设这个键在语言文件中
+    // const buttonKey = "open.in.browser"; // 新增的按钮文本键
 
-    const notificationMessage = LanguageService.getMessage(messageKey);
-    const buttonText = LanguageService.getMessage(buttonKey);
+    // const notificationMessage = LanguageService.getMessage(messageKey);
+    // const buttonText = LanguageService.getMessage(buttonKey);
 
-    // 右下角显示通知，包含跳转按钮
-    const choice = await vscode.window.showInformationMessage(
-      notificationMessage,
-      buttonText // 使用动态按钮文本
-    );
+    // // 右下角显示通知，包含跳转按钮
+    // const choice = await vscode.window.showInformationMessage(
+    //   notificationMessage,
+    //   buttonText // 使用动态按钮文本
+    // );
 
-    // 如果用户点击了按钮
-    if (choice === buttonText) {
-      const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
-      await vscode.env.openExternal(vscode.Uri.parse(statementUrl));
-    }
+    // // 如果用户点击了按钮
+    // if (choice === buttonText) {
+    //   const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
+    //   await vscode.env.openExternal(vscode.Uri.parse(statementUrl));
+    // }
   }
 
   deactivate(): void {

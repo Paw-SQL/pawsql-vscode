@@ -22,5 +22,8 @@
   "NO_WORKSPACE": "There are currently no available workspaces. Please ensure you are logged in to the PawSQL website with the account associated with the configured API key to create a workspace.",
   "CREATE_WORKSPACE": "Go create a workspace",
   "WORKSPACE_SELECTOR_PLACEHOLDER": "Please select a workspace to optimize",
-  "OPTIMIZING_SQL": "$(sync~spin) Optimizing SQL..."
+  "OPTIMIZING_SQL": "$(sync~spin) Optimizing SQL...",
+  "error.backendUrl.invalid": "Please check if backendUrl is correctly configured or if the server is running.",
+  "error.frontendUrl.invalid": "Please check if frontendUrl is correctly configured or if the server is running.",
+  "license.code.not.valid": "The license code is invalid. Please contact the administrator to obtain it."
 }

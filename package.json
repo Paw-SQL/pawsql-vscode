@@ -82,15 +82,19 @@
       },
       {
         "command": "pawsql.openSettings",
-        "title": "打开PawSQL设置"
+        "title": "修改配置"
       },
       {
         "command": "pawsql.refreshTree",
-        "title": "刷新配置信息",
-        "icon": {
-          "light": "resources/light/refresh.svg",
-          "dark": "resources/dark/refresh.svg"
-        }
+        "title": "刷新配置"
+      },
+      {
+        "command": "pawsql.createWorkspace",
+        "title": "创建工作空间"
+      },
+      {
+        "command": "pawsql.setDefaultWorkspace",
+        "title": "设置为默认工作空间"
       }
     ],
     "submenus": [
@@ -105,17 +109,33 @@
         "pawsql.apiKey": {
           "type": "string",
           "default": "",
-          "description": "PawSQL API Key"
+          "description": "PawSQL API Key",
+          "order": 3
         },
         "pawsql.url.frontendUrl": {
           "type": "string",
           "default": "https://www.pawsql.com",
-          "description": "PawSQL Frontend URL"
+          "description": "PawSQL Frontend URL",
+          "order": 2
         },
         "pawsql.url.backendUrl": {
           "type": "string",
           "default": "https://www.pawsql.com",
-          "description": "PawSQL Backend URL"
+          "description": "PawSQL Backend URL",
+          "order": 1
+        },
+        "pawsql.defaultWorkspace": {
+          "type": "object",
+          "properties": {
+            "workspaceId": {
+              "type": "string"
+            },
+            "workspaceName": {
+              "type": "string"
+            }
+          },
+          "description": "PawSQL Default Workspace",
+          "order": 4
         },
         "pawsql.recentWorkspaces": {
           "type": "array",
@@ -131,7 +151,8 @@
               }
             }
           },
-          "description": "最近使用的工作空间列表"
+          "description": "最近使用的工作空间列表",
+          "order": 5
         }
       }
     },
@@ -143,8 +164,23 @@
       ],
       "view/item/context": [
         {
+          "command": "pawsql.createWorkspace",
+          "when": "view == pawsqlSidebar && viewItem == workspaceManager",
+          "group": "inline"
+        },
+        {
+          "command": "pawsql.openSettings",
+          "when": "view == pawsqlSidebar && viewItem == workspaceManager",
+          "group": "inline"
+        },
+        {
           "command": "pawsql.refreshTree",
           "when": "view == pawsqlSidebar && viewItem == workspaceManager",
+          "group": "inline"
+        },
+        {
+          "command": "pawsql.setDefaultWorkspace",
+          "when": "view == pawsqlSidebar && viewItem == workspaceItem",
           "group": "inline"
         }
       ],

@@ -22,5 +22,8 @@
   "NO_WORKSPACE": "当前没有可用的工作空间。请确保使用与已配置 API Key 关联的账户登录 PawSQL 网站创建工作空间。",
   "CREATE_WORKSPACE": "去创建工作空间",
   "WORKSPACE_SELECTOR_PLACEHOLDER": "请选择一个工作空间进行优化",
-  "OPTIMIZING_SQL": "$(sync~spin) 正在优化SQL..."
+  "OPTIMIZING_SQL": "$(sync~spin) 正在优化SQL...",
+  "error.backendUrl.invalid": "请检查 backendUrl 是否正确配置或服务器是否运行。",
+  "error.frontendUrl.invalid": "请检查 frontendUrl 是否正确配置或服务器是否运行。",
+  "license.code.not.valid": "许可证代码无效，请联系管理员获取。"
 }

@@ -41,20 +41,20 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
       // 获取 pawsql:recentWorkspacesCount 配置值
 
       const configuration = vscode.workspace.getConfiguration("pawsql");
-      const recentWorkspaces =
-        configuration.get<WorkspaceItem[]>("recentWorkspaces") || [];
+      // const recentWorkspaces =
+      //   configuration.get<WorkspaceItem[]>("recentWorkspaces") || [];
 
-      // 只有在最近工作空间数量 >= 1 时才添加 CodeLens
-      if (currentQuery && range && recentWorkspaces.length >= 1) {
-        // 添加“使用上次的优化空间进行优化”按钮
-        codeLenses.push(
-          new vscode.CodeLens(range, {
-            command: "pawsql.recentWorkspace",
-            title: "使用上次的优化空间进行优化",
-            arguments: [currentQuery],
-          })
-        );
-      }
+      // // 只有在最近工作空间数量 >= 1 时才添加 CodeLens
+      // if (currentQuery && range && recentWorkspaces.length >= 1) {
+      //   // 添加“使用上次的优化空间进行优化”按钮
+      //   codeLenses.push(
+      //     new vscode.CodeLens(range, {
+      //       command: "pawsql.recentWorkspace",
+      //       title: "使用上次的优化空间进行优化",
+      //       arguments: [currentQuery],
+      //     })
+      //   );
+      // }
     }
 
     return codeLenses;
