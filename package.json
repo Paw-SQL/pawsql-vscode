@@ -73,12 +73,24 @@
         "title": "尚未配置 API Key，点击进行配置"
       },
       {
+        "command": "pawsql.recentWorkspace",
+        "title": "使用上次的工作空间执行优化"
+      },
+      {
+        "command": "pawsql.selectDefaultWorkspace",
+        "title": "选择默认工作空间"
+      },
+      {
+        "command": "pawsql.optimizeUsingDefaultWorkspace",
+        "title": "使用默认工作空间执行优化"
+      },
+      {
         "command": "pawsql.selectWorkspace",
         "title": "选择工作空间进行优化"
       },
       {
-        "command": "pawsql.recentWorkspace",
-        "title": "使用上次的工作空间执行优化"
+        "command": "pawsql.selectWorkspaceForOptimization",
+        "title": "选择工作空间执行优化"
       },
       {
         "command": "pawsql.openSettings",
@@ -160,6 +172,10 @@
       "editor/context": [
         {
           "submenu": "pawsql.mainMenu"
+        },
+        {
+          "command": "pawsql.selectDefaultWorkspace",
+          "group": "navigation"
         }
       ],
       "view/item/context": [

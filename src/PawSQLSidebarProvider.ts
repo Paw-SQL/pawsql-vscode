@@ -30,11 +30,6 @@ class WorkspaceItem extends vscode.TreeItem {
     this.iconPath = new vscode.ThemeIcon(
       defaultWorkspace?.workspaceId === workspaceId ? "star-full" : "workspace"
     );
-    // 将 workspaceId 作为参数传入命令
-    this.command = {
-      command: "pawsql.setDefaultWorkspace",
-      title: "Set Default Workspace",
-    };
   }
 }
 
