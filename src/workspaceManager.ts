@@ -69,7 +69,11 @@ export class WorkspaceManager {
       await vscode.commands.executeCommand(
         "setContext",
         `pawsql:recentWorkspace${i + 1}Name`,
-        workspace ? `${workspace.workspaceName} (最近使用)` : ""
+        workspace
+          ? workspace.dbHost
+            ? `${workspace.dbType}:${workspace.dbHost}@${workspace.dbPort} `
+            : `${workspace.dbType}:${workspace.workspaceName}`
+          : ""
       );
     }
   }

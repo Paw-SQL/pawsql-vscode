@@ -2,6 +2,9 @@ export interface WorkspaceItem {
   label: string;
   workspaceId: string;
   workspaceName: string;
+  dbType: string;
+  dbHost: string;
+  dbPort: string;
 }
 
 export interface AnalysisStatement {
@@ -24,8 +27,11 @@ export interface WorkspacesResponse {
   data: {
     total: string;
     records: Array<{
-      workspaceName: string;
       workspaceId: string;
+      workspaceName: string;
+      dbType: string;
+      dbHost: string;
+      dbPort: string;
     }>;
   };
 }

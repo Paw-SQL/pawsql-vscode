@@ -17,26 +17,9 @@ export class CommandManager {
   public async initializeCommands(apiKey: string | undefined): Promise<void> {
     try {
       this.registerApiKeyCommands();
-      await this.updateWorkspaceCommands(apiKey);
     } catch (error) {
       ErrorHandler.handle("initialize.commands.failed", error);
     }
-  }
-
-  public async updateWorkspaceCommands(
-    apiKey: string | undefined
-  ): Promise<void> {
-    const disposable = vscode.commands.registerCommand(
-      COMMANDS.SELECT_WORKSPACE,
-      () => this.handleWorkspaceSelection(apiKey ?? "")
-    );
-    this.context.subscriptions.push(disposable);
-
-    const configFileDefaultDisposable = vscode.commands.registerCommand(
-      COMMANDS.CONFIG_FILE_DEFAULT_WORKSPACE,
-      () => this.handleFileDefaultWorkspaceSelection(apiKey ?? "")
-    );
-    this.context.subscriptions.push(configFileDefaultDisposable);
   }
 
   private registerApiKeyCommands(): void {
@@ -63,6 +46,23 @@ export class CommandManager {
       const disposable = vscode.commands.registerCommand(command, callback);
       this.context.subscriptions.push(disposable);
     });
+
+    const disposable = vscode.commands.registerCommand(
+      COMMANDS.SELECT_WORKSPACE,
+      () => this.handleWorkspaceSelection()
+    );
+    this.context.subscriptions.push(disposable);
+
+    const configFileDefaultDisposable = vscode.commands.registerCommand(
+      COMMANDS.CONFIG_FILE_DEFAULT_WORKSPACE,
+      () => this.handleFileDefaultWorkspaceSelection()
+    );
+    this.context.subscriptions.push(configFileDefaultDisposable);
+    const currentFileDefaultDisposable = vscode.commands.registerCommand(
+      COMMANDS.CURRENT_FILE_DEFAULT_WORKSPACE,
+      () => {}
+    );
+    this.context.subscriptions.push(currentFileDefaultDisposable);
   }
 
   private async openSettings(section: string): Promise<void> {
@@ -72,7 +72,8 @@ export class CommandManager {
     );
   }
 
-  private async handleWorkspaceSelection(apiKey: string): Promise<void> {
+  public async handleWorkspaceSelection(): Promise<void> {
+    const apiKey = await ConfigurationService.getApiKey();
     const statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left
     );
@@ -80,7 +81,7 @@ export class CommandManager {
     statusBarItem.show();
 
     try {
-      const workspaces = await ApiService.getWorkspaces(apiKey);
+      const workspaces = await ApiService.getWorkspaces(apiKey ?? "");
 
       if (workspaces.data.total === "0") {
         await this.handleEmptyWorkspaces();
@@ -100,17 +101,17 @@ export class CommandManager {
     }
   }
 
-  public async handleFileDefaultWorkspaceSelection(
-    apiKey: string
-  ): Promise<void> {
+  public async handleFileDefaultWorkspaceSelection(): Promise<void> {
+    const apiKey = await ConfigurationService.getApiKey();
+
     const statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left
     );
-    statusBarItem.text = UI_MESSAGES.CONFIG_File_DEFAULT_WORKSPACES();
+    statusBarItem.text = UI_MESSAGES.CONFIG_FILE_DEFAULT_WORKSPACES();
     statusBarItem.show();
 
     try {
-      const workspaces = await ApiService.getWorkspaces(apiKey);
+      const workspaces = await ApiService.getWorkspaces(apiKey ?? "");
 
       if (workspaces.data.total === "0") {
         await this.handleEmptyWorkspaces();
@@ -118,7 +119,10 @@ export class CommandManager {
       }
 
       const workspaceItems = this.createWorkspaceItems(workspaces);
-      const selected = await this.showWorkspaceQuickPick(workspaceItems);
+      const selected = await this.showWorkspaceQuickPick(
+        workspaceItems,
+        UI_MESSAGES.CONFIG_FILE_DEFAULT_WORKSPACE_PLACEHOLDER()
+      );
 
       if (selected) {
         // 更新配置
@@ -163,17 +167,26 @@ export class CommandManager {
 
   public createWorkspaceItems(workspaces: any): WorkspaceItem[] {
     return workspaces.data.records.map((workspace: any) => ({
-      label: workspace.workspaceName,
+      label: workspace.dbHost
+        ? `${workspace.dbType}:${workspace.dbHost}@${workspace.dbPort}`
+        : `${workspace.dbType}:${workspace.workspaceName}`,
       workspaceId: workspace.workspaceId,
       workspaceName: workspace.workspaceName,
+      // workspaceName: workspace.dbHost
+      //   ? `${workspace.dbType}:${workspace.dbHost}@${workspace.dbPort}`
+      //   : `${workspace.dbType}:${workspace.workspaceName}`,
+      dbType: workspace.dbType,
+      dbHost: workspace.dbHost,
+      dbPort: workspace.dbPort,
     }));
   }
 
   public async showWorkspaceQuickPick(
-    items: WorkspaceItem[]
+    items: WorkspaceItem[],
+    placeHolder?: string
   ): Promise<WorkspaceItem | undefined> {
     return vscode.window.showQuickPick(items, {
-      placeHolder: UI_MESSAGES.WORKSPACE_SELECTOR_PLACEHOLDER(),
+      placeHolder: placeHolder ?? UI_MESSAGES.WORKSPACE_SELECTOR_PLACEHOLDER(),
     });
   }
 }

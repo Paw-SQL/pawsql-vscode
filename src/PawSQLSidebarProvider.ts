@@ -1,13 +1,19 @@
 import * as vscode from "vscode";
 import { ApiService } from "./apiService";
 import { LanguageService } from "./LanguageService";
+import * as path from "path";
 
 // Previous classes remain unchanged...
 class WorkspaceManagerItem extends vscode.TreeItem {
   constructor() {
-    super("工作空间管理器", vscode.TreeItemCollapsibleState.Expanded);
+    const iconPath = path.join(__dirname, "../resources/paw.svg"); // 向上移动到 src 同级
+
+    super(
+      LanguageService.getMessage("sidebar.workspace.manager"),
+      vscode.TreeItemCollapsibleState.Expanded
+    );
     this.contextValue = "workspaceManager";
-    this.iconPath = new vscode.ThemeIcon("folder");
+    this.iconPath = vscode.Uri.file(iconPath);
   }
 }
 
@@ -16,10 +22,18 @@ class WorkspaceItem extends vscode.TreeItem {
     public readonly label: string,
     public readonly workspaceId: string,
     public readonly workspaceName: string,
+    public readonly dbType: string,
+    public readonly dbHost: string,
+    public readonly dbPort: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState
   ) {
     super(label, collapsibleState);
     this.contextValue = "workspaceItem";
+
+    // 根据是否为默认工作空间设置图标
+    this.label = this.dbHost
+      ? `${this.dbType}:${this.dbHost}@${this.dbPort}`
+      : `${this.dbType}:${this.workspaceName}`;
 
     // 从配置中读取默认工作空间
     const defaultWorkspace = vscode.workspace
@@ -58,7 +72,7 @@ class StatementItem extends vscode.TreeItem {
     this.iconPath = new vscode.ThemeIcon("symbol-method");
     this.command = {
       command: "pawsql.showStatementDetail",
-      title: "Show Statement Detail",
+      title: LanguageService.getMessage("sidebar.show.statement.detail"),
       arguments: [
         this.statementId,
         this.analysisId,
@@ -78,10 +92,10 @@ class ConfigurationItem extends vscode.TreeItem {
   ) {
     super(
       config === "apiKey"
-        ? "API Key"
+        ? LanguageService.getMessage("sidebar.apiKey.label")
         : config === "url.frontendUrl"
-        ? "Frontend URL"
-        : "Backend URL",
+        ? LanguageService.getMessage("sidebar.frontendUrl.label")
+        : LanguageService.getMessage("sidebar.backendUrl.label"),
       vscode.TreeItemCollapsibleState.None
     );
 
@@ -89,13 +103,15 @@ class ConfigurationItem extends vscode.TreeItem {
       .getConfiguration("pawsql")
       .get<string>(`${config}`);
 
-    this.description = currentValue ? "已配置" : "未配置";
+    this.description = currentValue
+      ? LanguageService.getMessage("sidebar.configured.label")
+      : LanguageService.getMessage("sidebar.not.configured.label");
     this.contextValue = "configItem";
     this.updateIconPath();
 
     this.command = {
       command: "pawsql.showConfigInput",
-      title: "Configure",
+      title: LanguageService.getMessage("sidebar.config.label"),
       arguments: [this.config],
     };
   }
@@ -112,12 +128,15 @@ class ConfigurationItem extends vscode.TreeItem {
 
 class ValidateConfigItem extends vscode.TreeItem {
   constructor() {
-    super("验证配置", vscode.TreeItemCollapsibleState.None);
+    super(
+      LanguageService.getMessage("sidebar.validate.config"),
+      vscode.TreeItemCollapsibleState.None
+    );
     this.contextValue = "validateItem";
     this.iconPath = new vscode.ThemeIcon("verify");
     this.command = {
       command: "pawsql.validateConfig",
-      title: "Validate Configuration",
+      title: LanguageService.getMessage("sidebar.validate.config"),
     };
   }
 }
@@ -197,75 +216,73 @@ export class PawSQLTreeProvider
     const frontendUrl = config.get<string>("url.frontendUrl");
     const backendUrl = config.get<string>("url.backendUrl");
 
-    this.isConfigValid = Boolean(apiKey && frontendUrl && backendUrl);
+    try {
+      // Validate backend connectivity first
+      const isBackendConnected = await ApiService.checkConnectivity(
+        backendUrl!
+      );
+      this.configItems
+        .get("url.backendUrl")
+        ?.setValidationState(isBackendConnected);
+      this._onDidChangeTreeData.fire(undefined);
 
-    if (this.isConfigValid) {
-      try {
-        // Validate backend connectivity first
-        const isBackendConnected = await ApiService.checkConnectivity(
-          backendUrl!
-        );
-        this.configItems
-          .get("url.backendUrl")
-          ?.setValidationState(isBackendConnected);
-        this._onDidChangeTreeData.fire(undefined);
-
-        if (!isBackendConnected) {
-          this.isConfigValid = false;
-          vscode.window.showErrorMessage(
-            `配置验证失败: ${LanguageService.getMessage(
-              "error.backendUrl.invalid"
-            )}`
-          );
-          return;
-        }
-
-        // Then validate frontend connectivity
-        const isFrontendConnected = await ApiService.checkConnectivity(
-          frontendUrl!
-        );
-        this.configItems
-          .get("url.frontendUrl")
-          ?.setValidationState(isFrontendConnected);
-        this._onDidChangeTreeData.fire(undefined);
-
-        if (!isFrontendConnected) {
-          this.isConfigValid = false;
-          vscode.window.showErrorMessage(
-            `配置验证失败: ${LanguageService.getMessage(
-              "error.frontendUrl.invalid"
-            )}`
-          );
-          return;
-        }
-
-        // Finally validate API key
-        const isApikeyValid = await ApiService.validateUserKey(apiKey ?? "");
-        this.configItems.get("apiKey")?.setValidationState(isApikeyValid);
-        this._onDidChangeTreeData.fire(undefined);
-
-        if (!isApikeyValid) {
-          this.isConfigValid = false;
-          vscode.window.showErrorMessage(
-            `Apikey验证失败: ${LanguageService.getMessage(
-              "license.code.not.valid"
-            )}`
-          );
-          return;
-        }
-        !hideMessage && vscode.window.showInformationMessage("配置验证成功！");
-        // If all validations pass, load the workspace data
-        await this.loadData();
-      } catch (error: any) {
+      if (!isBackendConnected) {
         this.isConfigValid = false;
         vscode.window.showErrorMessage(
-          `配置验证失败: ${LanguageService.getMessage(
-            error.response?.data?.message ?? ""
-          )}`
+          `${LanguageService.getMessage(
+            "error.config.validate.failed"
+          )}: ${LanguageService.getMessage("error.backendUrl.invalid")}`
         );
+        return;
       }
-    } else {
-      vscode.window.showErrorMessage(`配置验证失败`);
+
+      // Then validate frontend connectivity
+      const isFrontendConnected = await ApiService.checkConnectivity(
+        frontendUrl!
+      );
+      this.configItems
+        .get("url.frontendUrl")
+        ?.setValidationState(isFrontendConnected);
+      this._onDidChangeTreeData.fire(undefined);
+
+      if (!isFrontendConnected) {
+        this.isConfigValid = false;
+        vscode.window.showErrorMessage(
+          `${LanguageService.getMessage(
+            "error.config.validate.failed"
+          )}: ${LanguageService.getMessage("error.frontendUrl.invalid")}`
+        );
+        return;
+      }
+
+      // Finally validate API key
+      const isApikeyValid = await ApiService.validateUserKey(apiKey ?? "");
+      this.configItems.get("apiKey")?.setValidationState(isApikeyValid);
+      this._onDidChangeTreeData.fire(undefined);
+
+      if (!isApikeyValid) {
+        this.isConfigValid = false;
+        vscode.window.showErrorMessage(
+          `${LanguageService.getMessage(
+            "error.config.validate.failed"
+          )}: ${LanguageService.getMessage("license.code.not.valid")}`
+        );
+        return;
+      }
+      !hideMessage &&
+        vscode.window.showInformationMessage(
+          LanguageService.getMessage("error.config.validate.success")
+        );
+      // If all validations pass, load the workspace data
+      await this.loadData();
+      this.isConfigValid = true;
+    } catch (error: any) {
+      this.isConfigValid = false;
+      vscode.window.showErrorMessage(
+        `${LanguageService.getMessage(
+          "error.config.validate.failed"
+        )}: ${LanguageService.getMessage(error.response?.data?.message ?? "")}`
+      );
     }
   }
 
@@ -276,9 +293,8 @@ export class PawSQLTreeProvider
       .get<string>("apiKey");
 
     try {
-      const [workspacesResponse, analysesResponse] = await Promise.all([
+      const [workspacesResponse] = await Promise.all([
         ApiService.getWorkspaces(apiKey!),
-        ApiService.getAnalyses(apiKey!, "", 1, 10),
       ]);
 
       this.workspaces = workspacesResponse.data.records.map(
@@ -287,6 +303,9 @@ export class PawSQLTreeProvider
             workspace.workspaceName,
             workspace.workspaceId,
             workspace.workspaceName,
+            workspace.dbType,
+            workspace.dbHost,
+            workspace.dbPort,
             vscode.TreeItemCollapsibleState.Collapsed
           )
       );
@@ -294,13 +313,15 @@ export class PawSQLTreeProvider
       console.log(error);
       if (error.code === "ECONNREFUSED") {
         vscode.window.showErrorMessage(
-          `配置验证失败: ${LanguageService.getMessage(
-            "error.backendUrl.invalid"
-          )}`
+          `${LanguageService.getMessage(
+            "error.config.validate.failed"
+          )}: ${LanguageService.getMessage("error.backendUrl.invalid")}`
         );
       } else {
         vscode.window.showErrorMessage(
-          `加载数据失败: ${LanguageService.getMessage(
+          `${LanguageService.getMessage(
+            "error.load.data.failed"
+          )}: ${LanguageService.getMessage(
             error.response?.data?.message ?? ""
           )}`
         );
@@ -316,12 +337,7 @@ export class PawSQLTreeProvider
       .get<string>("apiKey");
 
     try {
-      const response = await ApiService.getAnalyses(
-        apiKey!,
-        workspaceId,
-        1,
-        10
-      );
+      const response = await ApiService.getAnalyses(apiKey!, workspaceId);
 
       return response.data.records.map(
         (analysis: any) =>
@@ -332,7 +348,11 @@ export class PawSQLTreeProvider
           )
       );
     } catch (error: any) {
-      vscode.window.showErrorMessage(`加载分析列表失败: ${error.message}`);
+      vscode.window.showErrorMessage(
+        `${LanguageService.getMessage("error.load.data.failed")}: ${
+          error.message
+        }`
+      );
       return [];
     }
   }
@@ -359,7 +379,7 @@ export class PawSQLTreeProvider
       const statements = response.data.summaryStatementInfo.map(
         (stmt: any) =>
           new StatementItem(
-            `语句 ${stmt.analysisStmtId}`,
+            `${stmt.analysisName}`,
             stmt.analysisStmtId,
             analysisId,
             workspaceId,
@@ -370,7 +390,11 @@ export class PawSQLTreeProvider
       this.statementsCache.set(cacheKey, statements);
       return statements;
     } catch (error: any) {
-      vscode.window.showErrorMessage(`加载语句列表失败: ${error.message}`);
+      vscode.window.showErrorMessage(
+        `${LanguageService.getMessage("error.load.data.failed")}: ${
+          error.message
+        }`
+      );
       return [];
     }
   }
@@ -385,19 +409,28 @@ export class PawSQLTreeProvider
       await this.validateConfiguration();
 
       if (this.isConfigValid) {
-        vscode.window.showInformationMessage("配置验证成功！");
+        vscode.window.showInformationMessage(
+          LanguageService.getMessage("error.config.validate.success")
+        );
         await this.refresh();
         return true;
       }
     } catch (error: any) {
-      vscode.window.showErrorMessage(`配置验证失败: ${error.message}`);
+      vscode.window.showErrorMessage(
+        `${LanguageService.getMessage("error.config.validate.failed")}: ${
+          error.message
+        }`
+      );
     }
     return false;
   }
 
   async setDefaultWorkspace(
+    workspaceId: string,
     workspaceName: string,
-    workspaceId: string
+    dbType: string,
+    dbHost: string,
+    dbPort: string
   ): Promise<void> {
     // 更新配置中的默认工作空间项
     await vscode.workspace.getConfiguration("pawsql").update(
@@ -405,6 +438,9 @@ export class PawSQLTreeProvider
       {
         workspaceId,
         workspaceName,
+        dbType,
+        dbHost,
+        dbPort,
       },
       vscode.ConfigurationTarget.Global
     );
@@ -416,6 +452,9 @@ export class PawSQLTreeProvider
           workspace.label,
           workspace.workspaceId,
           workspace.workspaceName,
+          workspace.dbType,
+          workspace.dbHost,
+          workspace.dbPort,
           workspace.collapsibleState
         )
     );

@@ -80,7 +80,9 @@ export class PawSQLExtension {
         "pawsql.showConfigInput",
         async (configKey: string) => {
           const result = await vscode.window.showInputBox({
-            prompt: `请输入 ${configKey}`,
+            prompt: `${LanguageService.getMessage(
+              "please.enter"
+            )} ${configKey}`,
             password: configKey === "apiKey",
             value: vscode.workspace.getConfiguration("pawsql").get(configKey),
           });
@@ -126,8 +128,11 @@ export class PawSQLExtension {
         "pawsql.setDefaultWorkspace",
         (item: WorkspaceItem) => {
           this.treeProvider.setDefaultWorkspace(
+            item.workspaceId,
             item.workspaceName,
-            item.workspaceId
+            item.dbType,
+            item.dbHost,
+            item.dbPort
           );
         }
       )
@@ -135,7 +140,7 @@ export class PawSQLExtension {
 
     this.context.subscriptions.push(
       vscode.commands.registerCommand(
-        "pawsql.optimizeWithDefaultWorkspace",
+        COMMANDS.OPTIMIZE_WITH_FILE_DEFAULT_WORKSPACE,
         this.optimizeSQLWithButton.bind(this)
       )
     );
@@ -155,8 +160,6 @@ export class PawSQLExtension {
     query: string,
     range: vscode.Range
   ): Promise<void> {
-    console.log("Selected Query:", query);
-
     const statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left
     );
@@ -165,7 +168,6 @@ export class PawSQLExtension {
 
     try {
       const apiKey = await ConfigurationService.getApiKey();
-      console.log("API Key:", apiKey);
 
       const workspaces = await ApiService.getWorkspaces(apiKey ?? "");
       if (workspaces.data.total === "0") {
@@ -180,13 +182,9 @@ export class PawSQLExtension {
       );
 
       if (selected) {
-        console.log("Selected Workspace:", selected);
         await this.optimizeSQLWithButton(query, selected.workspaceId, range);
-      } else {
-        console.log("No workspace selected.");
       }
     } catch (error) {
-      console.error("Error in handleWorkspaceSelectionWithRangeQuery:", error);
       ErrorHandler.handle("workspace.operation.failed", error);
     } finally {
       statusBarItem.dispose();
@@ -198,27 +196,7 @@ export class PawSQLExtension {
     await vscode.env.openExternal(vscode.Uri.parse(URLS.NEW_WORKSPACE));
   }
   private async showStatementResult(analysisStmtId: string): Promise<void> {
-    const { URLS } = getUrls();
-    const panel = WebviewProvider.createResultPanel(analysisStmtId);
-
-    // // 获取通知和按钮文本
-    // const messageKey = "sql.optimization.completed"; // 假设这个键在语言文件中
-    // const buttonKey = "open.in.browser"; // 新增的按钮文本键
-
-    // const notificationMessage = LanguageService.getMessage(messageKey);
-    // const buttonText = LanguageService.getMessage(buttonKey);
-
-    // // 右下角显示通知，包含跳转按钮
-    // const choice = await vscode.window.showInformationMessage(
-    //   notificationMessage,
-    //   buttonText // 使用动态按钮文本
-    // );
-
-    // // 如果用户点击了按钮
-    // if (choice === buttonText) {
-    //   const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
-    //   await vscode.env.openExternal(vscode.Uri.parse(statementUrl));
-    // }
+    WebviewProvider.createResultPanel(analysisStmtId);
   }
 
   private registerProviders(): void {
@@ -236,15 +214,11 @@ export class PawSQLExtension {
     try {
       if (this.isApiConfigChanged(e)) {
         await this.workspaceManager.clearRecentWorkspaces();
+        await this.treeProvider.refresh();
       }
 
       if (e.affectsConfiguration("pawsql.recentWorkspaces")) {
         await this.updateWorkspaceContext();
-      }
-
-      if (e.affectsConfiguration("pawsql.apiKey")) {
-        const newApiKey = await ConfigurationService.getApiKey();
-        await this.commandManager.updateWorkspaceCommands(newApiKey);
       }
     } catch (error) {
       ErrorHandler.handle("configuration.update.failed", error);
@@ -290,11 +264,15 @@ export class PawSQLExtension {
     workspaceId: string,
     range: vscode.Range
   ): Promise<void> {
-    console.log(query);
-
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       throw new Error("no.active.editor");
+    }
+    if (!workspaceId) {
+      await vscode.window.showInformationMessage(
+        UI_MESSAGES.NO_DEFAULT_WORKSPACE()
+      );
+      return;
     }
 
     const statusBarItem = this.createStatusBarItem(

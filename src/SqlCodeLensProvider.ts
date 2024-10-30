@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { ConfigurationService } from "./configurationService";
 import parse from "./utils/parse";
 import { COMMANDS } from "./constants";
+import { LanguageService } from "./LanguageService";
 
 export class SqlCodeLensProvider implements vscode.CodeLensProvider {
   private _onDidChangeCodeLenses: vscode.EventEmitter<void> =
@@ -75,22 +76,54 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     );
 
     // 从配置中读取默认工作空间
-    const defaultWorkspace = vscode.workspace
-      .getConfiguration("pawsql")
-      .get<{ workspaceId: string; workspaceName: string }>("defaultWorkspace");
+    const defaultWorkspace = vscode.workspace.getConfiguration("pawsql").get<{
+      workspaceId: string;
+      workspaceName: string;
+      dbType: string;
+      dbHost: string;
+      dbPort: string;
+    }>("defaultWorkspace");
 
-    if (fileWorkspace) {
+    const apiKey = vscode.workspace
+      .getConfiguration("pawsql")
+      .get<string>("apiKey");
+
+    if (!apiKey) {
       codeLenses.push(
         new vscode.CodeLens(separatorRange, {
-          title: `📁 当前工作空间: ${fileWorkspace.workspaceName} (编辑)`,
+          title: LanguageService.getMessage("init.pawsql.config"),
+          command: "pawsql.openSettings",
+          arguments: [document.uri],
+        })
+      );
+    } else if (fileWorkspace?.workspaceId) {
+      codeLenses.push(
+        new vscode.CodeLens(separatorRange, {
+          title: fileWorkspace.dbHost
+            ? `${LanguageService.getMessage(
+                "codelens.file.default.workspace.title"
+              )}: ${fileWorkspace.dbType}:${fileWorkspace.dbHost}@${
+                fileWorkspace.dbPort
+              }`
+            : `${LanguageService.getMessage(
+                "codelens.file.default.workspace.title"
+              )}: ${fileWorkspace.dbType}:${fileWorkspace.workspaceName}`,
           command: "pawsql.selectFileDefaultWorkspace",
           arguments: [document.uri],
         })
       );
-    } else if (defaultWorkspace) {
+    } else if (defaultWorkspace?.workspaceId) {
       codeLenses.push(
         new vscode.CodeLens(separatorRange, {
-          title: `📁 默认工作空间: ${defaultWorkspace.workspaceName} (点击选择)`,
+          title: defaultWorkspace.dbHost
+            ? `${LanguageService.getMessage(
+                "codelens.file.default.workspace.title"
+              )}: ${defaultWorkspace.dbType}:${defaultWorkspace.dbHost}@${
+                defaultWorkspace.dbPort
+              }`
+            : `${LanguageService.getMessage(
+                "codelens.file.default.workspace.title"
+              )}: ${defaultWorkspace.dbType}:${defaultWorkspace.workspaceName}`,
           command: "pawsql.selectFileDefaultWorkspace",
           arguments: [document.uri],
         })
@@ -98,7 +131,9 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     } else {
       codeLenses.push(
         new vscode.CodeLens(separatorRange, {
-          title: "📁 配置文件默认工作空间",
+          title: LanguageService.getMessage(
+            "codelens.config.file.default.workspace"
+          ),
           command: "pawsql.selectFileDefaultWorkspace",
           arguments: [document.uri],
         })
@@ -119,6 +154,8 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
       document.uri.toString()
     );
 
+    const defaultWorkspace = await ConfigurationService.getDefaultWorkspace();
+
     let lastIndex = 0;
     for (const query of queries) {
       if (token.isCancellationRequested) {
@@ -137,10 +174,20 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
         const adjustedStartPos = new vscode.Position(1, 0);
         const queryRange = new vscode.Range(adjustedStartPos, endPos);
 
-        this.addQueryCodeLenses(codeLenses, queryRange, query, fileWorkspace);
+        this.addQueryCodeLenses(
+          codeLenses,
+          queryRange,
+          query,
+          fileWorkspace ?? defaultWorkspace
+        );
       } else {
         const queryRange = new vscode.Range(startPos, endPos);
-        this.addQueryCodeLenses(codeLenses, queryRange, query, fileWorkspace);
+        this.addQueryCodeLenses(
+          codeLenses,
+          queryRange,
+          query,
+          fileWorkspace ?? defaultWorkspace
+        );
       }
 
       lastIndex = queryIndex + query.length;
@@ -153,23 +200,33 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     query: string,
     fileWorkspace: any
   ) {
-    // 添加使用默认工作空间的优化按钮
-    codeLenses.push(
-      new vscode.CodeLens(queryRange, {
-        title: "⚡ Optimize",
-        command: COMMANDS.OPTIMIZE_WITH_FILE_DEFAULT_WORKSPACE,
-        arguments: [query, fileWorkspace?.workspaceId, queryRange], // 传递范围
-      })
-    );
+    const apiKey = vscode.workspace
+      .getConfiguration("pawsql")
+      .get<string>("apiKey");
 
-    // 添加选择其他工作空间的优化按钮
-    codeLenses.push(
-      new vscode.CodeLens(queryRange, {
-        title: "⚡ Optimize...",
-        command: COMMANDS.OPTIMIZE_WITH_FILE_SELECTED_WORKSPACE,
-        arguments: [query, queryRange], // 传递范围
-      })
-    );
+    if (apiKey) {
+      // 添加使用默认工作空间的优化按钮
+      codeLenses.push(
+        new vscode.CodeLens(queryRange, {
+          title: LanguageService.getMessage(
+            "codelens.optimize.sql.with.default.workspace"
+          ),
+          command: COMMANDS.OPTIMIZE_WITH_FILE_DEFAULT_WORKSPACE,
+          arguments: [query, fileWorkspace?.workspaceId, queryRange], // 传递范围
+        })
+      );
+
+      // 添加选择其他工作空间的优化按钮
+      codeLenses.push(
+        new vscode.CodeLens(queryRange, {
+          title: LanguageService.getMessage(
+            "codelens.optimize.sql.with.selected.workspace"
+          ),
+          command: COMMANDS.OPTIMIZE_WITH_FILE_SELECTED_WORKSPACE,
+          arguments: [query, queryRange], // 传递范围
+        })
+      );
+    }
   }
 
   private parseThrottleTimeout: NodeJS.Timeout | null = null;

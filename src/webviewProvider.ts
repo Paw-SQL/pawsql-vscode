@@ -7,7 +7,7 @@ export class WebviewProvider {
   static createResultPanel(analysisStmtId: string): vscode.WebviewPanel {
     const panel = vscode.window.createWebviewPanel(
       "pawsqlOptimizationResult",
-      "SQL优化结果",
+      LanguageService.getMessage("webview.anlysis.result.title"),
       vscode.ViewColumn.Two,
       {
         enableScripts: true,
@@ -39,7 +39,7 @@ export class WebviewProvider {
   static openOptimizationSummary(optimizationId: string) {
     const panel = vscode.window.createWebviewPanel(
       "pawsqlOptimizationResult",
-      "SQL优化结果",
+      LanguageService.getMessage("webview.anlysis.result.title"),
       vscode.ViewColumn.Two,
       { enableScripts: true, retainContextWhenHidden: true }
     );
@@ -58,7 +58,7 @@ export class WebviewProvider {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>SQL优化结果</title>
+    <title>${LanguageService.getMessage("webview.anlysis.result.title")}</title>
     <style>
         body, html { 
             margin: 0;
@@ -105,12 +105,12 @@ export class WebviewProvider {
     <div class="iframe-container">
         <iframe 
             src="${queryUrl}"
-            title="SQL优化结果"
+            title=${LanguageService.getMessage("webview.anlysis.result.title")}
             allowfullscreen>
         </iframe>
     </div>
     <script>
-        const vscode = acquireVsCodeApi(); // 获取 vscode API
+        const vscode = acquireVsCodeApi();
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('openLink').addEventListener('click', () => {
                 vscode.postMessage({ command: 'openLink', url: '${statementUrl}' });

@@ -10,6 +10,8 @@ interface Workspace {
   workspaceId: string;
   workspaceName: string;
   dbType: string;
+  dbHost: string;
+  dbPort: string;
   createTime: string;
   numberOfAnalysis: number;
   latestAnalysisTime: string;
@@ -96,21 +98,26 @@ export const getWorkspaces = async (
 ): Promise<ListWorkspacesResponse> => {
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/listWorkspaces`;
-  const response = await axios.post<ListWorkspacesResponse>(url, { userKey });
+  const response = await axios.post<ListWorkspacesResponse>(url, {
+    userKey,
+    pageSize: 100,
+    pageNumber: 1,
+  });
+
   return response.data;
 };
 // 获取优化列表
 export const getAnalyses = async (
   userKey: string,
-  workspaceId: string,
-  pageNumber: number,
-  pageSize: number
+  workspaceId: string
 ): Promise<ListAnalysesResponse> => {
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/listAnalyses`;
   const response = await axios.post<ListAnalysesResponse>(url, {
     userKey: userKey,
     workspaceId: workspaceId,
+    pageSize: 10,
+    pageNumber: 1,
   });
   return response.data;
 };
@@ -154,6 +161,7 @@ export const validateUserKey = async (userKey: string): Promise<boolean> => {
     const response = await axios.post(url, { userKey }, { timeout: 3000 });
     return response.data.code === 200; // 假设返回码 200 表示有效
   } catch (error: any) {
+    console.log(error);
     return false;
   }
 };
