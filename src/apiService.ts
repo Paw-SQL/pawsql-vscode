@@ -104,6 +104,9 @@ export const getWorkspaces = async (
     pageNumber: 1,
   });
 
+  if (!response.data.data) {
+    throw Error("error.backendUrl.invalid");
+  }
   return response.data;
 };
 // 获取优化列表
@@ -119,6 +122,12 @@ export const getAnalyses = async (
     pageSize: 10,
     pageNumber: 1,
   });
+
+  console.log(!response.data.data);
+
+  if (!response.data.data) {
+    throw Error("error.backendUrl.invalid");
+  }
   return response.data;
 };
 
@@ -129,6 +138,11 @@ export const createAnalysis = async (
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/createAnalysis`;
   const response = await axios.post<CreateAnalysisResponse>(url, params);
+  console.log(123);
+  console.log(!response.data.data);
+  if (!response.data.data) {
+    throw Error("error.backendUrl.invalid");
+  }
   return response.data;
 };
 
@@ -139,6 +153,9 @@ export const getAnalysisSummary = async (
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/getAnalysisSummary`;
   const response = await axios.post<GetAnalysisSummaryResponse>(url, params);
+  if (!response.data.data) {
+    throw Error("error.backendUrl.invalid");
+  }
   return response.data;
 };
 
@@ -149,6 +166,9 @@ export const getStatementDetails = async (
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/getStatementDetails`;
   const response = await axios.post<GetStatementDetailsResponse>(url, params);
+  if (!response.data.data) {
+    throw Error("error.backendUrl.invalid");
+  }
   return response.data;
 };
 
