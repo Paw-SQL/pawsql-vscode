@@ -1,12 +1,13 @@
 import * as vscode from "vscode";
-import { ApiService } from "./apiService";
+import { ApiService, validateBackend, validateFrontend } from "./apiService";
 import { LanguageService } from "./LanguageService";
 import * as path from "path";
+import { ConfigurationService } from "./configurationService";
 
 // Previous classes remain unchanged...
 class WorkspaceManagerItem extends vscode.TreeItem {
   constructor() {
-    const iconPath = path.join(__dirname, "../resources/paw.svg"); // 向上移动到 src 同级
+    const iconPath = path.join(__dirname, "../resources/icon/paw.svg"); // 向上移动到 src 同级
 
     super(
       LanguageService.getMessage("sidebar.workspace.manager"),
@@ -88,17 +89,10 @@ class StatementItem extends vscode.TreeItem {
 class ConfigurationItem extends vscode.TreeItem {
   constructor(
     public readonly config: "apiKey" | "url.frontendUrl" | "url.backendUrl",
+    public readonly label: string,
     public isValid: boolean = false
   ) {
-    super(
-      config === "apiKey"
-        ? LanguageService.getMessage("sidebar.apiKey.label")
-        : config === "url.frontendUrl"
-        ? LanguageService.getMessage("sidebar.frontendUrl.label")
-        : LanguageService.getMessage("sidebar.backendUrl.label"),
-      vscode.TreeItemCollapsibleState.None
-    );
-
+    super(label, vscode.TreeItemCollapsibleState.None);
     const currentValue = vscode.workspace
       .getConfiguration("pawsql")
       .get<string>(`${config}`);
@@ -109,10 +103,13 @@ class ConfigurationItem extends vscode.TreeItem {
     this.contextValue = "configItem";
     this.updateIconPath();
 
+    console.log(label);
+    console.log(this.label);
+
     this.command = {
       command: "pawsql.showConfigInput",
       title: LanguageService.getMessage("sidebar.config.label"),
-      arguments: [this.config],
+      arguments: [this.config, this.label],
     };
   }
 
@@ -157,14 +154,28 @@ export class PawSQLTreeProvider
 
   constructor(private context: vscode.ExtensionContext) {
     // Initialize configuration items
-    this.configItems.set("apiKey", new ConfigurationItem("apiKey"));
+
     this.configItems.set(
-      "url.frontendUrl",
-      new ConfigurationItem("url.frontendUrl")
+      "apiKey",
+      new ConfigurationItem(
+        "apiKey",
+        LanguageService.getMessage("sidebar.apiKey.label")
+      )
     );
+
     this.configItems.set(
       "url.backendUrl",
-      new ConfigurationItem("url.backendUrl")
+      new ConfigurationItem(
+        "url.backendUrl",
+        LanguageService.getMessage("sidebar.backendUrl.label")
+      )
+    );
+    this.configItems.set(
+      "url.frontendUrl",
+      new ConfigurationItem(
+        "url.frontendUrl",
+        LanguageService.getMessage("sidebar.frontendUrl.label")
+      )
     );
     this.refresh(true);
   }
@@ -217,65 +228,202 @@ export class PawSQLTreeProvider
     const backendUrl = config.get<string>("url.backendUrl");
 
     try {
-      // Validate backend connectivity first
-      const isBackendConnected = await ApiService.checkConnectivity(
-        backendUrl!
-      );
-      this.configItems
-        .get("url.backendUrl")
-        ?.setValidationState(isBackendConnected);
-      this._onDidChangeTreeData.fire(undefined);
+      // Reset all validation states first
+      this.configItems.forEach((item) => item.setValidationState(false));
+      this.isConfigValid = false;
+
+      // Validate backend connectivity
+
+      const backendResult = await validateBackend(backendUrl ?? "");
+      const isBackendConnected = backendResult.isAvailable;
+      const backendConfig = this.configItems.get("url.backendUrl");
+      if (backendConfig) {
+        backendConfig.setValidationState(isBackendConnected);
+        this._onDidChangeTreeData.fire(backendConfig);
+      }
+      console.log(backendResult);
 
       if (!isBackendConnected) {
-        this.isConfigValid = false;
-        vscode.window.showErrorMessage(
-          `${LanguageService.getMessage(
-            "error.config.validate.failed"
-          )}: ${LanguageService.getMessage("error.backendUrl.invalid")}`
-        );
+        !hideMessage &&
+          vscode.window.showErrorMessage(
+            `${LanguageService.getMessage(
+              "error.config.validate.failed"
+            )}: ${LanguageService.getMessage("error.backendUrl.invalid")}`
+          );
         return;
       }
 
-      // Then validate frontend connectivity
-      const isFrontendConnected = await ApiService.checkConnectivity(
-        frontendUrl!
-      );
-      this.configItems
-        .get("url.frontendUrl")
-        ?.setValidationState(isFrontendConnected);
-      this._onDidChangeTreeData.fire(undefined);
+      // Validate frontend connectivity
+      const frontendReuslt = await validateFrontend(frontendUrl ?? "");
+      console.log(frontendReuslt);
+
+      const isFrontendConnected = frontendReuslt.isAvailable;
+      const frontendConfig = this.configItems.get("url.frontendUrl");
+      if (frontendConfig) {
+        frontendConfig.setValidationState(isFrontendConnected);
+        this._onDidChangeTreeData.fire(frontendConfig);
+      }
 
       if (!isFrontendConnected) {
-        this.isConfigValid = false;
-        vscode.window.showErrorMessage(
-          `${LanguageService.getMessage(
-            "error.config.validate.failed"
-          )}: ${LanguageService.getMessage("error.frontendUrl.invalid")}`
-        );
+        !hideMessage &&
+          vscode.window.showErrorMessage(
+            `${LanguageService.getMessage(
+              "error.config.validate.failed"
+            )}: ${LanguageService.getMessage("error.frontendUrl.invalid")}`
+          );
         return;
       }
 
-      // Finally validate API key
+      // Validate API key
       const isApikeyValid = await ApiService.validateUserKey(apiKey ?? "");
-      this.configItems.get("apiKey")?.setValidationState(isApikeyValid);
-      this._onDidChangeTreeData.fire(undefined);
+      const apiKeyConfig = this.configItems.get("apiKey");
+      if (apiKeyConfig) {
+        apiKeyConfig.setValidationState(isApikeyValid);
+        this._onDidChangeTreeData.fire(apiKeyConfig);
+      }
 
       if (!isApikeyValid) {
-        this.isConfigValid = false;
-        vscode.window.showErrorMessage(
-          `${LanguageService.getMessage(
-            "error.config.validate.failed"
-          )}: ${LanguageService.getMessage("license.code.not.valid")}`
-        );
+        !hideMessage &&
+          vscode.window.showErrorMessage(
+            `${LanguageService.getMessage(
+              "error.config.validate.failed"
+            )}: ${LanguageService.getMessage("license.code.not.valid")}`
+          );
         return;
       }
+
+      // All validations passed
       !hideMessage &&
         vscode.window.showInformationMessage(
           LanguageService.getMessage("error.config.validate.success")
         );
-      // If all validations pass, load the workspace data
-      await this.loadData();
+
       this.isConfigValid = true;
+      await this.loadData(hideMessage);
+    } catch (error: any) {
+      this.isConfigValid = false;
+      !hideMessage &&
+        vscode.window.showErrorMessage(
+          `${LanguageService.getMessage(
+            "error.config.validate.failed"
+          )}: ${LanguageService.getMessage(
+            error.response?.data?.message ?? ""
+          )}`
+        );
+    }
+  }
+
+  public async validateConfig(): Promise<boolean> {
+    const config = vscode.workspace.getConfiguration("pawsql");
+    const apiKey = config.get<string>("apiKey");
+    const frontendUrl = config.get<string>("url.frontendUrl");
+    const backendUrl = config.get<string>("url.backendUrl");
+
+    try {
+      const backendResult = await validateBackend(backendUrl ?? "");
+      const isBackendConnected = backendResult.isAvailable;
+      const backendConfig = this.configItems.get("url.backendUrl");
+      if (backendConfig) {
+        backendConfig.setValidationState(isBackendConnected);
+        this._onDidChangeTreeData.fire(backendConfig);
+      }
+
+      // Validate frontend connectivity
+      const frontendReuslt = await validateFrontend(frontendUrl ?? "");
+      const isFrontendConnected = frontendReuslt.isAvailable;
+      const frontendConfig = this.configItems.get("url.frontendUrl");
+      if (frontendConfig) {
+        frontendConfig.setValidationState(isFrontendConnected);
+        this._onDidChangeTreeData.fire(frontendConfig);
+      }
+
+      // Validate API key
+      const isApikeyValid = await ApiService.validateUserKey(apiKey ?? "");
+      const apiKeyConfig = this.configItems.get("apiKey");
+      if (apiKeyConfig) {
+        apiKeyConfig.setValidationState(isApikeyValid);
+        this._onDidChangeTreeData.fire(apiKeyConfig);
+      }
+
+      if (!(isBackendConnected && isFrontendConnected && isApikeyValid)) {
+        const choice = await vscode.window.showInformationMessage(
+          LanguageService.getMessage("pawsql.config.validate.failed"),
+          LanguageService.getMessage("init.pawsql.config")
+        );
+
+        if (choice === LanguageService.getMessage("init.pawsql.config")) {
+          ConfigurationService.openSettings("pawsqlInit");
+        }
+      }
+      return isBackendConnected && isFrontendConnected && isApikeyValid;
+    } catch (error: any) {
+      vscode.window.showErrorMessage(
+        `${LanguageService.getMessage(
+          "error.config.validate.failed"
+        )}: ${LanguageService.getMessage(error.response?.data?.message ?? "")}`
+      );
+      return false;
+    }
+  }
+
+  public async validateConfigurationByKey(key: string): Promise<void> {
+    const config = vscode.workspace.getConfiguration("pawsql");
+
+    const value = config.get<string>(key);
+
+    try {
+      if (key === "url.backendUrl") {
+        // Validate backend connectivity
+        const backendResult = await validateBackend(value ?? "");
+        const isBackendConnected = backendResult.isAvailable;
+        const backendConfig = this.configItems.get("url.backendUrl");
+        if (backendConfig) {
+          backendConfig.setValidationState(isBackendConnected);
+          this._onDidChangeTreeData.fire(backendConfig);
+        }
+        if (!isBackendConnected) {
+          vscode.window.showErrorMessage(
+            `${LanguageService.getMessage(
+              "error.config.validate.failed"
+            )}: ${LanguageService.getMessage("error.backendUrl.invalid")}`
+          );
+          return;
+        }
+      } else if (key === "url.frontendUrl") {
+        // Validate frontend connectivity
+        const frontendReuslt = await validateFrontend(value ?? "");
+        const isFrontendConnected = frontendReuslt.isAvailable;
+        const frontendConfig = this.configItems.get("url.frontendUrl");
+        if (frontendConfig) {
+          frontendConfig.setValidationState(isFrontendConnected);
+          this._onDidChangeTreeData.fire(frontendConfig);
+        }
+
+        if (!isFrontendConnected) {
+          vscode.window.showErrorMessage(
+            `${LanguageService.getMessage(
+              "error.config.validate.failed"
+            )}: ${LanguageService.getMessage("error.frontendUrl.invalid")}`
+          );
+          return;
+        }
+      } else if (key === "apiKey") {
+        // Validate API key
+        const isApikeyValid = await ApiService.validateUserKey(value ?? "");
+        const apiKeyConfig = this.configItems.get("apiKey");
+        if (apiKeyConfig) {
+          apiKeyConfig.setValidationState(isApikeyValid);
+          this._onDidChangeTreeData.fire(apiKeyConfig);
+        }
+        if (!isApikeyValid) {
+          vscode.window.showErrorMessage(
+            `${LanguageService.getMessage(
+              "error.config.validate.failed"
+            )}: ${LanguageService.getMessage("license.code.not.valid")}`
+          );
+          return;
+        }
+      }
     } catch (error: any) {
       this.isConfigValid = false;
       vscode.window.showErrorMessage(
@@ -287,7 +435,7 @@ export class PawSQLTreeProvider
   }
 
   // Rest of the methods remain unchanged...
-  private async loadData(): Promise<void> {
+  private async loadData(hideMessage?: boolean): Promise<void> {
     const apiKey = vscode.workspace
       .getConfiguration("pawsql")
       .get<string>("apiKey");
@@ -312,19 +460,21 @@ export class PawSQLTreeProvider
     } catch (error: any) {
       console.log(error);
       if (error.code === "ECONNREFUSED") {
-        vscode.window.showErrorMessage(
-          `${LanguageService.getMessage(
-            "error.config.validate.failed"
-          )}: ${LanguageService.getMessage("error.backendUrl.invalid")}`
-        );
+        !hideMessage &&
+          vscode.window.showErrorMessage(
+            `${LanguageService.getMessage(
+              "error.config.validate.failed"
+            )}: ${LanguageService.getMessage("error.backendUrl.invalid")}`
+          );
       } else {
-        vscode.window.showErrorMessage(
-          `${LanguageService.getMessage(
-            "error.load.data.failed"
-          )}: ${LanguageService.getMessage(
-            error.response?.data?.message ?? ""
-          )}`
-        );
+        !hideMessage &&
+          vscode.window.showErrorMessage(
+            `${LanguageService.getMessage(
+              "error.load.data.failed"
+            )}: ${LanguageService.getMessage(
+              error.response?.data?.message ?? ""
+            )}`
+          );
       }
       this.isConfigValid = false;
       this.workspaces = [];
@@ -401,28 +551,7 @@ export class PawSQLTreeProvider
 
   async updateConfig(key: string, value: string): Promise<void> {
     await vscode.workspace.getConfiguration("pawsql").update(key, value, true);
-    await this.refresh();
-  }
-
-  async validateConfig(): Promise<boolean> {
-    try {
-      await this.validateConfiguration();
-
-      if (this.isConfigValid) {
-        vscode.window.showInformationMessage(
-          LanguageService.getMessage("error.config.validate.success")
-        );
-        await this.refresh();
-        return true;
-      }
-    } catch (error: any) {
-      vscode.window.showErrorMessage(
-        `${LanguageService.getMessage("error.config.validate.failed")}: ${
-          error.message
-        }`
-      );
-    }
-    return false;
+    await this.validateConfigurationByKey(key);
   }
 
   async setDefaultWorkspace(

@@ -4,6 +4,11 @@ import parse from "./utils/parse";
 import { COMMANDS } from "./constants";
 import { LanguageService } from "./LanguageService";
 
+interface OptimizeState {
+  isOptimizing: boolean;
+  optimizingRanges: Set<string>;
+}
+
 export class SqlCodeLensProvider implements vscode.CodeLensProvider {
   private _onDidChangeCodeLenses: vscode.EventEmitter<void> =
     new vscode.EventEmitter<void>();
@@ -11,6 +16,35 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     this._onDidChangeCodeLenses.event;
 
   private disposables: vscode.Disposable[] = [];
+
+  private state: OptimizeState = {
+    isOptimizing: false,
+    optimizingRanges: new Set<string>(),
+  };
+
+  private getRangeKey(range: vscode.Range): string {
+    return `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
+  }
+
+  // 修改设置状态的方法，添加刷新触发
+  public setOptimizing(range: vscode.Range, isOptimizing: boolean) {
+    console.log(this.state);
+
+    const rangeKey = this.getRangeKey(range);
+    if (isOptimizing) {
+      this.state.optimizingRanges.add(rangeKey);
+    } else {
+      this.state.optimizingRanges.delete(rangeKey);
+    }
+    this.state.isOptimizing = this.state.optimizingRanges.size > 0;
+
+    // 触发 CodeLens 刷新
+    this._onDidChangeCodeLenses.fire();
+  }
+
+  public isRangeOptimizing(range: vscode.Range): boolean {
+    return this.state.optimizingRanges.has(this.getRangeKey(range));
+  }
 
   constructor(private context: vscode.ExtensionContext) {
     this.disposables.push(
@@ -100,12 +134,12 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
       codeLenses.push(
         new vscode.CodeLens(separatorRange, {
           title: fileWorkspace.dbHost
-            ? `${LanguageService.getMessage(
+            ? `\u200B$(pawsql-icon) ${LanguageService.getMessage(
                 "codelens.file.default.workspace.title"
               )}: ${fileWorkspace.dbType}:${fileWorkspace.dbHost}@${
                 fileWorkspace.dbPort
               }`
-            : `${LanguageService.getMessage(
+            : `\u200B$(pawsql-icon) ${LanguageService.getMessage(
                 "codelens.file.default.workspace.title"
               )}: ${fileWorkspace.dbType}:${fileWorkspace.workspaceName}`,
           command: "pawsql.selectFileDefaultWorkspace",
@@ -200,30 +234,35 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     query: string,
     fileWorkspace: any
   ) {
-    const apiKey = vscode.workspace
-      .getConfiguration("pawsql")
-      .get<string>("apiKey");
+    const isOptimizing = this.isRangeOptimizing(queryRange);
 
-    if (apiKey) {
-      // 添加使用默认工作空间的优化按钮
+    if (isOptimizing) {
+      // 在优化过程中显示加载状态的 CodeLens
+      codeLenses.push(
+        new vscode.CodeLens(queryRange, {
+          title: LanguageService.getMessage("OPTIMIZING_SQL"),
+          command: "", // 空命令使其不可点击
+        })
+      );
+    } else {
+      // 正常状态下显示两个可点击的 CodeLens
       codeLenses.push(
         new vscode.CodeLens(queryRange, {
           title: LanguageService.getMessage(
             "codelens.optimize.sql.with.default.workspace"
           ),
           command: COMMANDS.OPTIMIZE_WITH_FILE_DEFAULT_WORKSPACE,
-          arguments: [query, fileWorkspace?.workspaceId, queryRange], // 传递范围
+          arguments: [query, fileWorkspace?.workspaceId, queryRange],
         })
       );
 
-      // 添加选择其他工作空间的优化按钮
       codeLenses.push(
         new vscode.CodeLens(queryRange, {
           title: LanguageService.getMessage(
             "codelens.optimize.sql.with.selected.workspace"
           ),
           command: COMMANDS.OPTIMIZE_WITH_FILE_SELECTED_WORKSPACE,
-          arguments: [query, queryRange], // 传递范围
+          arguments: [query, queryRange],
         })
       );
     }

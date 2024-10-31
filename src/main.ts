@@ -24,7 +24,7 @@ export class PawSQLExtension {
   private readonly decorationManager: DecorationManager;
   private readonly commandManager: CommandManager;
   private readonly sqlCodeLensProvider: SqlCodeLensProvider;
-  private readonly treeProvider: PawSQLTreeProvider;
+  private treeProvider: PawSQLTreeProvider | undefined;
 
   constructor(private readonly context: vscode.ExtensionContext) {
     // 初始化管理器和提供者
@@ -37,15 +37,13 @@ export class PawSQLExtension {
       context,
       this.sqlCodeLensProvider
     );
-
-    this.treeProvider = new PawSQLTreeProvider(context);
   }
 
   public async activate(): Promise<void> {
     try {
       await this.initializeExtension();
-      this.registerEventListeners();
-      this.registerProviders();
+      await this.registerProviders();
+      await this.registerEventListeners();
     } catch (error) {
       ErrorHandler.handle("extension.activation.failed", error);
     }
@@ -78,17 +76,18 @@ export class PawSQLExtension {
     this.context.subscriptions.push(
       vscode.commands.registerCommand(
         "pawsql.showConfigInput",
-        async (configKey: string) => {
+        async (configKey: string, label: string) => {
           const result = await vscode.window.showInputBox({
             prompt: `${LanguageService.getMessage(
               "please.enter"
-            )} ${configKey}`,
+            )} ${LanguageService.getMessage(label)}`,
             password: configKey === "apiKey",
             value: vscode.workspace.getConfiguration("pawsql").get(configKey),
           });
 
           if (result !== undefined) {
-            await this.treeProvider.updateConfig(configKey, result);
+            this.treeProvider &&
+              (await this.treeProvider.updateConfig(configKey, result));
           }
         }
       )
@@ -97,7 +96,7 @@ export class PawSQLExtension {
     // 注册验证配置命令
     this.context.subscriptions.push(
       vscode.commands.registerCommand("pawsql.validateConfig", async () => {
-        await this.treeProvider.validateConfiguration();
+        this.treeProvider && (await this.treeProvider.validateConfiguration());
       })
     );
 
@@ -113,7 +112,7 @@ export class PawSQLExtension {
     // 注册刷新命令
     this.context.subscriptions.push(
       vscode.commands.registerCommand("pawsql.refreshTree", () => {
-        this.treeProvider.refresh();
+        this.treeProvider && this.treeProvider.refresh();
       })
     );
 
@@ -127,13 +126,14 @@ export class PawSQLExtension {
       vscode.commands.registerCommand(
         "pawsql.setDefaultWorkspace",
         (item: WorkspaceItem) => {
-          this.treeProvider.setDefaultWorkspace(
-            item.workspaceId,
-            item.workspaceName,
-            item.dbType,
-            item.dbHost,
-            item.dbPort
-          );
+          this.treeProvider &&
+            this.treeProvider.setDefaultWorkspace(
+              item.workspaceId,
+              item.workspaceName,
+              item.dbType,
+              item.dbHost,
+              item.dbPort
+            );
         }
       )
     );
@@ -201,10 +201,13 @@ export class PawSQLExtension {
 
   private registerProviders(): void {
     // 注册树视图
+    this.treeProvider = new PawSQLTreeProvider(this.context);
+
     const treeView = vscode.window.createTreeView("pawsqlSidebar", {
       treeDataProvider: this.treeProvider,
       showCollapseAll: true,
     });
+
     this.context.subscriptions.push(treeView);
   }
 
@@ -214,7 +217,7 @@ export class PawSQLExtension {
     try {
       if (this.isApiConfigChanged(e)) {
         await this.workspaceManager.clearRecentWorkspaces();
-        await this.treeProvider.refresh();
+        this.treeProvider && (await this.treeProvider.refresh());
       }
 
       if (e.affectsConfiguration("pawsql.recentWorkspaces")) {
@@ -238,6 +241,11 @@ export class PawSQLExtension {
     if (!editor) {
       throw new Error("no.active.editor");
     }
+    if (this.treeProvider) {
+      this.treeProvider.refresh();
+    } else {
+      throw new Error("no.active.treeProvider");
+    }
 
     const { currentQuery, range } = getEditorQueryDetails(editor);
     if (!currentQuery.trim()) {
@@ -248,7 +256,16 @@ export class PawSQLExtension {
       UI_MESSAGES.OPTIMIZING_SQL()
     );
 
+    await vscode.window.showInformationMessage(
+      LanguageService.getMessage("start.optimize"),
+      { modal: false } // 确保消息不会阻塞用户操作
+    );
+
     try {
+      // 设置优化状态为 true
+
+      this.sqlCodeLensProvider.setOptimizing(range, true);
+
       await this.selectAndRevealQuery(editor, range);
       const result = await this.executeOptimization(workspaceId, currentQuery);
       await this.handleOptimizationResult(result);
@@ -256,6 +273,8 @@ export class PawSQLExtension {
       ErrorHandler.handle("sql.optimization.failed", error);
     } finally {
       statusBarItem.dispose();
+      // 优化完成后，设置状态为 false
+      this.sqlCodeLensProvider.setOptimizing(range, false);
     }
   }
 
@@ -268,6 +287,18 @@ export class PawSQLExtension {
     if (!editor) {
       throw new Error("no.active.editor");
     }
+    if (this.treeProvider) {
+      this.treeProvider.refresh();
+    } else {
+      throw new Error("no.active.treeProvider");
+    }
+
+    const validateResult = await this.treeProvider.validateConfig();
+
+    if (!validateResult) {
+      return;
+    }
+
     if (!workspaceId) {
       await vscode.window.showInformationMessage(
         UI_MESSAGES.NO_DEFAULT_WORKSPACE()
@@ -279,13 +310,27 @@ export class PawSQLExtension {
       UI_MESSAGES.OPTIMIZING_SQL()
     );
 
+    await vscode.window.showInformationMessage(
+      LanguageService.getMessage("start.optimize"),
+      { modal: false } // 确保消息不会阻塞用户操作
+    );
+
     try {
+      // 设置优化状态为 true
+      this.sqlCodeLensProvider.setOptimizing(range, true);
+
       const result = await this.executeOptimization(workspaceId, query); // 使用获取到的 SQL 文本
+      // 3. 优化完成后更新消息
+      if (statusBarItem) {
+        statusBarItem.dispose(); // 清除之前的消息
+      }
+
       await this.handleOptimizationResult(result);
     } catch (error) {
       ErrorHandler.handle("sql.optimization.failed", error);
     } finally {
       statusBarItem.dispose();
+      this.sqlCodeLensProvider.setOptimizing(range, false);
     }
   }
 
