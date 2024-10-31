@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { ApiService } from "./apiService";
 import { LanguageService } from "./LanguageService";
 import * as path from "path";
+import { getUrls } from "./constants";
 
 // Previous classes remain unchanged...
 class WorkspaceManagerItem extends vscode.TreeItem {
@@ -9,7 +10,8 @@ class WorkspaceManagerItem extends vscode.TreeItem {
     const iconPath = path.join(__dirname, "../resources/paw.svg"); // 向上移动到 src 同级
 
     super(
-      LanguageService.getMessage("sidebar.workspace.manager"),
+      // LanguageService.getMessage("sidebar.workspace.manager"),
+      LanguageService.getMessage(getUrls().DOMAIN.Backend),
       vscode.TreeItemCollapsibleState.Expanded
     );
     this.contextValue = "workspaceManager";
