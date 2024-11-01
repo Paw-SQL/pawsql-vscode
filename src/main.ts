@@ -18,17 +18,20 @@ import { ErrorHandler } from "./errorHandler";
 import { OptimizationService } from "./optimizationService";
 import { WebviewProvider } from "./webviewProvider";
 import { ApiService } from "./apiService";
+import path from "path";
 
 export class PawSQLExtension {
   private readonly workspaceManager: WorkspaceManager;
   private readonly decorationManager: DecorationManager;
   private readonly commandManager: CommandManager;
   private readonly sqlCodeLensProvider: SqlCodeLensProvider;
+  private readonly webviewProvider: WebviewProvider;
   private treeProvider: PawSQLTreeProvider | undefined;
 
   constructor(private readonly context: vscode.ExtensionContext) {
     // 初始化管理器和提供者
     this.workspaceManager = new WorkspaceManager(this);
+    this.webviewProvider = new WebviewProvider(context);
     this.decorationManager = new DecorationManager(context);
     this.sqlCodeLensProvider = registerSqlCodeLensProvider(context);
 
@@ -41,12 +44,24 @@ export class PawSQLExtension {
 
   public async activate(): Promise<void> {
     try {
+      await this.registerSettingsWebview();
       await this.initializeExtension();
       await this.registerProviders();
       await this.registerEventListeners();
     } catch (error) {
       ErrorHandler.handle("extension.activation.failed", error);
     }
+  }
+
+  private async registerSettingsWebview() {
+    let disposable = vscode.commands.registerCommand(
+      "vscode-webview-react.showWebview",
+      () => {
+        this.webviewProvider.createSettingsPanel();
+      }
+    );
+
+    this.context.subscriptions.push(disposable);
   }
 
   private async initializeExtension(): Promise<void> {
@@ -196,7 +211,7 @@ export class PawSQLExtension {
     await vscode.env.openExternal(vscode.Uri.parse(URLS.NEW_WORKSPACE));
   }
   private async showStatementResult(analysisStmtId: string): Promise<void> {
-    WebviewProvider.createResultPanel(analysisStmtId);
+    this.webviewProvider.createResultPanel(analysisStmtId);
   }
 
   private registerProviders(): void {
@@ -371,7 +386,7 @@ export class PawSQLExtension {
   ): Promise<void> {
     const statementId = result.data.summaryStatementInfo[0]?.analysisStmtId;
     if (statementId) {
-      await WebviewProvider.createResultPanel(statementId);
+      await this.webviewProvider.createResultPanel(statementId);
     }
   }
 
