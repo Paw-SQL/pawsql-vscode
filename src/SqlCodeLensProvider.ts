@@ -165,9 +165,9 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     } else {
       codeLenses.push(
         new vscode.CodeLens(separatorRange, {
-          title: LanguageService.getMessage(
+          title: `\u200B$(pawsql-icon) ${LanguageService.getMessage(
             "codelens.config.file.default.workspace"
-          ),
+          )}`,
           command: "pawsql.selectFileDefaultWorkspace",
           arguments: [document.uri],
         })
