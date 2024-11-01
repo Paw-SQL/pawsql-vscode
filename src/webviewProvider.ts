@@ -99,9 +99,9 @@ export class WebviewProvider {
     </style>
 </head>
 <body>
-    <button id="openLink">${LanguageService.getMessage(
-      "open.in.browser"
-    )}</button>
+    <button id="openLink">${LanguageService.getMessage("open.in.browser")}${
+      getUrls().DOMAIN.Frontend
+    }</button>
     <div class="iframe-container">
         <iframe 
             src="${queryUrl}"
