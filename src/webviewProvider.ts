@@ -1,10 +1,48 @@
+import path from "path";
 import { getUrls } from "./constants";
 import { LanguageService } from "./LanguageService";
-import { SummaryResponse } from "./types";
 import * as vscode from "vscode";
 
 export class WebviewProvider {
-  static createResultPanel(analysisStmtId: string): vscode.WebviewPanel {
+  private context: vscode.ExtensionContext;
+
+  constructor(context: vscode.ExtensionContext) {
+    this.context = context;
+  }
+
+  public createSettingsPanel() {
+    const panel = vscode.window.createWebviewPanel(
+      "reactWebview",
+      "React Webview",
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+      }
+    );
+
+    const webviewJsPath = vscode.Uri.file(
+      path.join(this.context.extensionPath, "dist", "webview.js")
+    );
+
+    panel.webview.html = this.getSettingsWebviewContent(
+      panel.webview,
+      webviewJsPath
+    );
+
+    panel.webview.onDidReceiveMessage(
+      (message) => {
+        switch (message.command) {
+          case "alert":
+            vscode.window.showInformationMessage(message.text);
+            return;
+        }
+      },
+      undefined,
+      this.context.subscriptions
+    );
+  }
+
+  public createResultPanel(analysisStmtId: string): vscode.WebviewPanel {
     const panel = vscode.window.createWebviewPanel(
       "pawsqlOptimizationResult",
       LanguageService.getMessage("webview.anlysis.result.title"),
@@ -17,7 +55,6 @@ export class WebviewProvider {
 
     panel.webview.html = this.getWebviewContent(analysisStmtId);
 
-    // 监听来自 Webview 的消息
     panel.webview.onDidReceiveMessage(
       (message) => {
         switch (message.command) {
@@ -30,24 +67,47 @@ export class WebviewProvider {
         }
       },
       undefined,
-      [] // 如果没有其他需要清理的订阅，可以传入空数组
+      []
     );
 
     return panel;
   }
 
-  static openOptimizationSummary(optimizationId: string) {
-    const panel = vscode.window.createWebviewPanel(
-      "pawsqlOptimizationResult",
-      LanguageService.getMessage("webview.anlysis.result.title"),
-      vscode.ViewColumn.Two,
-      { enableScripts: true, retainContextWhenHidden: true }
-    );
+  private getSettingsWebviewContent(
+    webview: vscode.Webview,
+    scriptPath: vscode.Uri
+  ): string {
+    const scriptUri = webview.asWebviewUri(scriptPath);
 
-    panel.webview.html = WebviewProvider.getWebviewContent(optimizationId);
+    return `<!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>React Webview</title>
+          <style>
+            body { padding: 20px; }
+            button { 
+              padding: 8px 16px;
+              background: #007acc;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            }
+            button:hover {
+              background: #005999;
+            }
+          </style>
+      </head>
+      <body>
+          <div id="settings-webview"></div>
+          <script src="${scriptUri}"></script>
+      </body>
+      </html>`;
   }
 
-  private static getWebviewContent(analysisStmtId: string): string {
+  private getWebviewContent(analysisStmtId: string): string {
     const { URLS } = getUrls();
     const queryUrl = `${URLS.QUERY_BASE}/${analysisStmtId}`;
     const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
@@ -57,7 +117,6 @@ export class WebviewProvider {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>${LanguageService.getMessage("webview.anlysis.result.title")}</title>
     <style>
         body, html { 
@@ -74,27 +133,26 @@ export class WebviewProvider {
         .iframe-container {
             width: 100%;
             height: 100%;
-            font-size: 30%; /* 调整字体大小到90% */
         }
-            #openLink {
-            background-color: #ffffff; /* 按钮背景颜色为白色 */
-            color: #333333; /* 按钮文本颜色为深灰色 */
-            border: 2px solid #cccccc; /* 边框颜色为浅灰色 */
-            border-radius: 5px; /* 圆角 */
-            padding: 5px 10px; /* 内边距 */
-            font-size: 12px; /* 字体大小 */
+        #openLink {
+            background-color: #ffffff;
+            color: #333333;
+            border: 2px solid #cccccc;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 12px;
             cursor: pointer;
-            position: fixed; /* 固定在页面 */
-            bottom: 10px; /* 距离顶部的距离 */
-            left: 50%; /* 水平居中 */
-            transform: translateX(-50%); /* 通过平移实现精确居中 */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* 添加阴影效果 */
-            transition: background-color 0.3s, color 0.3s; /* 平滑过渡 */
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, color 0.3s;
         }
 
         #openLink:hover {
-            background-color: #f0f0f0; /* 悬停时背景颜色为浅灰色 */
-            color: #000000; /* 悬停时文本颜色为黑色 */
+            background-color: #f0f0f0;
+            color: #000000;
         }
     </style>
 </head>

@@ -25,11 +25,13 @@ export class PawSQLExtension {
   private readonly decorationManager: DecorationManager;
   private readonly commandManager: CommandManager;
   private readonly sqlCodeLensProvider: SqlCodeLensProvider;
+  private readonly webviewProvider: WebviewProvider;
   private treeProvider: PawSQLTreeProvider | undefined;
 
   constructor(private readonly context: vscode.ExtensionContext) {
     // 初始化管理器和提供者
     this.workspaceManager = new WorkspaceManager(this);
+    this.webviewProvider = new WebviewProvider(context);
     this.decorationManager = new DecorationManager(context);
     this.sqlCodeLensProvider = registerSqlCodeLensProvider(context);
 
@@ -55,71 +57,13 @@ export class PawSQLExtension {
     let disposable = vscode.commands.registerCommand(
       "vscode-webview-react.showWebview",
       () => {
-        const panel = vscode.window.createWebviewPanel(
-          "reactWebview",
-          "React Webview",
-          vscode.ViewColumn.One,
-          {
-            enableScripts: true,
-          }
-        );
-
-        const webviewJsPath = vscode.Uri.file(
-          path.join(this.context.extensionPath, "dist", "webview.js")
-        );
-
-        panel.webview.html = this.getWebviewContent(
-          panel.webview,
-          webviewJsPath
-        );
-
-        panel.webview.onDidReceiveMessage(
-          (message) => {
-            switch (message.command) {
-              case "alert":
-                vscode.window.showInformationMessage(message.text);
-                return;
-            }
-          },
-          undefined,
-          this.context.subscriptions
-        );
+        this.webviewProvider.createSettingsPanel();
       }
     );
 
     this.context.subscriptions.push(disposable);
   }
 
-  private getWebviewContent(webview: vscode.Webview, scriptPath: vscode.Uri) {
-    const scriptUri = webview.asWebviewUri(scriptPath);
-
-    return `<!DOCTYPE html>
-      <html lang="en">
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>React Webview</title>
-          <style>
-            body { padding: 20px; }
-            button { 
-              padding: 8px 16px;
-              background: #007acc;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-            }
-            button:hover {
-              background: #005999;
-            }
-          </style>
-      </head>
-      <body>
-          <div id="settings-webview""></div>
-          <script src="${scriptUri}"></script>
-      </body>
-      </html>`;
-  }
   private async initializeExtension(): Promise<void> {
     // 初始化语言服务
     LanguageService.loadLanguage(vscode.env.language);
@@ -267,7 +211,7 @@ export class PawSQLExtension {
     await vscode.env.openExternal(vscode.Uri.parse(URLS.NEW_WORKSPACE));
   }
   private async showStatementResult(analysisStmtId: string): Promise<void> {
-    WebviewProvider.createResultPanel(analysisStmtId);
+    this.webviewProvider.createResultPanel(analysisStmtId);
   }
 
   private registerProviders(): void {
@@ -442,7 +386,7 @@ export class PawSQLExtension {
   ): Promise<void> {
     const statementId = result.data.summaryStatementInfo[0]?.analysisStmtId;
     if (statementId) {
-      await WebviewProvider.createResultPanel(statementId);
+      await this.webviewProvider.createResultPanel(statementId);
     }
   }
 
