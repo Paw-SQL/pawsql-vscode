@@ -26,19 +26,19 @@ export class CommandManager {
     const commands = [
       {
         command: COMMANDS.NO_API_KEY_HINT,
-        callback: () => this.openSettings("pawsql.apiKey"),
+        callback: () => ConfigurationService.openSettings("pawsql.apiKey"),
       },
       {
         command: COMMANDS.CONFIGURE_API_KEY,
-        callback: () => this.openSettings("pawsql.apiKey"),
+        callback: () => ConfigurationService.openSettings("pawsql.apiKey"),
       },
       {
         command: COMMANDS.CONFIGURE_API_URL,
-        callback: () => this.openSettings("pawsql.url"),
+        callback: () => ConfigurationService.openSettings("pawsql.url"),
       },
       {
         command: COMMANDS.PAWSQL_CONFIG,
-        callback: () => this.openSettings("pawsql."),
+        callback: () => ConfigurationService.openSettings("pawsqlInit"),
       },
     ];
 
@@ -63,13 +63,6 @@ export class CommandManager {
       () => {}
     );
     this.context.subscriptions.push(currentFileDefaultDisposable);
-  }
-
-  private async openSettings(section: string): Promise<void> {
-    await vscode.commands.executeCommand(
-      "workbench.action.openSettings",
-      section
-    );
   }
 
   public async handleWorkspaceSelection(): Promise<void> {

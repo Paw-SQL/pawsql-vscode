@@ -50,4 +50,15 @@ export const ConfigurationService = {
     const config = vscode.workspace.getConfiguration("pawsql");
     return config.get("defaultWorkspace");
   },
+
+  async openSettings(section: string): Promise<void> {
+    await vscode.commands.executeCommand(
+      "workbench.action.openSettings",
+      section
+    );
+    // 打开 pawsql sidebar
+    await vscode.commands.executeCommand(
+      "workbench.view.extension.pawsqlContainer"
+    );
+  },
 };
