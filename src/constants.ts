@@ -36,10 +36,8 @@ export const UI_MESSAGES = {
 
 export function getUrls() {
   const config = vscode.workspace.getConfiguration("pawsql.url");
-  const frontendUrl =
-    config.get<string>("frontendUrl") || "https://www.pawsql.com";
-  const backendUrl =
-    config.get<string>("backendUrl") || "https://www.pawsql.com";
+  const frontendUrl = config.get<string>("frontendUrl");
+  const backendUrl = config.get<string>("backendUrl");
 
   return {
     DOMAIN: {

@@ -21,7 +21,7 @@
         {
           "id": "pawsqlContainer",
           "title": "PawSQL",
-          "icon": "./resources/paw.svg"
+          "icon": "./resources/icon/paw.svg"
         }
       ]
     },
@@ -60,6 +60,10 @@
       "en": "./i18n/en.json"
     },
     "commands": [
+      {
+        "command": "vscode-webview-react.showWebview",
+        "title": "Show React Webview"
+      },
       {
         "command": "pawsql.configureApiKey",
         "title": "%commands.configureApiKey%"
@@ -109,7 +113,7 @@
       },
       {
         "command": "pawsql.setDefaultWorkspace",
-        "title": "commands.setDefaultWorkspace",
+        "title": "%commands.setDefaultWorkspace%",
         "icon": "$(star)"
       },
       {
@@ -123,83 +127,122 @@
         "label": "%menus.mainMenu%"
       }
     ],
-    "configuration": {
-      "title": "PawSQL",
-      "properties": {
-        "pawsql.apiKey": {
-          "type": "string",
-          "default": "",
-          "description": "PawSQL API Key",
-          "order": 3
-        },
-        "pawsql.url.frontendUrl": {
-          "type": "string",
-          "default": "https://www.pawsql.com",
-          "description": "PawSQL Frontend URL",
-          "order": 2
-        },
-        "pawsql.url.backendUrl": {
-          "type": "string",
-          "default": "https://www.pawsql.com",
-          "description": "PawSQL Backend URL",
-          "order": 1
-        },
-        "pawsql.defaultWorkspace": {
-          "type": "object",
-          "properties": {
-            "workspaceId": {
-              "type": "string"
-            },
-            "workspaceName": {
-              "type": "string"
-            },
-            "dbType:": {
-              "type": "string"
-            },
-            "dbHost": {
-              "type": "string"
-            },
-            "dbPort": {
-              "type": "string"
-            }
+    "configuration": [
+      {
+        "id": "pawsqlInit",
+        "title": "%config.initialization.title%",
+        "description": "%config.initialization.description%",
+        "properties": {
+          "pawsql.apiKey": {
+            "type": "string",
+            "default": "",
+            "description": "%config.initialization.apiKey.description%",
+            "markdownDescription": "%config.initialization.apiKey.markdownDescription%",
+            "order": 1
           },
-          "description": "PawSQL Default Workspace",
-          "order": 4
-        },
-        "pawsql.recentWorkspaces": {
-          "type": "array",
-          "default": [],
-          "items": {
+          "pawsql.url.backendUrl": {
+            "type": "string",
+            "default": "",
+            "description": "%config.initialization.backendUrl.description%",
+            "markdownDescription": "%config.initialization.backendUrl.markdownDescription%",
+            "order": 2
+          },
+          "pawsql.url.frontendUrl": {
+            "type": "string",
+            "default": "",
+            "description": "%config.initialization.frontendUrl.description%",
+            "markdownDescription": "%config.initialization.frontendUrl.markdownDescription%",
+            "order": 3
+          }
+        }
+      },
+      {
+        "id": "pawsqlWorkspace",
+        "title": "%config.workspace.title%",
+        "description": "%config.workspace.description%",
+        "properties": {
+          "pawsql.defaultWorkspace": {
             "type": "object",
+            "title": "%config.workspace.default.title%",
+            "description": "%config.workspace.default.description%",
+            "markdownDescription": "%config.workspace.default.markdownDescription%",
             "properties": {
               "workspaceId": {
-                "type": "string"
+                "type": "string",
+                "description": "%config.workspace.default.workspaceId.description%",
+                "markdownDescription": "%config.workspace.default.workspaceId.markdownDescription%"
               },
               "workspaceName": {
-                "type": "string"
+                "type": "string",
+                "description": "%config.workspace.default.workspaceName.description%",
+                "markdownDescription": "%config.workspace.default.workspaceName.markdownDescription%"
               },
-              "dbType:": {
-                "type": "string"
+              "dbType": {
+                "type": "string",
+                "description": "%config.workspace.default.dbType.description%",
+                "markdownDescription": "%config.workspace.default.dbType.markdownDescription%"
               },
               "dbHost": {
-                "type": "string"
+                "type": "string",
+                "description": "%config.workspace.default.dbHost.description%",
+                "markdownDescription": "%config.workspace.default.dbHost.markdownDescription%"
               },
               "dbPort": {
-                "type": "string"
+                "type": "string",
+                "description": "%config.workspace.default.dbPort.description%",
+                "markdownDescription": "%config.workspace.default.dbPort.markdownDescription%"
               }
             }
           },
-          "description": "最近使用的工作空间列表",
-          "order": 5
-        },
-        "pawsql.fileWorkspaceMappings": {
-          "type": "object",
-          "default": {},
-          "description": "文件标识符与工作空间的映射关系",
-          "order": 6
+          "pawsql.recentWorkspaces": {
+            "type": "array",
+            "title": "%config.workspace.recent.title%",
+            "description": "%config.workspace.recent.description%",
+            "markdownDescription": "%config.workspace.recent.markdownDescription%",
+            "default": [],
+            "items": {
+              "type": "object",
+              "title": "%config.workspace.recent.item.title%",
+              "description": "%config.workspace.recent.item.description%",
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "description": "%config.workspace.recent.workspaceId.description%",
+                  "markdownDescription": "%config.workspace.recent.workspaceId.markdownDescription%"
+                },
+                "workspaceName": {
+                  "type": "string",
+                  "description": "%config.workspace.recent.workspaceName.description%",
+                  "markdownDescription": "%config.workspace.recent.workspaceName.markdownDescription%"
+                },
+                "dbType": {
+                  "type": "string",
+                  "description": "%config.workspace.recent.dbType.description%",
+                  "markdownDescription": "%config.workspace.recent.dbType.markdownDescription%"
+                },
+                "dbHost": {
+                  "type": "string",
+                  "description": "%config.workspace.recent.dbHost.description%",
+                  "markdownDescription": "%config.workspace.recent.dbHost.markdownDescription%"
+                },
+                "dbPort": {
+                  "type": "string",
+                  "description": "%config.workspace.recent.dbPort.description%",
+                  "markdownDescription": "%config.workspace.recent.dbPort.markdownDescription%"
+                }
+              }
+            }
+          },
+          "pawsql.fileWorkspaceMappings": {
+            "type": "object",
+            "title": "%config.workspace.fileMapping.title%",
+            "description": "%config.workspace.fileMapping.description%",
+            "markdownDescription": "%config.workspace.fileMapping.markdownDescription%",
+            "default": {}
+          }
         }
       }
-    },
+    ],
     "menus": {
       "editor/context": [
         {
@@ -264,6 +307,15 @@
           "title": "%menus.recentWorkspace%"
         }
       ]
+    },
+    "icons": {
+      "pawsql-icon": {
+        "description": "PawSQL",
+        "default": {
+          "fontPath": "./resources/icon/icomoon.woff",
+          "fontCharacter": "\\E900"
+        }
+      }
     }
   },
   "scripts": {
@@ -271,6 +323,7 @@
     "compile": "webpack",
     "watch": "webpack --watch",
     "package": "webpack --mode production --devtool hidden-source-map",
+    "build-webview": "esbuild src/webview/index.tsx --bundle --minify --outfile=dist/webview.js --external:vscode-webview --format=iife --platform=browser",
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {
@@ -282,11 +335,16 @@
     "ts-loader": "^9.0.0",
     "typescript": "^4.0.0",
     "webpack": "^5.0.0",
-    "webpack-cli": "^4.0.0"
+    "webpack-cli": "^4.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "esbuild": "^0.19.0"
   },
   "dependencies": {
     "axios": "^1.7.7",
     "supports-color": "^9.4.0",
-    "vscode-nls": "^5.2.0"
+    "vscode-nls": "^5.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }

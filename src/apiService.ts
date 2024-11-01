@@ -1,5 +1,5 @@
-import axios from "axios";
 import { getUrls } from "./constants";
+import axios, { AxiosError } from "axios";
 
 // 定义接口请求参数和返回数据类型
 interface ListWorkspacesParams {
@@ -104,6 +104,9 @@ export const getWorkspaces = async (
     pageNumber: 1,
   });
 
+  if (!response.data.data) {
+    throw Error("error.backendUrl.invalid");
+  }
   return response.data;
 };
 // 获取优化列表
@@ -119,6 +122,12 @@ export const getAnalyses = async (
     pageSize: 10,
     pageNumber: 1,
   });
+
+  console.log(!response.data.data);
+
+  if (!response.data.data) {
+    throw Error("error.backendUrl.invalid");
+  }
   return response.data;
 };
 
@@ -129,6 +138,11 @@ export const createAnalysis = async (
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/createAnalysis`;
   const response = await axios.post<CreateAnalysisResponse>(url, params);
+  console.log(123);
+  console.log(!response.data.data);
+  if (!response.data.data) {
+    throw Error("error.backendUrl.invalid");
+  }
   return response.data;
 };
 
@@ -139,6 +153,9 @@ export const getAnalysisSummary = async (
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/getAnalysisSummary`;
   const response = await axios.post<GetAnalysisSummaryResponse>(url, params);
+  if (!response.data.data) {
+    throw Error("error.backendUrl.invalid");
+  }
   return response.data;
 };
 
@@ -149,6 +166,9 @@ export const getStatementDetails = async (
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/getStatementDetails`;
   const response = await axios.post<GetStatementDetailsResponse>(url, params);
+  if (!response.data.data) {
+    throw Error("error.backendUrl.invalid");
+  }
   return response.data;
 };
 
@@ -166,18 +186,177 @@ export const validateUserKey = async (userKey: string): Promise<boolean> => {
   }
 };
 
-export const checkConnectivity = async (url: string): Promise<boolean> => {
+interface ValidationResult {
+  isAvailable: boolean;
+  error?: string;
+  details?: {
+    message: string;
+    statusCode?: number;
+    errorCode?: string;
+  };
+}
+
+interface ValidationOptions {
+  timeout?: number;
+}
+
+/**
+ * 验证后端服务可用性
+ */
+export const validateBackend = async (
+  backendUrl: string,
+  options: ValidationOptions = {}
+): Promise<ValidationResult> => {
+  const timeout = options.timeout || 3000;
+
   try {
-    // 使用 HEAD 请求进行简单的连通性测试
-    await axios.head(url, { timeout: 3000 }); // 设置一个超时时间
-    return true;
-  } catch (error: any) {
-    if (error.code === "ECONNREFUSED") {
-      return false;
-    } else {
-      return true;
+    // 处理 URL，确保格式正确
+    const url = backendUrl.endsWith("/") ? backendUrl.slice(0, -1) : backendUrl;
+
+    // 尝试访问根路径，大多数 Spring Boot 应用都会响应
+    const response = await axios({
+      method: "get",
+      url: url,
+      timeout,
+      headers: {
+        Accept: "application/json, text/plain, */*",
+      },
+      validateStatus: (status) => {
+        // 任何响应都表示服务在运行
+        return status >= 200 && status < 500;
+      },
+    });
+    console.log(response);
+
+    // 2xx 和 3xx 状态码表示正常访问
+    const isSuccessResponse = response.status >= 200 && response.status < 400;
+
+    return {
+      isAvailable: true,
+      details: {
+        message: isSuccessResponse
+          ? `成功连接到后端服务 (状态码: ${response.status})`
+          : `后端服务可访问，但返回了状态码: ${response.status}`,
+        statusCode: response.status,
+      },
+    };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    console.log(axiosError);
+
+    // 如果收到任何 HTTP 响应，说明服务器是在线的
+    if (
+      axiosError.response?.status !== undefined &&
+      axiosError.response.status >= 200 &&
+      axiosError.response.status < 500
+    ) {
+      return {
+        isAvailable: true,
+        details: {
+          message: "后端服务可访问，但可能需要认证或存在其他限制",
+          statusCode: axiosError.response.status,
+          errorCode: axiosError.code,
+        },
+      };
     }
+
+    return {
+      isAvailable: false,
+      error: getErrorMessage(axiosError),
+      details: {
+        message: axiosError.message,
+        errorCode: axiosError.code,
+      },
+    };
   }
+};
+
+/**
+ * 验证前端服务可用性
+ */
+export const validateFrontend = async (
+  frontendUrl: string,
+  options: ValidationOptions = {}
+): Promise<ValidationResult> => {
+  const timeout = options.timeout || 3000;
+
+  try {
+    const url = frontendUrl.endsWith("/")
+      ? frontendUrl.slice(0, -1)
+      : frontendUrl;
+
+    const response = await axios({
+      method: "get",
+      url,
+      timeout,
+      headers: {
+        Accept: "text/html, */*",
+      },
+      maxRedirects: 5,
+      validateStatus: (status) => status >= 200 && status < 500,
+    });
+
+    const isSuccessResponse = response.status >= 200 && response.status < 400;
+
+    return {
+      isAvailable: true,
+      details: {
+        message: isSuccessResponse
+          ? `成功连接到前端服务 (状态码: ${response.status})`
+          : `前端服务可访问，但返回了状态码: ${response.status}`,
+        statusCode: response.status,
+      },
+    };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    console.log(error);
+
+    if (
+      axiosError.response?.status !== undefined &&
+      axiosError.response.status >= 200 &&
+      axiosError.response.status < 500
+    ) {
+      return {
+        isAvailable: true,
+        details: {
+          message: "前端服务可访问，但返回了非预期的状态码",
+          statusCode: axiosError.response.status,
+          errorCode: axiosError.code,
+        },
+      };
+    }
+
+    return {
+      isAvailable: false,
+      error: getErrorMessage(axiosError),
+      details: {
+        message: axiosError.message,
+        errorCode: axiosError.code,
+      },
+    };
+  }
+};
+
+/**
+ * 获取友好的错误消息
+ */
+const getErrorMessage = (error: AxiosError): string => {
+  if (error.code === "ECONNREFUSED") {
+    return "无法连接到服务器，服务可能未启动";
+  }
+  if (error.code === "ETIMEDOUT") {
+    return "连接超时，请检查服务器地址或网络状况";
+  }
+  if (error.code === "ERR_BAD_REQUEST") {
+    return "服务器返回了错误的响应，但服务是在线的";
+  }
+  if (error.code === "ERR_NETWORK") {
+    return "网络错误，请检查网络连接";
+  }
+  if (error.code === "ENOTFOUND") {
+    return "无法解析服务器地址，请检查 URL 是否正确";
+  }
+  return error.message;
 };
 
 // 组合服务以便于调用
@@ -187,6 +366,5 @@ export const ApiService = {
   createAnalysis,
   getAnalysisSummary,
   getStatementDetails,
-  checkConnectivity,
   validateUserKey,
 };
