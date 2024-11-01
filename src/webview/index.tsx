@@ -1,28 +1,27 @@
+// src/App.tsx 或其他使用 ConfigForm 的组件
 import * as React from "react";
+import ConfigForm from "./components/ConfigForm";
 import * as ReactDOM from "react-dom";
 
-const vscode = window.acquireVsCodeApi();
-
-function App() {
-  const [count, setCount] = React.useState(0);
-
-  const handleClick = () => {
-    setCount((prev) => prev + 1);
+const App: React.FC = () => {
+  const handleConfigSubmit = (config: {
+    apiKey: string;
+    backendUrl: string;
+    frontendUrl: string;
+  }) => {
+    const vscode = window.acquireVsCodeApi();
     vscode.postMessage({
-      command: "alert",
-      text: `Count is now ${count + 1}`,
+      command: "saveConfig",
+      config,
     });
   };
 
   return (
     <div>
-      <h1>VSCode React Webview</h1>
-      <button onClick={handleClick}>Count: {count}</button>
+      <h1>欢迎使用 PawSQL</h1>
+      <ConfigForm onSubmit={handleConfigSubmit} />
     </div>
   );
-}
+};
 
 ReactDOM.render(<App />, document.getElementById("settings-webview"));
-function acquireVsCodeApi() {
-  throw new Error("Function not implemented.");
-}

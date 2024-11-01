@@ -35,11 +35,40 @@ export class WebviewProvider {
           case "alert":
             vscode.window.showInformationMessage(message.text);
             return;
+          case "saveConfig":
+            this.handleSaveConfig(message.config); // 处理保存配置
+            return;
         }
       },
       undefined,
       this.context.subscriptions
     );
+  }
+
+  // 修改保存配置的方法
+  private async handleSaveConfig(config: {
+    apiKey: string;
+    backendUrl: string;
+    frontendUrl: string;
+  }) {
+    try {
+      // 分别更新每个配置项
+      await vscode.workspace
+        .getConfiguration("pawsql")
+        .update("apiKey", config.apiKey, true);
+      await vscode.workspace
+        .getConfiguration("pawsql")
+        .update("backendUrl", config.backendUrl, true);
+      await vscode.workspace
+        .getConfiguration("pawsql")
+        .update("frontendUrl", config.frontendUrl, true);
+
+      // 配置保存成功反馈
+      vscode.window.showInformationMessage("配置已成功保存！");
+    } catch (error) {
+      // 错误处理
+      vscode.window.showErrorMessage(`保存配置失败: ${error}`);
+    }
   }
 
   public createResultPanel(analysisStmtId: string): vscode.WebviewPanel {

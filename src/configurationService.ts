@@ -11,11 +11,11 @@ export const ConfigurationService = {
   },
 
   async getFrontendUrl(): Promise<string | undefined> {
-    return this.config.get("url.frontendUrl");
+    return this.config.get("frontendUrl");
   },
 
   async getBackendUrl(): Promise<string | undefined> {
-    return this.config.get("url.backendUrl");
+    return this.config.get("backendUrl");
   },
 
   // 获取用户级别的默认工作空间

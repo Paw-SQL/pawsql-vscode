@@ -93,7 +93,7 @@ class StatementItem extends vscode.TreeItem {
 // Optimized ConfigurationItem class
 class ConfigurationItem extends vscode.TreeItem {
   constructor(
-    public readonly config: "apiKey" | "url.frontendUrl" | "url.backendUrl",
+    public readonly config: "apiKey" | "frontendUrl" | "backendUrl",
     public readonly label: string,
     public isValid: boolean = false
   ) {
@@ -169,16 +169,16 @@ export class PawSQLTreeProvider
     );
 
     this.configItems.set(
-      "url.backendUrl",
+      "backendUrl",
       new ConfigurationItem(
-        "url.backendUrl",
+        "backendUrl",
         LanguageService.getMessage("sidebar.backendUrl.label")
       )
     );
     this.configItems.set(
-      "url.frontendUrl",
+      "frontendUrl",
       new ConfigurationItem(
-        "url.frontendUrl",
+        "frontendUrl",
         LanguageService.getMessage("sidebar.frontendUrl.label")
       )
     );
@@ -203,8 +203,8 @@ export class PawSQLTreeProvider
     if (element instanceof WorkspaceManagerItem) {
       if (!this.isConfigValid) {
         return [
-          this.configItems.get("url.backendUrl")!,
-          this.configItems.get("url.frontendUrl")!,
+          this.configItems.get("backendUrl")!,
+          this.configItems.get("frontendUrl")!,
           this.configItems.get("apiKey")!,
           new ValidateConfigItem(),
         ];
@@ -229,8 +229,8 @@ export class PawSQLTreeProvider
   public async validateConfiguration(hideMessage?: boolean): Promise<void> {
     const config = vscode.workspace.getConfiguration("pawsql");
     const apiKey = config.get<string>("apiKey");
-    const frontendUrl = config.get<string>("url.frontendUrl");
-    const backendUrl = config.get<string>("url.backendUrl");
+    const frontendUrl = config.get<string>("frontendUrl");
+    const backendUrl = config.get<string>("backendUrl");
 
     try {
       // Reset all validation states first
@@ -241,7 +241,7 @@ export class PawSQLTreeProvider
 
       const backendResult = await validateBackend(backendUrl ?? "");
       const isBackendConnected = backendResult.isAvailable;
-      const backendConfig = this.configItems.get("url.backendUrl");
+      const backendConfig = this.configItems.get("backendUrl");
       if (backendConfig) {
         backendConfig.setValidationState(isBackendConnected);
         this._onDidChangeTreeData.fire(backendConfig);
@@ -263,7 +263,7 @@ export class PawSQLTreeProvider
       console.log(frontendReuslt);
 
       const isFrontendConnected = frontendReuslt.isAvailable;
-      const frontendConfig = this.configItems.get("url.frontendUrl");
+      const frontendConfig = this.configItems.get("frontendUrl");
       if (frontendConfig) {
         frontendConfig.setValidationState(isFrontendConnected);
         this._onDidChangeTreeData.fire(frontendConfig);
@@ -321,13 +321,13 @@ export class PawSQLTreeProvider
   public async validateConfig(): Promise<boolean> {
     const config = vscode.workspace.getConfiguration("pawsql");
     const apiKey = config.get<string>("apiKey");
-    const frontendUrl = config.get<string>("url.frontendUrl");
-    const backendUrl = config.get<string>("url.backendUrl");
+    const frontendUrl = config.get<string>("frontendUrl");
+    const backendUrl = config.get<string>("backendUrl");
 
     try {
       const backendResult = await validateBackend(backendUrl ?? "");
       const isBackendConnected = backendResult.isAvailable;
-      const backendConfig = this.configItems.get("url.backendUrl");
+      const backendConfig = this.configItems.get("backendUrl");
       if (backendConfig) {
         backendConfig.setValidationState(isBackendConnected);
         this._onDidChangeTreeData.fire(backendConfig);
@@ -336,7 +336,7 @@ export class PawSQLTreeProvider
       // Validate frontend connectivity
       const frontendReuslt = await validateFrontend(frontendUrl ?? "");
       const isFrontendConnected = frontendReuslt.isAvailable;
-      const frontendConfig = this.configItems.get("url.frontendUrl");
+      const frontendConfig = this.configItems.get("frontendUrl");
       if (frontendConfig) {
         frontendConfig.setValidationState(isFrontendConnected);
         this._onDidChangeTreeData.fire(frontendConfig);
@@ -377,11 +377,11 @@ export class PawSQLTreeProvider
     const value = config.get<string>(key);
 
     try {
-      if (key === "url.backendUrl") {
+      if (key === "backendUrl") {
         // Validate backend connectivity
         const backendResult = await validateBackend(value ?? "");
         const isBackendConnected = backendResult.isAvailable;
-        const backendConfig = this.configItems.get("url.backendUrl");
+        const backendConfig = this.configItems.get("backendUrl");
         if (backendConfig) {
           backendConfig.setValidationState(isBackendConnected);
           this._onDidChangeTreeData.fire(backendConfig);
@@ -394,11 +394,11 @@ export class PawSQLTreeProvider
           );
           return;
         }
-      } else if (key === "url.frontendUrl") {
+      } else if (key === "frontendUrl") {
         // Validate frontend connectivity
         const frontendReuslt = await validateFrontend(value ?? "");
         const isFrontendConnected = frontendReuslt.isAvailable;
-        const frontendConfig = this.configItems.get("url.frontendUrl");
+        const frontendConfig = this.configItems.get("frontendUrl");
         if (frontendConfig) {
           frontendConfig.setValidationState(isFrontendConnected);
           this._onDidChangeTreeData.fire(frontendConfig);

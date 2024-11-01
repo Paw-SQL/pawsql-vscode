@@ -246,8 +246,8 @@ export class PawSQLExtension {
   private isApiConfigChanged(e: vscode.ConfigurationChangeEvent): boolean {
     return (
       e.affectsConfiguration("pawsql.apiKey") ||
-      e.affectsConfiguration("pawsql.url.frontendUrl") ||
-      e.affectsConfiguration("pawsql.url.backendUrl")
+      e.affectsConfiguration("pawsql.frontendUrl") ||
+      e.affectsConfiguration("pawsql.backendUrl")
     );
   }
 
