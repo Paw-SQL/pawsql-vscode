@@ -6,7 +6,7 @@
   "initialize.commands.failed": "Failed to initialize commands.",
   "configuration.update.failed": "Configuration update failed.",
   "menu.update.failed": "Failed to update the menu.",
-  "workspace.operation.failed": "Workspace operation failed.",
+  "workspace.operation.failed": "Workspace operation failed",
   "sql.optimization.failed": "Optimization failed.",
   "no.active.editor": "No active editor found.",
   "invalid.sql.text": "Please select a valid SQL.",

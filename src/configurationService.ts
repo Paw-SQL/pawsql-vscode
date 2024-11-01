@@ -23,12 +23,6 @@ export const ConfigurationService = {
     return this.config.get<WorkspaceItem>("defaultWorkspace");
   },
 
-  // 获取最近使用的工作空间
-  async getRecentWorkspaces(): Promise<WorkspaceItem[]> {
-    const config = vscode.workspace.getConfiguration("pawsql");
-    return config.get<WorkspaceItem[]>("recentWorkspaces") || [];
-  },
-
   // 设置用户级别的默认工作空间
   async setUserDefaultWorkspace(workspaceItem: WorkspaceItem): Promise<void> {
     await this.config.update(

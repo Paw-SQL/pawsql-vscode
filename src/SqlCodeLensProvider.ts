@@ -3,6 +3,7 @@ import { ConfigurationService } from "./configurationService";
 import parse from "./utils/parse";
 import { COMMANDS } from "./constants";
 import { LanguageService } from "./LanguageService";
+import { ApiService } from "./apiService";
 
 interface OptimizeState {
   isOptimizing: boolean;
@@ -122,7 +123,9 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
       .getConfiguration("pawsql")
       .get<string>("apiKey");
 
-    if (!apiKey) {
+    const isApikeyValid = await ApiService.validateUserKey(apiKey ?? "");
+
+    if (!isApikeyValid) {
       codeLenses.push(
         new vscode.CodeLens(separatorRange, {
           title: LanguageService.getMessage("init.pawsql.config"),
@@ -288,28 +291,4 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
   public dispose(): void {
     this.disposables.forEach((d) => d.dispose());
   }
-}
-
-// 注册 CodeLens Provider 的辅助函数
-export function registerSqlCodeLensProvider(context: vscode.ExtensionContext) {
-  const provider = new SqlCodeLensProvider(context);
-
-  const disposable = vscode.languages.registerCodeLensProvider(
-    { language: "sql", scheme: "file" },
-    provider
-  );
-
-  // 确保在文件打开时创建分隔符
-  context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument(async (document) => {
-      if (document.languageId === "sql") {
-        provider.refresh();
-      }
-    })
-  );
-
-  context.subscriptions.push(disposable);
-  context.subscriptions.push(provider);
-
-  return provider;
 }

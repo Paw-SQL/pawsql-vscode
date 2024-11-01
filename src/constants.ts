@@ -2,20 +2,10 @@ import * as vscode from "vscode";
 import { LanguageService } from "./LanguageService";
 
 export const COMMANDS = {
-  NO_API_KEY_HINT: "pawsql.noApiKeyHint",
-  CONFIGURE_API_KEY: "pawsql.configureApiKey",
-  CONFIGURE_API_URL: "pawsql.configureApiURL",
-  SELECT_WORKSPACE: "pawsql.selectWorkspace",
-  CURRENT_FILE_DEFAULT_WORKSPACE: "pawsql.currentFileDefaultWorkspace",
   CONFIG_FILE_DEFAULT_WORKSPACE: "pawsql.selectFileDefaultWorkspace",
   OPTIMIZE_WITH_FILE_DEFAULT_WORKSPACE: "pawsql.optimizeWithDefaultWorkspace",
   OPTIMIZE_WITH_FILE_SELECTED_WORKSPACE: "pawsql.optimizeWithSelectedWorkspace",
-  OPTIMIZE_LAST_WORKSPACE: "pawsql.recentWorkspace", // 添加此行
   PAWSQL_CONFIG: "pawsql.openSettings",
-} as const;
-
-export const CONTEXTS = {
-  HAS_API_KEY: "pawsql:hasApiKey",
 } as const;
 
 export const UI_MESSAGES = {
@@ -35,7 +25,7 @@ export const UI_MESSAGES = {
 } as const;
 
 export function getUrls() {
-  const config = vscode.workspace.getConfiguration("pawsql.url");
+  const config = vscode.workspace.getConfiguration("pawsql");
   const frontendUrl = config.get<string>("frontendUrl");
   const backendUrl = config.get<string>("backendUrl");
 

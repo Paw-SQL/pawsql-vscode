@@ -176,6 +176,8 @@ export const getStatementDetails = async (
 export const validateUserKey = async (userKey: string): Promise<boolean> => {
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/validateUserKey`; // 假设你有这个验证接口
+  console.log(url);
+
   try {
     // 发送请求以验证 userKey
     const response = await axios.post(url, { userKey }, { timeout: 3000 });

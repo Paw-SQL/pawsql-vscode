@@ -14,7 +14,7 @@ export class CommandManager {
     private readonly sqlCodeLensProvider: SqlCodeLensProvider // 接受 SqlCodeLensProvider 实例
   ) {}
 
-  public async initializeCommands(apiKey: string | undefined): Promise<void> {
+  public async initializeCommands(): Promise<void> {
     try {
       this.registerApiKeyCommands();
     } catch (error) {
@@ -25,73 +25,20 @@ export class CommandManager {
   private registerApiKeyCommands(): void {
     const commands = [
       {
-        command: COMMANDS.NO_API_KEY_HINT,
-        callback: () => ConfigurationService.openSettings("pawsql.apiKey"),
-      },
-      {
-        command: COMMANDS.CONFIGURE_API_KEY,
-        callback: () => ConfigurationService.openSettings("pawsql.apiKey"),
-      },
-      {
-        command: COMMANDS.CONFIGURE_API_URL,
-        callback: () => ConfigurationService.openSettings("pawsql.url"),
-      },
-      {
         command: COMMANDS.PAWSQL_CONFIG,
         callback: () => ConfigurationService.openSettings("pawsqlInit"),
       },
     ];
-
     commands.forEach(({ command, callback }) => {
       const disposable = vscode.commands.registerCommand(command, callback);
       this.context.subscriptions.push(disposable);
     });
-
-    const disposable = vscode.commands.registerCommand(
-      COMMANDS.SELECT_WORKSPACE,
-      () => this.handleWorkspaceSelection()
-    );
-    this.context.subscriptions.push(disposable);
 
     const configFileDefaultDisposable = vscode.commands.registerCommand(
       COMMANDS.CONFIG_FILE_DEFAULT_WORKSPACE,
       () => this.handleFileDefaultWorkspaceSelection()
     );
     this.context.subscriptions.push(configFileDefaultDisposable);
-    const currentFileDefaultDisposable = vscode.commands.registerCommand(
-      COMMANDS.CURRENT_FILE_DEFAULT_WORKSPACE,
-      () => {}
-    );
-    this.context.subscriptions.push(currentFileDefaultDisposable);
-  }
-
-  public async handleWorkspaceSelection(): Promise<void> {
-    const apiKey = await ConfigurationService.getApiKey();
-    const statusBarItem = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Left
-    );
-    statusBarItem.text = UI_MESSAGES.QUERYING_WORKSPACES();
-    statusBarItem.show();
-
-    try {
-      const workspaces = await ApiService.getWorkspaces(apiKey ?? "");
-
-      if (workspaces.data.total === "0") {
-        await this.handleEmptyWorkspaces();
-        return;
-      }
-
-      const workspaceItems = this.createWorkspaceItems(workspaces);
-      const selected = await this.showWorkspaceQuickPick(workspaceItems);
-
-      if (selected) {
-        await this.extension.optimizeSql(selected.workspaceId);
-      }
-    } catch (error) {
-      ErrorHandler.handle("workspace.operation.failed", error);
-    } finally {
-      statusBarItem.dispose();
-    }
   }
 
   public async handleFileDefaultWorkspaceSelection(): Promise<void> {
@@ -140,6 +87,7 @@ export class CommandManager {
         }
       }
     } catch (error) {
+      this.sqlCodeLensProvider.refresh();
       ErrorHandler.handle("workspace.operation.failed", error);
     } finally {
       statusBarItem.dispose();

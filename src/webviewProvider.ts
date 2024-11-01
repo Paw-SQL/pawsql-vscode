@@ -31,12 +31,17 @@ export class WebviewProvider {
 
     panel.webview.onDidReceiveMessage(
       (message) => {
+        console.log(message);
+
         switch (message.command) {
           case "alert":
             vscode.window.showInformationMessage(message.text);
             return;
           case "saveConfig":
             this.handleSaveConfig(message.config); // 处理保存配置
+            return;
+          case "getConfig":
+            this.handleGetConfig(panel); // 处理获取配置
             return;
         }
       },
@@ -45,12 +50,35 @@ export class WebviewProvider {
     );
   }
 
+  private handleGetConfig(panel: vscode.WebviewPanel) {
+    const config = {
+      apiKey: vscode.workspace.getConfiguration("pawsql").get("apiKey") || "",
+      backendUrl:
+        vscode.workspace.getConfiguration("pawsql").get("backendUrl") || "",
+      frontendUrl:
+        vscode.workspace.getConfiguration("pawsql").get("frontendUrl") || "",
+    };
+    panel.webview.postMessage({ command: "configResponse", ...config });
+  }
+  // 发送消息到 Webview
+  private sendMessageToWebview(
+    command: string,
+    payload: any,
+    panel: vscode.WebviewPanel
+  ) {
+    if (panel) {
+      panel.webview.postMessage({ command, ...payload });
+    }
+  }
+
   // 修改保存配置的方法
   private async handleSaveConfig(config: {
     apiKey: string;
     backendUrl: string;
     frontendUrl: string;
   }) {
+    console.log(config);
+
     try {
       // 分别更新每个配置项
       await vscode.workspace

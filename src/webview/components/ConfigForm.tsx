@@ -1,3 +1,4 @@
+// ConfigForm.tsx
 import React from "react";
 import {
   TextField,
@@ -8,31 +9,44 @@ import {
   Alert,
   InputAdornment,
 } from "@mui/material";
-import ApiIcon from "@mui/icons-material/Api"; // API Key 图标
-import PublicIcon from "@mui/icons-material/Public"; // URL 图标
-import LinkIcon from "@mui/icons-material/Link"; // 链接图标
-import PawIcon from "./PawIcon"; // 引入 PawIcon 组件
+import ApiIcon from "@mui/icons-material/Api";
+import PublicIcon from "@mui/icons-material/Public";
+import LinkIcon from "@mui/icons-material/Link";
+import PawIcon from "./PawIcon";
 
-interface ConfigFormProps {
-  onSubmit: (config: {
-    apiKey: string;
-    backendUrl: string;
-    frontendUrl: string;
-  }) => void;
+interface Config {
+  apiKey: string;
+  backendUrl: string;
+  frontendUrl: string;
 }
 
-const ConfigForm: React.FC<ConfigFormProps> = ({ onSubmit }) => {
-  const [apiKey, setApiKey] = React.useState("");
-  const [backendUrl, setBackendUrl] = React.useState("");
-  const [frontendUrl, setFrontendUrl] = React.useState("");
+interface ConfigFormProps {
+  initialConfig: Config;
+  onSubmit: (config: Config) => void;
+}
+
+const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
+  const [apiKey, setApiKey] = React.useState(initialConfig.apiKey);
+  const [backendUrl, setBackendUrl] = React.useState(initialConfig.backendUrl);
+  const [frontendUrl, setFrontendUrl] = React.useState(
+    initialConfig.frontendUrl
+  );
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarMessage, setSnackbarMessage] = React.useState("");
   const [snackbarSeverity, setSnackbarSeverity] = React.useState<
     "success" | "error"
   >("success");
 
+  // 当 initialConfig 更新时，更新表单状态
+  React.useEffect(() => {
+    setApiKey(initialConfig.apiKey);
+    setBackendUrl(initialConfig.backendUrl);
+    setFrontendUrl(initialConfig.frontendUrl);
+  }, [initialConfig]);
+
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+
     if (!apiKey || !backendUrl || !frontendUrl) {
       setSnackbarMessage("请填写所有字段");
       setSnackbarSeverity("error");
@@ -55,7 +69,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ onSubmit }) => {
       <div
         style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}
       >
-        <PawIcon /> {/* 使用 PawIcon 组件 */}
+        <PawIcon />
         <Typography variant="h4" align="center" gutterBottom>
           配置 PawSQL
         </Typography>
