@@ -1,6 +1,6 @@
 import * as React from "react";
-import ConfigForm from "./components/ConfigForm";
 import * as ReactDOM from "react-dom";
+import ConfigForm from "./components/ConfigForm";
 
 interface Config {
   apiKey: string;
@@ -15,35 +15,46 @@ const App: React.FC = () => {
     frontendUrl: "",
   });
 
-  const handleConfigSubmit = (newConfig: Config) => {
-    const vscode = window.acquireVsCodeApi();
-    vscode.postMessage({
-      command: "saveConfig",
-      config: newConfig,
-    });
-  };
+  const vscode = React.useMemo(() => {
+    return window.acquireVsCodeApi();
+  }, []);
+
+  const handleConfigSubmit = React.useCallback(
+    (newConfig: Config) => {
+      vscode.postMessage({
+        command: "saveConfig",
+        config: newConfig,
+      });
+    },
+    [vscode]
+  );
 
   React.useEffect(() => {
-    const vscode = window.acquireVsCodeApi();
-
-    // 监听来自 VSCode 的消息
     const messageHandler = (event: MessageEvent) => {
       const message = event.data;
+      console.log("Received message:", message);
+
       if (message.command === "configResponse") {
-        setConfig(message); // 更新状态
+        const newConfig = {
+          apiKey: message.apiKey || "",
+          backendUrl: message.backendUrl || "",
+          frontendUrl: message.frontendUrl || "",
+        };
+        console.log("Updating config:", newConfig);
+        setConfig(newConfig);
       }
     };
 
     window.addEventListener("message", messageHandler);
 
-    // 初始化时请求配置
+    // Request initial config
+    console.log("Requesting initial config");
     vscode.postMessage({ command: "getConfig" });
 
-    // 清理函数
     return () => {
       window.removeEventListener("message", messageHandler);
     };
-  }, []);
+  }, [vscode]);
 
   return (
     <div>

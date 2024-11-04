@@ -162,7 +162,7 @@ export class PawSQLExtension {
 
     this.context.subscriptions.push(
       vscode.commands.registerCommand(
-        "pawsql.optimizeWithSelectedWorkspace",
+        COMMANDS.OPTIMIZE_WITH_FILE_SELECTED_WORKSPACE,
         this.handleWorkspaceSelectionWithRangeQuery.bind(this)
       )
     );
@@ -172,18 +172,19 @@ export class PawSQLExtension {
     query: string,
     range: vscode.Range
   ): Promise<void> {
-    const isConfigValid = this.treeProvider.validateConfig;
-    if (!isConfigValid) {
-      return;
-    }
-
+    await this.sqlCodeLensProvider.setOptimizing(range, true);
     const statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left
     );
-    statusBarItem.text = UI_MESSAGES.QUERYING_WORKSPACES();
-    statusBarItem.show();
-
     try {
+      const isConfigValid = this.treeProvider.validateConfig;
+      if (!isConfigValid) {
+        return;
+      }
+
+      statusBarItem.text = UI_MESSAGES.QUERYING_WORKSPACES();
+      statusBarItem.show();
+
       const apiKey = await ConfigurationService.getApiKey();
       const workspaces = await ApiService.getWorkspaces(apiKey ?? "");
       if (workspaces.data.total === "0") {
@@ -199,11 +200,38 @@ export class PawSQLExtension {
 
       if (selected) {
         statusBarItem.dispose();
-        await this.optimizeSqlBelowButton(query, selected.workspaceId, range);
+
+        const workspaceId = selected.workspaceId;
+
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+          throw new Error("no.active.editor");
+        }
+
+        const optimizationStatusBarItem = this.createStatusBarItem(
+          UI_MESSAGES.OPTIMIZING_SQL()
+        );
+
+        try {
+          // 设置优化状态为 true
+          await this.selectAndRevealQuery(editor, range);
+          const result = await this.executeOptimization(workspaceId, query); // 使用获取到的 SQL 文本
+          // 3. 优化完成后更新消息
+          if (optimizationStatusBarItem) {
+            optimizationStatusBarItem.dispose(); // 清除之前的消息
+          }
+
+          await this.handleOptimizationResult(result);
+        } catch (error) {
+          ErrorHandler.handle("sql.optimization.failed", error);
+        } finally {
+          optimizationStatusBarItem.dispose();
+        }
       }
     } catch (error) {
       ErrorHandler.handle("workspace.operation.failed", error);
     } finally {
+      this.sqlCodeLensProvider.setOptimizing(range, false);
       if (statusBarItem) {
         statusBarItem.dispose();
       }
@@ -247,57 +275,55 @@ export class PawSQLExtension {
       e.affectsConfiguration("pawsql.backendUrl")
     );
   }
-
+  // optimizeSqlBelowButton 方法修改
   public async optimizeSqlBelowButton(
     query: string,
     workspaceId: string,
     range: vscode.Range
   ): Promise<void> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      throw new Error("no.active.editor");
-    }
-
-    const isConfigValid = this.treeProvider.validateConfig;
-    if (!isConfigValid) {
-      return;
-    }
-    const validateResult = await this.treeProvider.validateConfig();
-
-    if (!validateResult) {
-      return;
-    }
-
-    if (!workspaceId) {
-      await vscode.window.showInformationMessage(
-        UI_MESSAGES.NO_DEFAULT_WORKSPACE()
-      );
-      return;
-    }
+    // 1. 先设置状态并等待UI更新完成
+    await this.sqlCodeLensProvider.setOptimizing(range, true);
 
     const statusBarItem = this.createStatusBarItem(
       UI_MESSAGES.OPTIMIZING_SQL()
     );
 
     try {
-      // 设置优化状态为 true
-      this.sqlCodeLensProvider.setOptimizing(range, true);
-      await this.selectAndRevealQuery(editor, range);
-      const result = await this.executeOptimization(workspaceId, query); // 使用获取到的 SQL 文本
-      // 3. 优化完成后更新消息
-      if (statusBarItem) {
-        statusBarItem.dispose(); // 清除之前的消息
+      // 2. 确保编辑器存在
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        throw new Error("no.active.editor");
       }
 
+      // 3. 验证配置
+      const isConfigValid = await this.treeProvider.validateConfig;
+      if (!isConfigValid) {
+        return;
+      }
+
+      if (!workspaceId) {
+        await vscode.window.showInformationMessage(
+          UI_MESSAGES.NO_DEFAULT_WORKSPACE()
+        );
+        return;
+      }
+
+      // 4. 选择并显示查询
+      await this.selectAndRevealQuery(editor, range);
+
+      // 5. 执行优化
+      const result = await this.executeOptimization(workspaceId, query);
+
+      // 6. 处理结果
       await this.handleOptimizationResult(result);
     } catch (error) {
       ErrorHandler.handle("sql.optimization.failed", error);
     } finally {
       statusBarItem.dispose();
-      this.sqlCodeLensProvider.setOptimizing(range, false);
+      // 7. 重置状态
+      await this.sqlCodeLensProvider.setOptimizing(range, false);
     }
   }
-
   private async selectAndRevealQuery(
     editor: vscode.TextEditor,
     range: vscode.Range

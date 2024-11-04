@@ -26,43 +26,41 @@ interface ConfigFormProps {
 }
 
 const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
-  const [apiKey, setApiKey] = React.useState(initialConfig.apiKey);
-  const [backendUrl, setBackendUrl] = React.useState(initialConfig.backendUrl);
-  const [frontendUrl, setFrontendUrl] = React.useState(
-    initialConfig.frontendUrl
-  );
+  const [formState, setFormState] = React.useState<Config>(initialConfig);
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarMessage, setSnackbarMessage] = React.useState("");
   const [snackbarSeverity, setSnackbarSeverity] = React.useState<
     "success" | "error"
   >("success");
 
-  // 当 initialConfig 更新时，更新表单状态
+  // Update form state when initialConfig changes
   React.useEffect(() => {
-    setApiKey(initialConfig.apiKey);
-    setBackendUrl(initialConfig.backendUrl);
-    setFrontendUrl(initialConfig.frontendUrl);
+    setFormState(initialConfig);
   }, [initialConfig]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!apiKey || !backendUrl || !frontendUrl) {
+    if (!formState.apiKey || !formState.backendUrl || !formState.frontendUrl) {
       setSnackbarMessage("请填写所有字段");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
       return;
     }
 
-    onSubmit({ apiKey, backendUrl, frontendUrl });
+    onSubmit(formState);
     setSnackbarMessage("配置已保存");
     setSnackbarSeverity("success");
     setSnackbarOpen(true);
   };
 
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
-  };
+  const handleInputChange =
+    (field: keyof Config) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      setFormState((prev) => ({
+        ...prev,
+        [field]: event.target.value,
+      }));
+    };
 
   return (
     <Container maxWidth="sm" sx={{ padding: "20px" }}>
@@ -80,8 +78,8 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
           label="API Key"
           variant="outlined"
           margin="normal"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
+          value={formState.apiKey}
+          onChange={handleInputChange("apiKey")}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -95,8 +93,8 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
           label="Backend URL"
           variant="outlined"
           margin="normal"
-          value={backendUrl}
-          onChange={(e) => setBackendUrl(e.target.value)}
+          value={formState.backendUrl}
+          onChange={handleInputChange("backendUrl")}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -110,8 +108,8 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
           label="Frontend URL"
           variant="outlined"
           margin="normal"
-          value={frontendUrl}
-          onChange={(e) => setFrontendUrl(e.target.value)}
+          value={formState.frontendUrl}
+          onChange={handleInputChange("frontendUrl")}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -133,10 +131,10 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
-        onClose={handleSnackbarClose}
+        onClose={() => setSnackbarOpen(false)}
       >
         <Alert
-          onClose={handleSnackbarClose}
+          onClose={() => setSnackbarOpen(false)}
           severity={snackbarSeverity}
           sx={{ width: "100%" }}
         >

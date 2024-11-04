@@ -7,7 +7,13 @@ import { ApiService } from "./apiService";
 
 interface OptimizeState {
   isOptimizing: boolean;
-  optimizingRanges: Set<string>;
+  optimizingRanges: Map<
+    string,
+    {
+      range: vscode.Range;
+      timestamp: number;
+    }
+  >;
 }
 
 export class SqlCodeLensProvider implements vscode.CodeLensProvider {
@@ -17,35 +23,13 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     this._onDidChangeCodeLenses.event;
 
   private disposables: vscode.Disposable[] = [];
+  private refreshDebounceTimeout: NodeJS.Timeout | null = null;
+  private readonly DEBOUNCE_DELAY = 50; // ms
 
   private state: OptimizeState = {
     isOptimizing: false,
-    optimizingRanges: new Set<string>(),
+    optimizingRanges: new Map(),
   };
-
-  private getRangeKey(range: vscode.Range): string {
-    return `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
-  }
-
-  // 修改设置状态的方法，添加刷新触发
-  public setOptimizing(range: vscode.Range, isOptimizing: boolean) {
-    console.log(this.state);
-
-    const rangeKey = this.getRangeKey(range);
-    if (isOptimizing) {
-      this.state.optimizingRanges.add(rangeKey);
-    } else {
-      this.state.optimizingRanges.delete(rangeKey);
-    }
-    this.state.isOptimizing = this.state.optimizingRanges.size > 0;
-
-    // 触发 CodeLens 刷新
-    this._onDidChangeCodeLenses.fire();
-  }
-
-  public isRangeOptimizing(range: vscode.Range): boolean {
-    return this.state.optimizingRanges.has(this.getRangeKey(range));
-  }
 
   constructor(private context: vscode.ExtensionContext) {
     this.disposables.push(
@@ -69,6 +53,75 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     context.subscriptions.push(...this.disposables);
   }
 
+  private getRangeKey(range: vscode.Range): string {
+    return `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
+  }
+
+  public async setOptimizing(
+    range: vscode.Range,
+    isOptimizing: boolean
+  ): Promise<void> {
+    const rangeKey = this.getRangeKey(range);
+
+    // 立即更新状态
+    if (isOptimizing) {
+      this.state.optimizingRanges.set(rangeKey, {
+        range,
+        timestamp: Date.now(),
+      });
+    } else {
+      this.state.optimizingRanges.delete(rangeKey);
+    }
+
+    this.state.isOptimizing = this.state.optimizingRanges.size > 0;
+
+    // 使用防抖处理刷新
+    await this.debouncedRefresh();
+
+    // 确保状态已更新
+    await this.ensureStateUpdate();
+  }
+
+  private debouncedRefresh(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.refreshDebounceTimeout) {
+        clearTimeout(this.refreshDebounceTimeout);
+      }
+
+      this.refreshDebounceTimeout = setTimeout(() => {
+        this._onDidChangeCodeLenses.fire();
+        resolve();
+      }, this.DEBOUNCE_DELAY);
+    });
+  }
+
+  private async ensureStateUpdate(): Promise<void> {
+    await new Promise<void>((resolve) => {
+      if (typeof window !== "undefined" && window.requestAnimationFrame) {
+        window.requestAnimationFrame(() => {
+          setTimeout(resolve, 16);
+        });
+      } else {
+        setTimeout(resolve, 16);
+      }
+    });
+  }
+
+  public isRangeOptimizing(range: vscode.Range): boolean {
+    return Array.from(this.state.optimizingRanges.values()).some((item) =>
+      this.rangesEqual(item.range, range)
+    );
+  }
+
+  private rangesEqual(range1: vscode.Range, range2: vscode.Range): boolean {
+    return (
+      range1.start.line === range2.start.line &&
+      range1.start.character === range2.start.character &&
+      range1.end.line === range2.end.line &&
+      range1.end.character === range2.end.character
+    );
+  }
+
   async provideCodeLenses(
     document: vscode.TextDocument,
     token: vscode.CancellationToken
@@ -80,11 +133,21 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     const codeLenses: vscode.CodeLens[] = [];
 
     try {
+      // 使用缓存的范围信息来加速状态检查
+      const optimizingRanges = Array.from(this.state.optimizingRanges.values());
+
       // 1. 处理文件级别的配置
       await this.addFileConfigurationLens(document, codeLenses);
 
       // 2. 处理 SQL 查询级别的操作
-      await this.addSqlQueryLenses(document, codeLenses, token);
+      if (!token.isCancellationRequested) {
+        await this.addSqlQueryLenses(
+          document,
+          codeLenses,
+          token,
+          optimizingRanges
+        );
+      }
 
       return codeLenses;
     } catch (error) {
@@ -104,7 +167,6 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     );
 
     // 在文件开头添加注释分隔符
-    // 使用 range 从 (0,0) 到 (1,0) 确保文件级配置占据单独的一行
     const separatorRange = new vscode.Range(
       new vscode.Position(0, 0),
       new vscode.Position(1, 0)
@@ -183,7 +245,8 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
   private async addSqlQueryLenses(
     document: vscode.TextDocument,
     codeLenses: vscode.CodeLens[],
-    token: vscode.CancellationToken
+    token: vscode.CancellationToken,
+    optimizingRanges: Array<{ range: vscode.Range; timestamp: number }>
   ) {
     const text = document.getText();
     const queries = await this.parseWithThrottle(text);
@@ -202,30 +265,23 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
       const queryIndex = text.indexOf(query, lastIndex);
       if (queryIndex === -1) continue;
 
-      // 获取查询的起始行号
       const startPos = document.positionAt(queryIndex);
       const endPos = document.positionAt(queryIndex + query.length);
 
-      // 如果查询从第一行开始，我们调整其范围以避免与文件级配置冲突
-      if (startPos.line === 0) {
-        const adjustedStartPos = new vscode.Position(1, 0);
-        const queryRange = new vscode.Range(adjustedStartPos, endPos);
+      const queryRange = new vscode.Range(startPos, endPos);
 
-        this.addQueryCodeLenses(
-          codeLenses,
-          queryRange,
-          query,
-          fileWorkspace ?? defaultWorkspace
-        );
-      } else {
-        const queryRange = new vscode.Range(startPos, endPos);
-        this.addQueryCodeLenses(
-          codeLenses,
-          queryRange,
-          query,
-          fileWorkspace ?? defaultWorkspace
-        );
-      }
+      // 使用缓存的优化状态
+      const isOptimizing = optimizingRanges.some((item) =>
+        this.rangesEqual(item.range, queryRange)
+      );
+
+      this.addQueryCodeLenses(
+        codeLenses,
+        queryRange,
+        query,
+        fileWorkspace ?? defaultWorkspace,
+        isOptimizing
+      );
 
       lastIndex = queryIndex + query.length;
     }
@@ -235,12 +291,10 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     codeLenses: vscode.CodeLens[],
     queryRange: vscode.Range,
     query: string,
-    fileWorkspace: any
+    workspace: any,
+    isOptimizing: boolean
   ) {
-    const isOptimizing = this.isRangeOptimizing(queryRange);
-
     if (isOptimizing) {
-      // 在优化过程中显示加载状态的 CodeLens
       codeLenses.push(
         new vscode.CodeLens(queryRange, {
           title: LanguageService.getMessage("OPTIMIZING_SQL"),
@@ -248,14 +302,13 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
         })
       );
     } else {
-      // 正常状态下显示两个可点击的 CodeLens
       codeLenses.push(
         new vscode.CodeLens(queryRange, {
           title: LanguageService.getMessage(
             "codelens.optimize.sql.with.default.workspace"
           ),
           command: COMMANDS.OPTIMIZE_WITH_FILE_DEFAULT_WORKSPACE,
-          arguments: [query, fileWorkspace?.workspaceId, queryRange],
+          arguments: [query, workspace?.workspaceId, queryRange],
         })
       );
 
@@ -284,11 +337,30 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     });
   }
 
+  private cleanupStaleOptimizingStates() {
+    const now = Date.now();
+    const STALE_THRESHOLD = 30000; // 30 seconds
+
+    for (const [key, value] of this.state.optimizingRanges) {
+      if (now - value.timestamp > STALE_THRESHOLD) {
+        this.state.optimizingRanges.delete(key);
+      }
+    }
+
+    this.state.isOptimizing = this.state.optimizingRanges.size > 0;
+  }
+
   public refresh(): void {
     this._onDidChangeCodeLenses.fire();
   }
 
   public dispose(): void {
+    if (this.refreshDebounceTimeout) {
+      clearTimeout(this.refreshDebounceTimeout);
+    }
+    if (this.parseThrottleTimeout) {
+      clearTimeout(this.parseThrottleTimeout);
+    }
     this.disposables.forEach((d) => d.dispose());
   }
 }

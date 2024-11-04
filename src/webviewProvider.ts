@@ -58,6 +58,9 @@ export class WebviewProvider {
       frontendUrl:
         vscode.workspace.getConfiguration("pawsql").get("frontendUrl") || "",
     };
+
+    console.log({ command: "configResponse", ...config });
+
     panel.webview.postMessage({ command: "configResponse", ...config });
   }
   // 发送消息到 Webview

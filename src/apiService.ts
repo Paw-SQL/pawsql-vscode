@@ -273,70 +273,99 @@ export const validateBackend = async (
   }
 };
 
+interface ValidationOptions {
+  timeout?: number;
+  checkPaths?: string[];
+}
+
 /**
  * 验证前端服务可用性
+ */
+
+/**
+ * 验证前端服务可用性
+ * @param frontendUrl 前端服务地址
+ * @param options 配置选项
+ * @returns ValidationResult
  */
 export const validateFrontend = async (
   frontendUrl: string,
   options: ValidationOptions = {}
 ): Promise<ValidationResult> => {
-  const timeout = options.timeout || 3000;
+  const timeout = options.timeout || 5000;
+  const defaultCheckPaths = ["/favicon.ico", "/robots.txt", "/"];
 
-  try {
-    const url = frontendUrl.endsWith("/")
-      ? frontendUrl.slice(0, -1)
-      : frontendUrl;
+  // 规范化 URL
+  const baseUrl = frontendUrl.endsWith("/")
+    ? frontendUrl.slice(0, -1)
+    : frontendUrl;
 
-    const response = await axios({
-      method: "get",
-      url,
-      timeout,
-      headers: {
-        Accept: "text/html, */*",
-      },
-      maxRedirects: 5,
-      validateStatus: (status) => status >= 200 && status < 500,
-    });
+  // 创建检查函数
+  const checkUrl = async (path: string): Promise<ValidationResult> => {
+    try {
+      const response = await axios({
+        method: "head",
+        url: `${baseUrl}${path}`,
+        timeout,
+        headers: {
+          Accept: "text/html, */*",
+        },
+        maxRedirects: 3,
+        validateStatus: (status) => status >= 200 && status < 500,
+      });
 
-    const isSuccessResponse = response.status >= 200 && response.status < 400;
+      const isSuccessResponse = response.status >= 200 && response.status < 400;
 
-    return {
-      isAvailable: true,
-      details: {
-        message: isSuccessResponse
-          ? `成功连接到前端服务 (状态码: ${response.status})`
-          : `前端服务可访问，但返回了状态码: ${response.status}`,
-        statusCode: response.status,
-      },
-    };
-  } catch (error) {
-    const axiosError = error as AxiosError;
-    console.log(error);
-
-    if (
-      axiosError.response?.status !== undefined &&
-      axiosError.response.status >= 200 &&
-      axiosError.response.status < 500
-    ) {
       return {
         isAvailable: true,
         details: {
-          message: "前端服务可访问，但返回了非预期的状态码",
-          statusCode: axiosError.response.status,
+          message: isSuccessResponse
+            ? `成功连接到前端服务 (状态码: ${response.status})`
+            : `前端服务可访问，但返回了状态码: ${response.status}`,
+          statusCode: response.status,
+        },
+      };
+    } catch (error) {
+      const axiosError = error as AxiosError;
+
+      if (
+        axiosError.response?.status !== undefined &&
+        axiosError.response.status >= 200 &&
+        axiosError.response.status < 500
+      ) {
+        return {
+          isAvailable: true,
+          details: {
+            message: "前端服务可访问，但返回了非预期的状态码",
+            statusCode: axiosError.response.status,
+            errorCode: axiosError.code,
+          },
+        };
+      }
+
+      return {
+        isAvailable: false,
+        error: getErrorMessage(axiosError),
+        details: {
+          message: axiosError.message,
           errorCode: axiosError.code,
         },
       };
     }
+  };
 
-    return {
-      isAvailable: false,
-      error: getErrorMessage(axiosError),
-      details: {
-        message: axiosError.message,
-        errorCode: axiosError.code,
-      },
-    };
+  // 并发检查多个路径
+  const checkPaths = options.checkPaths || defaultCheckPaths;
+  const results = await Promise.all(checkPaths.map((path) => checkUrl(path)));
+
+  // 如果任何一个检查成功，就认为服务可用
+  const successResult = results.find((r) => r.isAvailable);
+  if (successResult) {
+    return successResult;
   }
+
+  // 所有检查都失败时返回最后一个错误
+  return results[results.length - 1];
 };
 
 /**
