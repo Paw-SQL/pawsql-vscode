@@ -49,7 +49,7 @@ export class WebviewProvider {
       (message) => {
         switch (message.command) {
           case "alert":
-            vscode.window.showInformationMessage(message.text);
+            vscode.window.showErrorMessage(message.text);
             return;
           case "saveConfig":
             this.handleSaveConfig(message.config); // 处理保存配置
@@ -114,10 +114,16 @@ export class WebviewProvider {
         .update("frontendUrl", config.frontendUrl, true);
 
       // 配置保存成功反馈
-      vscode.window.showInformationMessage("配置已成功保存！");
+      vscode.window.showInformationMessage(
+        LanguageService.getMessage("webview.settings.save.config.success")
+      );
     } catch (error) {
       // 错误处理
-      vscode.window.showErrorMessage(`保存配置失败: ${error}`);
+      vscode.window.showErrorMessage(
+        `${LanguageService.getMessage(
+          "webview.settings.save.config.failed"
+        )}: ${error}`
+      );
     }
   }
 

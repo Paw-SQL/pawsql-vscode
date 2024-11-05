@@ -2,8 +2,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import ConfigForm from "./components/ConfigForm";
 import { IntlProvider, FormattedMessage } from "react-intl";
-import messages_en from "./locales/en.json";
-import messages_zh from "./locales/zh-cn.json";
+import messages_en from "../i18n/en.json";
+import messages_zh from "../i18n/zh-cn.json";
 
 // 定义消息类型
 interface Messages {

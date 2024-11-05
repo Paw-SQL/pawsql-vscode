@@ -52,5 +52,7 @@
   "codelens.optimize.sql.with.selected.workspace": "⚡Optimize in ...",
   "webview.anlysis.result.title": "SQL优化结果",
   "webview.settings.save.config.success": "保存配置成功",
-  "webview.settings.save.config.failed": "保存配置失败"
+  "webview.settings.save.config.failed": "保存配置失败",
+  "form.config.title": "PawSQL配置",
+  "form.config.save": "保存配置"
 }

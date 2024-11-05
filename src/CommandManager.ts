@@ -99,7 +99,7 @@ export class CommandManager {
 
   public async handleEmptyWorkspaces(): Promise<void> {
     const { URLS } = getUrls();
-    const choice = await vscode.window.showInformationMessage(
+    const choice = await vscode.window.showErrorMessage(
       LanguageService.getMessage("NO_WORKSPACE"),
       LanguageService.getMessage("CREATE_WORKSPACE")
     );

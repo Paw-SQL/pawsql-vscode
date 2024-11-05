@@ -52,5 +52,8 @@
   "codelens.optimize.sql.with.selected.workspace": "⚡Optimize in ...",
   "webview.anlysis.result.title": "PawSQL Result",
   "webview.settings.save.config.success": "Save configuration successfully",
-  "webview.settings.save.config.failed": "Save configuration failed"
+  "webview.settings.save.config.failed": "Save configuration failed",
+  "form.config.title": "PawSQL Configuration",
+  "form.config.save": "Save Configuration",
+  "form.config.save.success": "Configuration saved"
 }

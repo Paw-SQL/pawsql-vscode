@@ -50,7 +50,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
     // }
 
     onSubmit(formState);
-    // setSnackbarMessage(formatMessage({ id: "form.config.save.success" }));
+    // setSnackbarMessage(formatMessage({ id: "webview.settings.save.config.success" }));
     // setSnackbarSeverity("success");
     // setSnackbarOpen(true);
   };

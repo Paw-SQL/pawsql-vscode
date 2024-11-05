@@ -149,25 +149,24 @@ export class PawSQLExtension {
     query: string,
     range: vscode.Range
   ): Promise<void> {
+    const isConfigValid = this.treeProvider.validateConfig();
+    if (!isConfigValid) {
+      return;
+    }
+    const apiKey = await ConfigurationService.getApiKey();
+    const workspaces = await ApiService.getWorkspaces(apiKey ?? "");
+    if (workspaces.data.total === "0") {
+      await this.commandManager.handleEmptyWorkspaces();
+      return;
+    }
+
     await this.sqlCodeLensProvider.setOptimizing(range, true);
     const statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left
     );
     try {
-      const isConfigValid = this.treeProvider.validateConfig();
-      if (!isConfigValid) {
-        return;
-      }
-
       statusBarItem.text = LanguageService.getMessage("QUERYING_WORKSPACES");
       statusBarItem.show();
-
-      const apiKey = await ConfigurationService.getApiKey();
-      const workspaces = await ApiService.getWorkspaces(apiKey ?? "");
-      if (workspaces.data.total === "0") {
-        await this.commandManager.handleEmptyWorkspaces();
-        return;
-      }
 
       const workspaceItems =
         this.commandManager.createWorkspaceItems(workspaces);
@@ -251,6 +250,25 @@ export class PawSQLExtension {
     workspaceId: string,
     range: vscode.Range
   ): Promise<void> {
+    // 2. 确保编辑器存在
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      throw new Error("no.active.editor");
+    }
+
+    // 3. 验证配置
+    const isConfigValid = await this.treeProvider.validateConfig();
+    if (!isConfigValid) {
+      return;
+    }
+
+    if (!workspaceId) {
+      await vscode.window.showErrorMessage(
+        LanguageService.getMessage("NO_DEFAULT_WORKSPACE")
+      );
+      return;
+    }
+
     // 1. 先设置状态并等待UI更新完成
     await this.sqlCodeLensProvider.setOptimizing(range, true);
 
@@ -259,25 +277,6 @@ export class PawSQLExtension {
     );
 
     try {
-      // 2. 确保编辑器存在
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        throw new Error("no.active.editor");
-      }
-
-      // 3. 验证配置
-      const isConfigValid = await this.treeProvider.validateConfig();
-      if (!isConfigValid) {
-        return;
-      }
-
-      if (!workspaceId) {
-        await vscode.window.showInformationMessage(
-          LanguageService.getMessage("NO_DEFAULT_WORKSPACE")
-        );
-        return;
-      }
-
       // 4. 选择并显示查询
       await this.selectAndRevealQuery(editor, range);
 
