@@ -103,7 +103,6 @@ export const getWorkspaces = async (
     pageSize: 100,
     pageNumber: 1,
   });
-  console.log(response);
 
   if (!response.data.data) {
     throw Error("error.backendUrl.invalid");
@@ -124,8 +123,6 @@ export const getAnalyses = async (
     pageNumber: 1,
   });
 
-  console.log(!response.data.data);
-
   if (!response.data.data) {
     throw Error("error.backendUrl.invalid");
   }
@@ -139,8 +136,6 @@ export const createAnalysis = async (
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/createAnalysis`;
   const response = await axios.post<CreateAnalysisResponse>(url, params);
-  console.log(123);
-  console.log(!response.data.data);
   if (!response.data.data) {
     throw Error("error.backendUrl.invalid");
   }
@@ -177,7 +172,6 @@ export const getStatementDetails = async (
 export const validateUserKey = async (userKey: string): Promise<boolean> => {
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/validateUserKey`; // 假设你有这个验证接口
-  console.log(url);
 
   try {
     // 发送请求以验证 userKey
@@ -229,7 +223,6 @@ export const validateBackend = async (
         return status >= 200 && status < 500;
       },
     });
-    console.log(response);
 
     // 2xx 和 3xx 状态码表示正常访问
     const isSuccessResponse = response.status >= 200 && response.status < 400;

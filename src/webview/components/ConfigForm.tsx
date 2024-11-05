@@ -13,6 +13,7 @@ import ApiIcon from "@mui/icons-material/Api";
 import PublicIcon from "@mui/icons-material/Public";
 import LinkIcon from "@mui/icons-material/Link";
 import PawIcon from "./PawIcon";
+import { FormattedMessage, useIntl } from "react-intl";
 
 interface Config {
   apiKey: string;
@@ -32,7 +33,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
   const [snackbarSeverity, setSnackbarSeverity] = React.useState<
     "success" | "error"
   >("success");
-
+  const { formatMessage } = useIntl();
   // Update form state when initialConfig changes
   React.useEffect(() => {
     setFormState(initialConfig);
@@ -41,17 +42,17 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!formState.apiKey || !formState.backendUrl || !formState.frontendUrl) {
-      setSnackbarMessage("请填写所有字段");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
+    // if (!formState.apiKey || !formState.backendUrl || !formState.frontendUrl) {
+    //   setSnackbarMessage("请填写所有字段");
+    //   setSnackbarSeverity("error");
+    //   setSnackbarOpen(true);
+    //   return;
+    // }
 
     onSubmit(formState);
-    setSnackbarMessage("配置已保存");
-    setSnackbarSeverity("success");
-    setSnackbarOpen(true);
+    // setSnackbarMessage(formatMessage({ id: "form.config.save.success" }));
+    // setSnackbarSeverity("success");
+    // setSnackbarOpen(true);
   };
 
   const handleInputChange =
@@ -69,7 +70,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
       >
         <PawIcon />
         <Typography variant="h4" align="center" gutterBottom>
-          配置 PawSQL
+          <FormattedMessage id="form.config.title" />
         </Typography>
       </div>
       <form onSubmit={handleSubmit}>
@@ -125,7 +126,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
           fullWidth
           sx={{ marginTop: "16px" }}
         >
-          保存配置
+          <FormattedMessage id="form.config.save" />
         </Button>
       </form>
       <Snackbar

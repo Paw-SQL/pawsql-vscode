@@ -20,18 +20,30 @@
       "activitybar": [
         {
           "id": "pawsqlContainer",
-          "title": "PawSQL",
+          "title": "%views.activitybar.pawsqlContainerTitle%",
           "icon": "./resources/icon/paw.svg"
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "pawsqlSidebar",
+        "contents": "%views.welcome.noConfiguration%",
+        "when": "!isConfigured"
+      },
+      {
+        "view": "pawsqlSidebar",
+        "contents": "%views.welcome.noWorkspace%",
+        "when": "isConfigured&&hasNoWorkspace"
+      }
+    ],
     "views": {
       "pawsqlContainer": [
         {
           "id": "pawsqlSidebar",
-          "name": "PawSQL Sidebar",
+          "name": "%views.sidebar.pawsqlSidebarName%",
           "type": "tree",
-          "visibility": "visible"
+          "visibility": "hidden"
         }
       ]
     },
@@ -261,6 +273,7 @@
     "axios": "^1.7.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-intl": "^6.8.7",
     "supports-color": "^9.4.0",
     "vscode-nls": "^5.2.0"
   }

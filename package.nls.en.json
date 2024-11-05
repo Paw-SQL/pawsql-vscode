@@ -63,5 +63,10 @@
 
   "config.workspace.fileMapping.title": "File Workspace Mapping",
   "config.workspace.fileMapping.description": "Mapping between files and workspaces",
-  "config.workspace.fileMapping.markdownDescription": "Configure which workspace should be used for specific files or file patterns"
+  "config.workspace.fileMapping.markdownDescription": "Configure which workspace should be used for specific files or file patterns",
+
+  "views.activitybar.pawsqlContainerTitle": "PawSQL",
+  "views.welcome.noConfiguration": "$(gear) No configuration found.\n\n[Configure Now](command:pawsql.openSettings)\n\nClick to setup your configuration.",
+  "views.welcome.noWorkspace": "No workspace found.\n\n[Create Now](command:pawsql.createWorkspace)\n\nClick to create your workspace.",
+  "views.sidebar.pawsqlSidebarName": "PawSQL Sidebar"
 }

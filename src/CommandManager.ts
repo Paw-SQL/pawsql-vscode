@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
 import { PawSQLExtension } from "./main";
-import { COMMANDS, UI_MESSAGES, getUrls } from "./constants";
+import { getUrls } from "./constants";
 import type { WorkspaceItem } from "./types";
 import { ApiService } from "./apiService";
 import { ErrorHandler } from "./errorHandler";
 import { SqlCodeLensProvider } from "./SqlCodeLensProvider";
 import { ConfigurationService } from "./configurationService";
+import { LanguageService } from "./LanguageService";
 
 export class CommandManager {
   constructor(
@@ -23,19 +24,19 @@ export class CommandManager {
   }
 
   private registerApiKeyCommands(): void {
-    const commands = [
-      {
-        command: COMMANDS.PAWSQL_CONFIG,
-        callback: () => ConfigurationService.openSettings("pawsqlInit"),
-      },
-    ];
-    commands.forEach(({ command, callback }) => {
-      const disposable = vscode.commands.registerCommand(command, callback);
-      this.context.subscriptions.push(disposable);
-    });
+    // const commands = [
+    //   {
+    //     command: COMMANDS.PAWSQL_CONFIG,
+    //     callback: () => ConfigurationService.openSettings("pawsqlInit"),
+    //   },
+    // ];
+    // commands.forEach(({ command, callback }) => {
+    //   const disposable = vscode.commands.registerCommand(command, callback);
+    //   this.context.subscriptions.push(disposable);
+    // });
 
     const configFileDefaultDisposable = vscode.commands.registerCommand(
-      COMMANDS.CONFIG_FILE_DEFAULT_WORKSPACE,
+      "pawsql.selectFileDefaultWorkspace",
       () => this.handleFileDefaultWorkspaceSelection()
     );
     this.context.subscriptions.push(configFileDefaultDisposable);
@@ -47,7 +48,9 @@ export class CommandManager {
     const statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left
     );
-    statusBarItem.text = UI_MESSAGES.CONFIG_FILE_DEFAULT_WORKSPACES();
+    statusBarItem.text = LanguageService.getMessage(
+      "config.file.default.workspace"
+    );
     statusBarItem.show();
 
     try {
@@ -62,7 +65,7 @@ export class CommandManager {
       const workspaceItems = this.createWorkspaceItems(workspaces);
       const selected = await this.showWorkspaceQuickPick(
         workspaceItems,
-        UI_MESSAGES.CONFIG_FILE_DEFAULT_WORKSPACE_PLACEHOLDER()
+        LanguageService.getMessage("CONFIG_FILE_DEFAULT_WORKSPACE_PLACEHOLDER")
       );
 
       if (selected) {
@@ -98,11 +101,11 @@ export class CommandManager {
   public async handleEmptyWorkspaces(): Promise<void> {
     const { URLS } = getUrls();
     const choice = await vscode.window.showInformationMessage(
-      UI_MESSAGES.NO_WORKSPACE(),
-      UI_MESSAGES.CREATE_WORKSPACE()
+      LanguageService.getMessage("NO_WORKSPACE"),
+      LanguageService.getMessage("CREATE_WORKSPACE")
     );
 
-    if (choice === UI_MESSAGES.CREATE_WORKSPACE()) {
+    if (choice === LanguageService.getMessage("CREATE_WORKSPACE")) {
       await vscode.env.openExternal(vscode.Uri.parse(URLS.NEW_WORKSPACE));
     }
   }
@@ -128,7 +131,9 @@ export class CommandManager {
     placeHolder?: string
   ): Promise<WorkspaceItem | undefined> {
     return vscode.window.showQuickPick(items, {
-      placeHolder: placeHolder ?? UI_MESSAGES.WORKSPACE_SELECTOR_PLACEHOLDER(),
+      placeHolder:
+        placeHolder ??
+        LanguageService.getMessage("WORKSPACE_SELECTOR_PLACEHOLDER"),
     });
   }
 }

@@ -1,6 +1,19 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import ConfigForm from "./components/ConfigForm";
+import { IntlProvider, FormattedMessage } from "react-intl";
+import messages_en from "./locales/en.json";
+import messages_zh from "./locales/zh-cn.json";
+
+// 定义消息类型
+interface Messages {
+  [key: string]: string; // 定义键为字符串，值为字符串
+}
+
+const messages: { [key: string]: Messages } = {
+  en: messages_en as Messages, // 使用类型断言
+  "zh-cn": messages_zh as Messages, // 使用类型断言
+};
 
 interface Config {
   apiKey: string;
@@ -14,6 +27,8 @@ const App: React.FC = () => {
     backendUrl: "",
     frontendUrl: "",
   });
+
+  const [locale, setLocale] = React.useState<"en" | "zh-cn">("en"); // 使用字面量类型
 
   const vscode = React.useMemo(() => {
     return window.acquireVsCodeApi();
@@ -43,6 +58,10 @@ const App: React.FC = () => {
         console.log("Updating config:", newConfig);
         setConfig(newConfig);
       }
+
+      if (message.command === "languageResponse") {
+        setLocale(message.locale);
+      }
     };
 
     window.addEventListener("message", messageHandler);
@@ -50,6 +69,7 @@ const App: React.FC = () => {
     // Request initial config
     console.log("Requesting initial config");
     vscode.postMessage({ command: "getConfig" });
+    vscode.postMessage({ command: "getLanguage" });
 
     return () => {
       window.removeEventListener("message", messageHandler);
@@ -57,9 +77,11 @@ const App: React.FC = () => {
   }, [vscode]);
 
   return (
-    <div>
-      <ConfigForm initialConfig={config} onSubmit={handleConfigSubmit} />
-    </div>
+    <IntlProvider locale={locale} messages={messages[locale]}>
+      <div>
+        <ConfigForm initialConfig={config} onSubmit={handleConfigSubmit} />
+      </div>
+    </IntlProvider>
   );
 };
 

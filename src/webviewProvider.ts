@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 
 export class WebviewProvider {
   private context: vscode.ExtensionContext;
+  private settingPanel: vscode.WebviewPanel | undefined;
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
@@ -31,8 +32,6 @@ export class WebviewProvider {
 
     panel.webview.onDidReceiveMessage(
       (message) => {
-        console.log(message);
-
         switch (message.command) {
           case "alert":
             vscode.window.showInformationMessage(message.text);
@@ -43,11 +42,21 @@ export class WebviewProvider {
           case "getConfig":
             this.handleGetConfig(panel); // 处理获取配置
             return;
+          case "getLanguage":
+            this.handleGetLanguage(panel);
         }
       },
       undefined,
       this.context.subscriptions
     );
+  }
+  private handleGetLanguage(panel: vscode.WebviewPanel) {
+    const currentLanguage = vscode.env.language;
+    console.log(`当前语言: ${currentLanguage}`);
+    panel.webview.postMessage({
+      command: "languageResponse",
+      locale: currentLanguage,
+    });
   }
 
   private handleGetConfig(panel: vscode.WebviewPanel) {
@@ -58,8 +67,6 @@ export class WebviewProvider {
       frontendUrl:
         vscode.workspace.getConfiguration("pawsql").get("frontendUrl") || "",
     };
-
-    console.log({ command: "configResponse", ...config });
 
     panel.webview.postMessage({ command: "configResponse", ...config });
   }
@@ -80,8 +87,6 @@ export class WebviewProvider {
     backendUrl: string;
     frontendUrl: string;
   }) {
-    console.log(config);
-
     try {
       // 分别更新每个配置项
       await vscode.workspace
@@ -173,7 +178,7 @@ export class WebviewProvider {
     const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
 
     return `<!DOCTYPE html>
-<html lang="zh">
+<html lang=${vscode.env.language}>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

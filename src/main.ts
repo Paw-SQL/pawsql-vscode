@@ -3,7 +3,7 @@ import { Selection } from "vscode";
 
 import { PawSQLTreeProvider } from "./PawSQLSidebarProvider";
 import { SqlCodeLensProvider } from "./SqlCodeLensProvider";
-import { COMMANDS, UI_MESSAGES, getUrls } from "./constants";
+import { getUrls } from "./constants";
 import { DecorationManager } from "./DecorationManager";
 import { CommandManager } from "./CommandManager";
 import type { WorkspaceItem, SummaryResponse } from "./types";
@@ -40,7 +40,6 @@ export class PawSQLExtension {
       await this.registerSettingsWebview();
       await this.commandManager.initializeCommands();
       await this.decorationManager.registerDecorationListeners();
-      await this.registerProviders();
       await this.registerEventListeners();
       await this.registerSqlCodeLensProvider();
     } catch (error) {
@@ -50,7 +49,7 @@ export class PawSQLExtension {
 
   private async registerSettingsWebview() {
     let disposable = vscode.commands.registerCommand(
-      "vscode-webview-react.showWebview",
+      "pawsql.openSettings",
       () => {
         this.webviewProvider.createSettingsPanel();
       }
@@ -155,14 +154,14 @@ export class PawSQLExtension {
 
     this.context.subscriptions.push(
       vscode.commands.registerCommand(
-        COMMANDS.OPTIMIZE_WITH_FILE_DEFAULT_WORKSPACE,
+        "pawsql.optimizeWithDefaultWorkspace",
         this.optimizeSqlBelowButton.bind(this)
       )
     );
 
     this.context.subscriptions.push(
       vscode.commands.registerCommand(
-        COMMANDS.OPTIMIZE_WITH_FILE_SELECTED_WORKSPACE,
+        "pawsql.optimizeWithSelectedWorkspace",
         this.handleWorkspaceSelectionWithRangeQuery.bind(this)
       )
     );
@@ -177,12 +176,12 @@ export class PawSQLExtension {
       vscode.StatusBarAlignment.Left
     );
     try {
-      const isConfigValid = this.treeProvider.validateConfig;
+      const isConfigValid = this.treeProvider.validateConfig();
       if (!isConfigValid) {
         return;
       }
 
-      statusBarItem.text = UI_MESSAGES.QUERYING_WORKSPACES();
+      statusBarItem.text = LanguageService.getMessage("QUERYING_WORKSPACES");
       statusBarItem.show();
 
       const apiKey = await ConfigurationService.getApiKey();
@@ -209,7 +208,7 @@ export class PawSQLExtension {
         }
 
         const optimizationStatusBarItem = this.createStatusBarItem(
-          UI_MESSAGES.OPTIMIZING_SQL()
+          LanguageService.getMessage("OPTIMIZING_SQL")
         );
 
         try {
@@ -246,15 +245,6 @@ export class PawSQLExtension {
     this.webviewProvider.createResultPanel(analysisStmtId);
   }
 
-  private registerProviders(): void {
-    // 注册树视图
-    const treeView = vscode.window.createTreeView("pawsqlSidebar", {
-      treeDataProvider: this.treeProvider,
-      showCollapseAll: true,
-    });
-    this.context.subscriptions.push(treeView);
-  }
-
   private async handleConfigurationChange(
     e: vscode.ConfigurationChangeEvent
   ): Promise<void> {
@@ -287,7 +277,7 @@ export class PawSQLExtension {
     await this.sqlCodeLensProvider.setOptimizing(range, true);
 
     const statusBarItem = this.createStatusBarItem(
-      UI_MESSAGES.OPTIMIZING_SQL()
+      LanguageService.getMessage("OPTIMIZING_SQL")
     );
 
     try {
@@ -298,14 +288,14 @@ export class PawSQLExtension {
       }
 
       // 3. 验证配置
-      const isConfigValid = await this.treeProvider.validateConfig;
+      const isConfigValid = await this.treeProvider.validateConfig();
       if (!isConfigValid) {
         return;
       }
 
       if (!workspaceId) {
         await vscode.window.showInformationMessage(
-          UI_MESSAGES.NO_DEFAULT_WORKSPACE()
+          LanguageService.getMessage("NO_DEFAULT_WORKSPACE")
         );
         return;
       }

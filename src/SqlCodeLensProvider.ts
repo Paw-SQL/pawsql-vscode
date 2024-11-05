@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { ConfigurationService } from "./configurationService";
 import parse from "./utils/parse";
-import { COMMANDS } from "./constants";
 import { LanguageService } from "./LanguageService";
 import { ApiService } from "./apiService";
 
@@ -307,7 +306,7 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
           title: LanguageService.getMessage(
             "codelens.optimize.sql.with.default.workspace"
           ),
-          command: COMMANDS.OPTIMIZE_WITH_FILE_DEFAULT_WORKSPACE,
+          command: "pawsql.optimizeWithDefaultWorkspace",
           arguments: [query, workspace?.workspaceId, queryRange],
         })
       );
@@ -317,7 +316,7 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
           title: LanguageService.getMessage(
             "codelens.optimize.sql.with.selected.workspace"
           ),
-          command: COMMANDS.OPTIMIZE_WITH_FILE_SELECTED_WORKSPACE,
+          command: "pawsql.optimizeWithSelectedWorkspace",
           arguments: [query, queryRange],
         })
       );

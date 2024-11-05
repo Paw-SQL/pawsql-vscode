@@ -1,5 +1,10 @@
 import * as vscode from "vscode";
-import { ApiService, validateBackend, validateFrontend } from "./apiService";
+import {
+  ApiService,
+  validateBackend,
+  validateFrontend,
+  validateUserKey,
+} from "./apiService";
 import { LanguageService } from "./LanguageService";
 import * as path from "path";
 import { ConfigurationService } from "./configurationService";
@@ -108,9 +113,6 @@ class ConfigurationItem extends vscode.TreeItem {
     this.contextValue = "configItem";
     this.updateIconPath();
 
-    console.log(label);
-    console.log(this.label);
-
     this.command = {
       command: "pawsql.showConfigInput",
       title: LanguageService.getMessage("sidebar.config.label"),
@@ -143,6 +145,19 @@ class ValidateConfigItem extends vscode.TreeItem {
   }
 }
 
+class ConfigItem extends vscode.TreeItem {
+  constructor(
+    public readonly label: string,
+    public readonly description: string,
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly command?: vscode.Command
+  ) {
+    super(label, collapsibleState);
+    this.description = description;
+    this.command = command;
+  }
+}
+
 export class PawSQLTreeProvider
   implements vscode.TreeDataProvider<vscode.TreeItem>
 {
@@ -151,6 +166,7 @@ export class PawSQLTreeProvider
   > = new vscode.EventEmitter();
   readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined> =
     this._onDidChangeTreeData.event;
+  private treeView: vscode.TreeView<vscode.TreeItem> | undefined; // 用于管理树视图
 
   private workspaces: WorkspaceItem[] = [];
   private isConfigValid: boolean = false;
@@ -159,56 +175,36 @@ export class PawSQLTreeProvider
 
   constructor(private context: vscode.ExtensionContext) {
     // Initialize configuration items
-
-    this.configItems.set(
-      "apiKey",
-      new ConfigurationItem(
-        "apiKey",
-        LanguageService.getMessage("sidebar.apiKey.label")
-      )
-    );
-
-    this.configItems.set(
-      "backendUrl",
-      new ConfigurationItem(
-        "backendUrl",
-        LanguageService.getMessage("sidebar.backendUrl.label")
-      )
-    );
-    this.configItems.set(
-      "frontendUrl",
-      new ConfigurationItem(
-        "frontendUrl",
-        LanguageService.getMessage("sidebar.frontendUrl.label")
-      )
-    );
-    this.refresh(true);
+    this.registerProviders();
+    this.registerConfigurationChangeListener();
   }
 
   async refresh(hideMessage?: boolean): Promise<void> {
     this.statementsCache.clear();
-    await this.validateConfiguration(hideMessage);
-    this._onDidChangeTreeData.fire(undefined);
+    if (this.treeView) {
+      await this.validateConfiguration(hideMessage);
+      this._onDidChangeTreeData.fire(undefined);
+    }
   }
-
   getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
     return element;
   }
 
   async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
+    if (!this.isConfigValid && !element) {
+      return [];
+    }
+    console.log(this.workspaces.length === 0);
+
+    if (this.workspaces.length === 0) {
+      return [];
+    }
+
     if (!element) {
       return [new WorkspaceManagerItem()];
     }
 
     if (element instanceof WorkspaceManagerItem) {
-      if (!this.isConfigValid) {
-        return [
-          this.configItems.get("backendUrl")!,
-          this.configItems.get("frontendUrl")!,
-          this.configItems.get("apiKey")!,
-          new ValidateConfigItem(),
-        ];
-      }
       return this.workspaces;
     }
 
@@ -246,7 +242,6 @@ export class PawSQLTreeProvider
         backendConfig.setValidationState(isBackendConnected);
         this._onDidChangeTreeData.fire(backendConfig);
       }
-      console.log(backendResult);
 
       if (!isBackendConnected) {
         !hideMessage &&
@@ -260,7 +255,6 @@ export class PawSQLTreeProvider
 
       // Validate frontend connectivity
       const frontendReuslt = await validateFrontend(frontendUrl ?? "");
-      console.log(frontendReuslt);
 
       const isFrontendConnected = frontendReuslt.isAvailable;
       const frontendConfig = this.configItems.get("frontendUrl");
@@ -304,9 +298,19 @@ export class PawSQLTreeProvider
         );
 
       this.isConfigValid = true;
+      vscode.commands.executeCommand(
+        "setContext",
+        "isConfigured",
+        this.isConfigValid
+      );
       await this.loadData(hideMessage);
     } catch (error: any) {
       this.isConfigValid = false;
+      vscode.commands.executeCommand(
+        "setContext",
+        "isConfigured",
+        this.isConfigValid
+      );
       !hideMessage &&
         vscode.window.showErrorMessage(
           `${LanguageService.getMessage(
@@ -318,15 +322,64 @@ export class PawSQLTreeProvider
     }
   }
 
+  private async registerProviders(): Promise<void> {
+    // 1. 创建树视图（如果不存在）
+    if (!this.treeView) {
+      this.treeView = vscode.window.createTreeView("pawsqlSidebar", {
+        treeDataProvider: this,
+        showCollapseAll: true,
+      });
+      this.context.subscriptions.push(this.treeView);
+    }
+
+    // 2. 验证配置
+    const isConfigValid = await this.validateConfig();
+    this.isConfigValid = isConfigValid;
+    vscode.commands.executeCommand(
+      "setContext",
+      "isConfigured",
+      this.isConfigValid
+    );
+
+    // 3. 根据配置状态更新数据
+    if (isConfigValid) {
+      await this.loadData(true);
+    } else {
+      this.workspaces = [];
+    }
+
+    // 4. 刷新视图
+    this.refresh(true);
+  }
+
+  private registerConfigurationChangeListener(): void {
+    vscode.workspace.onDidChangeConfiguration(async (event) => {
+      if (this.isApiConfigChanged(event)) {
+        await this.registerProviders();
+      }
+    });
+  }
+  private isApiConfigChanged(e: vscode.ConfigurationChangeEvent): boolean {
+    return (
+      e.affectsConfiguration("pawsql.apiKey") ||
+      e.affectsConfiguration("pawsql.frontendUrl") ||
+      e.affectsConfiguration("pawsql.backendUrl")
+    );
+  }
   public async validateConfig(): Promise<boolean> {
     const config = vscode.workspace.getConfiguration("pawsql");
     const apiKey = config.get<string>("apiKey");
     const frontendUrl = config.get<string>("frontendUrl");
     const backendUrl = config.get<string>("backendUrl");
-
+    let failedCommand = [];
     try {
       const backendResult = await validateBackend(backendUrl ?? "");
       const isBackendConnected = backendResult.isAvailable;
+      if (!isBackendConnected) {
+        failedCommand.push(
+          LanguageService.getMessage("sidebar.backendUrl.label")
+        );
+      }
       const backendConfig = this.configItems.get("backendUrl");
       if (backendConfig) {
         backendConfig.setValidationState(isBackendConnected);
@@ -336,6 +389,11 @@ export class PawSQLTreeProvider
       // Validate frontend connectivity
       const frontendReuslt = await validateFrontend(frontendUrl ?? "");
       const isFrontendConnected = frontendReuslt.isAvailable;
+      if (!isFrontendConnected) {
+        failedCommand.push(
+          LanguageService.getMessage("sidebar.frontendUrl.label")
+        );
+      }
       const frontendConfig = this.configItems.get("frontendUrl");
       if (frontendConfig) {
         frontendConfig.setValidationState(isFrontendConnected);
@@ -343,7 +401,10 @@ export class PawSQLTreeProvider
       }
 
       // Validate API key
-      const isApikeyValid = await ApiService.validateUserKey(apiKey ?? "");
+      const isApikeyValid = await validateUserKey(apiKey ?? "");
+      if (!isFrontendConnected) {
+        failedCommand.push(LanguageService.getMessage("sidebar.apiKey.label"));
+      }
       const apiKeyConfig = this.configItems.get("apiKey");
       if (apiKeyConfig) {
         apiKeyConfig.setValidationState(isApikeyValid);
@@ -351,13 +412,15 @@ export class PawSQLTreeProvider
       }
 
       if (!(isBackendConnected && isFrontendConnected && isApikeyValid)) {
-        const choice = await vscode.window.showInformationMessage(
-          LanguageService.getMessage("pawsql.config.validate.failed"),
+        const choice = await vscode.window.showErrorMessage(
+          LanguageService.getMessage("pawsql.config.validate.failed") +
+            `${
+              failedCommand.length === 0 ? "" : `: ${failedCommand.join(",")}`
+            }`,
           LanguageService.getMessage("init.pawsql.config")
         );
-
         if (choice === LanguageService.getMessage("init.pawsql.config")) {
-          ConfigurationService.openSettings("pawsqlInit");
+          vscode.commands.executeCommand("pawsql.openSettings");
         }
       }
       return isBackendConnected && isFrontendConnected && isApikeyValid;
@@ -373,9 +436,7 @@ export class PawSQLTreeProvider
 
   public async validateConfigurationByKey(key: string): Promise<void> {
     const config = vscode.workspace.getConfiguration("pawsql");
-
     const value = config.get<string>(key);
-
     try {
       if (key === "backendUrl") {
         // Validate backend connectivity
@@ -392,7 +453,12 @@ export class PawSQLTreeProvider
               "error.config.validate.failed"
             )}: ${LanguageService.getMessage("error.backendUrl.invalid")}`
           );
-          return;
+          this.isConfigValid = false;
+          vscode.commands.executeCommand(
+            "setContext",
+            "isConfigured",
+            this.isConfigValid
+          );
         }
       } else if (key === "frontendUrl") {
         // Validate frontend connectivity
@@ -410,7 +476,12 @@ export class PawSQLTreeProvider
               "error.config.validate.failed"
             )}: ${LanguageService.getMessage("error.frontendUrl.invalid")}`
           );
-          return;
+          this.isConfigValid = false;
+          vscode.commands.executeCommand(
+            "setContext",
+            "isConfigured",
+            this.isConfigValid
+          );
         }
       } else if (key === "apiKey") {
         // Validate API key
@@ -426,15 +497,26 @@ export class PawSQLTreeProvider
               "error.config.validate.failed"
             )}: ${LanguageService.getMessage("license.code.not.valid")}`
           );
-          return;
+          this.isConfigValid = false;
+          vscode.commands.executeCommand(
+            "setContext",
+            "isConfigured",
+            this.isConfigValid
+          );
         }
       }
     } catch (error: any) {
-      this.isConfigValid = false;
+      this.workspaces = [];
       vscode.window.showErrorMessage(
         `${LanguageService.getMessage(
           "error.config.validate.failed"
         )}: ${LanguageService.getMessage(error.response?.data?.message ?? "")}`
+      );
+      this.isConfigValid = false;
+      vscode.commands.executeCommand(
+        "setContext",
+        "isConfigured",
+        this.isConfigValid
       );
     }
   }
@@ -462,8 +544,12 @@ export class PawSQLTreeProvider
             vscode.TreeItemCollapsibleState.Collapsed
           )
       );
+      vscode.commands.executeCommand(
+        "setContext",
+        "hasNoWorkspace",
+        this.workspaces.length === 0
+      );
     } catch (error: any) {
-      console.log(error);
       if (error.code === "ECONNREFUSED") {
         !hideMessage &&
           vscode.window.showErrorMessage(
@@ -482,6 +568,11 @@ export class PawSQLTreeProvider
           );
       }
       this.isConfigValid = false;
+      vscode.commands.executeCommand(
+        "setContext",
+        "isConfigured",
+        this.isConfigValid
+      );
       this.workspaces = [];
     }
   }

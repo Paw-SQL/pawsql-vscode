@@ -63,5 +63,10 @@
 
   "config.workspace.fileMapping.title": "文件工作空间映射",
   "config.workspace.fileMapping.description": "文件与工作空间之间的映射关系",
-  "config.workspace.fileMapping.markdownDescription": "配置特定文件或文件模式应使用的工作空间"
+  "config.workspace.fileMapping.markdownDescription": "配置特定文件或文件模式应使用的工作空间",
+
+  "views.activitybar.pawsqlContainerTitle": "PawSQL",
+  "views.welcome.noConfiguration": "尚未完成PawSQL配置，单击以设置配置。\n\n[立即配置](command:pawsql.openSettings)\n\n",
+  "views.welcome.noWorkspace": "未找到工作空间，单击以创建您的工作空间。\n\n[立即创建](command:pawsql.createWorkspace)\n\n",
+  "views.sidebar.pawsqlSidebarName": "PawSQL 侧边栏"
 }
