@@ -32,6 +32,25 @@ export const ConfigurationService = {
     );
   },
 
+  // 设置用户级别的默认工作空间
+  async clearUserDefaultWorkspace(): Promise<void> {
+    await this.config.update(
+      "defaultWorkspace",
+      null,
+      vscode.ConfigurationTarget.Global
+    );
+  },
+
+  // 设置用户级别的默认工作空间
+  async clearFileDefaultWorkspace(): Promise<void> {
+    const config = vscode.workspace.getConfiguration("pawsql");
+    await config.update(
+      "fileWorkspaceMappings",
+      {}, // 设置为空对象，清空所有映射关系
+      vscode.ConfigurationTarget.Global
+    );
+  },
+
   async getFileDefaultWorkspace(
     fileUri: string
   ): Promise<WorkspaceItem | undefined> {

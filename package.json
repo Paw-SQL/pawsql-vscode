@@ -194,22 +194,24 @@
           "group": "navigation"
         }
       ],
-      "view/item/context": [
+      "view/title": [
         {
           "command": "pawsql.createWorkspace",
-          "when": "view == pawsqlSidebar && viewItem == workspaceManager",
-          "group": "inline@1"
+          "when": "view == pawsqlSidebar",
+          "group": "navigation@1"
         },
         {
           "command": "pawsql.refreshTree",
-          "when": "view == pawsqlSidebar && viewItem == workspaceManager",
-          "group": "inline@2"
+          "when": "view == pawsqlSidebar",
+          "group": "navigation@2"
         },
         {
           "command": "pawsql.openSettings",
-          "when": "view == pawsqlSidebar && viewItem == workspaceManager",
-          "group": "inline@3"
-        },
+          "when": "view == pawsqlSidebar",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
         {
           "command": "pawsql.setDefaultWorkspace",
           "when": "view == pawsqlSidebar && viewItem == workspaceItem",

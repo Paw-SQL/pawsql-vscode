@@ -260,6 +260,8 @@ export class PawSQLExtension {
   ): Promise<void> {
     try {
       if (this.isApiConfigChanged(e)) {
+        ConfigurationService.clearUserDefaultWorkspace();
+        ConfigurationService.clearFileDefaultWorkspace();
         await this.treeProvider.refresh();
         await this.sqlCodeLensProvider.refresh();
       }

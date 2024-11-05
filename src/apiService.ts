@@ -99,10 +99,11 @@ export const getWorkspaces = async (
   const { DOMAIN } = getUrls(); // 动态获取 DOMAIN
   const url = `${DOMAIN.Backend}/api/v1/listWorkspaces`;
   const response = await axios.post<ListWorkspacesResponse>(url, {
-    userKey,
+    userKey: userKey,
     pageSize: 100,
     pageNumber: 1,
   });
+  console.log(response);
 
   if (!response.data.data) {
     throw Error("error.backendUrl.invalid");
