@@ -6,13 +6,27 @@ import * as vscode from "vscode";
 export class WebviewProvider {
   private context: vscode.ExtensionContext;
   private settingPanel: vscode.WebviewPanel | undefined;
+  private resultPanels: Map<string, vscode.WebviewPanel> = new Map();
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
   }
 
   public createSettingsPanel() {
-    const panel = vscode.window.createWebviewPanel(
+    // 如果面板已经存在，重新激活并刷新内容
+    if (this.settingPanel) {
+      this.settingPanel.reveal(vscode.ViewColumn.One); // 重新显示面板
+      this.settingPanel.webview.html = this.getSettingsWebviewContent(
+        this.settingPanel.webview,
+        vscode.Uri.file(
+          path.join(this.context.extensionPath, "dist", "webview.js")
+        )
+      ); // 刷新内容
+      return; // 结束函数
+    }
+
+    // 创建新的面板
+    this.settingPanel = vscode.window.createWebviewPanel(
       "reactWebview",
       "React Webview",
       vscode.ViewColumn.One,
@@ -25,12 +39,13 @@ export class WebviewProvider {
       path.join(this.context.extensionPath, "dist", "webview.js")
     );
 
-    panel.webview.html = this.getSettingsWebviewContent(
-      panel.webview,
+    this.settingPanel.webview.html = this.getSettingsWebviewContent(
+      this.settingPanel.webview,
       webviewJsPath
     );
 
-    panel.webview.onDidReceiveMessage(
+    // 监听消息
+    this.settingPanel.webview.onDidReceiveMessage(
       (message) => {
         switch (message.command) {
           case "alert":
@@ -40,19 +55,28 @@ export class WebviewProvider {
             this.handleSaveConfig(message.config); // 处理保存配置
             return;
           case "getConfig":
-            this.handleGetConfig(panel); // 处理获取配置
+            if (this.settingPanel) {
+              this.handleGetConfig(this.settingPanel); // 处理获取配置
+            }
             return;
           case "getLanguage":
-            this.handleGetLanguage(panel);
+            if (this.settingPanel) {
+              this.handleGetLanguage(this.settingPanel);
+            }
+            return;
         }
       },
       undefined,
       this.context.subscriptions
     );
+
+    // 监听面板关闭事件
+    this.settingPanel.onDidDispose(() => {
+      this.settingPanel = undefined; // 清除面板引用
+    });
   }
   private handleGetLanguage(panel: vscode.WebviewPanel) {
     const currentLanguage = vscode.env.language;
-    console.log(`当前语言: ${currentLanguage}`);
     panel.webview.postMessage({
       command: "languageResponse",
       locale: currentLanguage,
@@ -69,16 +93,6 @@ export class WebviewProvider {
     };
 
     panel.webview.postMessage({ command: "configResponse", ...config });
-  }
-  // 发送消息到 Webview
-  private sendMessageToWebview(
-    command: string,
-    payload: any,
-    panel: vscode.WebviewPanel
-  ) {
-    if (panel) {
-      panel.webview.postMessage({ command, ...payload });
-    }
   }
 
   // 修改保存配置的方法
@@ -108,7 +122,16 @@ export class WebviewProvider {
   }
 
   public createResultPanel(analysisStmtId: string): vscode.WebviewPanel {
-    const panel = vscode.window.createWebviewPanel(
+    // 检查是否已经存在对应的面板
+    if (this.resultPanels.has(analysisStmtId)) {
+      const existingPanel = this.resultPanels.get(analysisStmtId)!; // 获取已存在的面板
+      existingPanel.reveal(vscode.ViewColumn.Two); // 重新显示面板
+      existingPanel.webview.html = this.getWebviewContent(analysisStmtId); // 更新内容
+      return existingPanel; // 返回现有面板
+    }
+
+    // 创建新的面板
+    const newPanel = vscode.window.createWebviewPanel(
       "pawsqlOptimizationResult",
       LanguageService.getMessage("webview.anlysis.result.title"),
       vscode.ViewColumn.Two,
@@ -118,9 +141,13 @@ export class WebviewProvider {
       }
     );
 
-    panel.webview.html = this.getWebviewContent(analysisStmtId);
+    newPanel.webview.html = this.getWebviewContent(analysisStmtId);
 
-    panel.webview.onDidReceiveMessage(
+    // 存储新面板
+    this.resultPanels.set(analysisStmtId, newPanel);
+
+    // 监听来自 Webview 的消息
+    newPanel.webview.onDidReceiveMessage(
       (message) => {
         switch (message.command) {
           case "showError":
@@ -135,7 +162,12 @@ export class WebviewProvider {
       []
     );
 
-    return panel;
+    // 监听面板关闭事件
+    newPanel.onDidDispose(() => {
+      this.resultPanels.delete(analysisStmtId); // 移除对应的面板引用
+    });
+
+    return newPanel; // 返回新创建的面板
   }
 
   private getSettingsWebviewContent(

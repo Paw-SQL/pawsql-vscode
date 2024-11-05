@@ -85,28 +85,6 @@ export class PawSQLExtension {
       )
     );
 
-    // 注册配置输入命令
-    this.context.subscriptions.push(
-      vscode.commands.registerCommand(
-        "pawsql.showConfigInput",
-        async (configKey: string, label: string) => {
-          const result = await vscode.window.showInputBox({
-            prompt: `${LanguageService.getMessage(
-              "please.enter"
-            )} ${LanguageService.getMessage(label)}`,
-            password: configKey === "apiKey",
-            value: vscode.workspace.getConfiguration("pawsql").get(configKey),
-          });
-
-          if (result !== undefined) {
-            await this.treeProvider.updateConfig(configKey, result);
-          } else {
-            console.log("输入为空");
-          }
-        }
-      )
-    );
-
     // 注册验证配置命令
     this.context.subscriptions.push(
       vscode.commands.registerCommand("pawsql.validateConfig", async () => {

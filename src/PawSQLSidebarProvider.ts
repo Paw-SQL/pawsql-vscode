@@ -7,7 +7,6 @@ import {
 } from "./apiService";
 import { LanguageService } from "./LanguageService";
 import * as path from "path";
-import { ConfigurationService } from "./configurationService";
 import { getUrls } from "./constants";
 
 // Previous classes remain unchanged...
@@ -95,69 +94,6 @@ class StatementItem extends vscode.TreeItem {
   }
 }
 
-// Optimized ConfigurationItem class
-class ConfigurationItem extends vscode.TreeItem {
-  constructor(
-    public readonly config: "apiKey" | "frontendUrl" | "backendUrl",
-    public readonly label: string,
-    public isValid: boolean = false
-  ) {
-    super(label, vscode.TreeItemCollapsibleState.None);
-    const currentValue = vscode.workspace
-      .getConfiguration("pawsql")
-      .get<string>(`${config}`);
-
-    this.description = currentValue
-      ? LanguageService.getMessage("sidebar.configured.label")
-      : LanguageService.getMessage("sidebar.not.configured.label");
-    this.contextValue = "configItem";
-    this.updateIconPath();
-
-    this.command = {
-      command: "pawsql.showConfigInput",
-      title: LanguageService.getMessage("sidebar.config.label"),
-      arguments: [this.config, this.label],
-    };
-  }
-
-  public updateIconPath() {
-    this.iconPath = new vscode.ThemeIcon(this.isValid ? "check" : "warning");
-  }
-
-  public setValidationState(isValid: boolean) {
-    this.isValid = isValid;
-    this.updateIconPath();
-  }
-}
-
-class ValidateConfigItem extends vscode.TreeItem {
-  constructor() {
-    super(
-      LanguageService.getMessage("sidebar.validate.config"),
-      vscode.TreeItemCollapsibleState.None
-    );
-    this.contextValue = "validateItem";
-    this.iconPath = new vscode.ThemeIcon("verify");
-    this.command = {
-      command: "pawsql.validateConfig",
-      title: LanguageService.getMessage("sidebar.validate.config"),
-    };
-  }
-}
-
-class ConfigItem extends vscode.TreeItem {
-  constructor(
-    public readonly label: string,
-    public readonly description: string,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly command?: vscode.Command
-  ) {
-    super(label, collapsibleState);
-    this.description = description;
-    this.command = command;
-  }
-}
-
 export class PawSQLTreeProvider
   implements vscode.TreeDataProvider<vscode.TreeItem>
 {
@@ -171,7 +107,6 @@ export class PawSQLTreeProvider
   private workspaces: WorkspaceItem[] = [];
   private isConfigValid: boolean = false;
   private statementsCache: Map<string, StatementItem[]> = new Map();
-  private configItems: Map<string, ConfigurationItem> = new Map();
 
   constructor(private context: vscode.ExtensionContext) {
     // Initialize configuration items
@@ -194,8 +129,6 @@ export class PawSQLTreeProvider
     if (!this.isConfigValid && !element) {
       return [];
     }
-    console.log(this.workspaces.length === 0);
-
     if (this.workspaces.length === 0) {
       return [];
     }
@@ -230,18 +163,12 @@ export class PawSQLTreeProvider
 
     try {
       // Reset all validation states first
-      this.configItems.forEach((item) => item.setValidationState(false));
       this.isConfigValid = false;
 
       // Validate backend connectivity
 
       const backendResult = await validateBackend(backendUrl ?? "");
       const isBackendConnected = backendResult.isAvailable;
-      const backendConfig = this.configItems.get("backendUrl");
-      if (backendConfig) {
-        backendConfig.setValidationState(isBackendConnected);
-        this._onDidChangeTreeData.fire(backendConfig);
-      }
 
       if (!isBackendConnected) {
         !hideMessage &&
@@ -257,11 +184,6 @@ export class PawSQLTreeProvider
       const frontendReuslt = await validateFrontend(frontendUrl ?? "");
 
       const isFrontendConnected = frontendReuslt.isAvailable;
-      const frontendConfig = this.configItems.get("frontendUrl");
-      if (frontendConfig) {
-        frontendConfig.setValidationState(isFrontendConnected);
-        this._onDidChangeTreeData.fire(frontendConfig);
-      }
 
       if (!isFrontendConnected) {
         !hideMessage &&
@@ -275,11 +197,6 @@ export class PawSQLTreeProvider
 
       // Validate API key
       const isApikeyValid = await ApiService.validateUserKey(apiKey ?? "");
-      const apiKeyConfig = this.configItems.get("apiKey");
-      if (apiKeyConfig) {
-        apiKeyConfig.setValidationState(isApikeyValid);
-        this._onDidChangeTreeData.fire(apiKeyConfig);
-      }
 
       if (!isApikeyValid) {
         !hideMessage &&
@@ -380,11 +297,6 @@ export class PawSQLTreeProvider
           LanguageService.getMessage("sidebar.backendUrl.label")
         );
       }
-      const backendConfig = this.configItems.get("backendUrl");
-      if (backendConfig) {
-        backendConfig.setValidationState(isBackendConnected);
-        this._onDidChangeTreeData.fire(backendConfig);
-      }
 
       // Validate frontend connectivity
       const frontendReuslt = await validateFrontend(frontendUrl ?? "");
@@ -394,21 +306,11 @@ export class PawSQLTreeProvider
           LanguageService.getMessage("sidebar.frontendUrl.label")
         );
       }
-      const frontendConfig = this.configItems.get("frontendUrl");
-      if (frontendConfig) {
-        frontendConfig.setValidationState(isFrontendConnected);
-        this._onDidChangeTreeData.fire(frontendConfig);
-      }
 
       // Validate API key
       const isApikeyValid = await validateUserKey(apiKey ?? "");
       if (!isFrontendConnected) {
         failedCommand.push(LanguageService.getMessage("sidebar.apiKey.label"));
-      }
-      const apiKeyConfig = this.configItems.get("apiKey");
-      if (apiKeyConfig) {
-        apiKeyConfig.setValidationState(isApikeyValid);
-        this._onDidChangeTreeData.fire(apiKeyConfig);
       }
 
       if (!(isBackendConnected && isFrontendConnected && isApikeyValid)) {
@@ -442,11 +344,6 @@ export class PawSQLTreeProvider
         // Validate backend connectivity
         const backendResult = await validateBackend(value ?? "");
         const isBackendConnected = backendResult.isAvailable;
-        const backendConfig = this.configItems.get("backendUrl");
-        if (backendConfig) {
-          backendConfig.setValidationState(isBackendConnected);
-          this._onDidChangeTreeData.fire(backendConfig);
-        }
         if (!isBackendConnected) {
           vscode.window.showErrorMessage(
             `${LanguageService.getMessage(
@@ -464,11 +361,6 @@ export class PawSQLTreeProvider
         // Validate frontend connectivity
         const frontendReuslt = await validateFrontend(value ?? "");
         const isFrontendConnected = frontendReuslt.isAvailable;
-        const frontendConfig = this.configItems.get("frontendUrl");
-        if (frontendConfig) {
-          frontendConfig.setValidationState(isFrontendConnected);
-          this._onDidChangeTreeData.fire(frontendConfig);
-        }
 
         if (!isFrontendConnected) {
           vscode.window.showErrorMessage(
@@ -486,11 +378,6 @@ export class PawSQLTreeProvider
       } else if (key === "apiKey") {
         // Validate API key
         const isApikeyValid = await ApiService.validateUserKey(value ?? "");
-        const apiKeyConfig = this.configItems.get("apiKey");
-        if (apiKeyConfig) {
-          apiKeyConfig.setValidationState(isApikeyValid);
-          this._onDidChangeTreeData.fire(apiKeyConfig);
-        }
         if (!isApikeyValid) {
           vscode.window.showErrorMessage(
             `${LanguageService.getMessage(
@@ -625,7 +512,7 @@ export class PawSQLTreeProvider
       const statements = response.data.summaryStatementInfo.map(
         (stmt: any) =>
           new StatementItem(
-            `${stmt.analysisName}`,
+            `${stmt.stmtName}`,
             stmt.analysisStmtId,
             analysisId,
             workspaceId,

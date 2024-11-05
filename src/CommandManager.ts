@@ -55,7 +55,6 @@ export class CommandManager {
 
     try {
       const workspaces = await ApiService.getWorkspaces(apiKey ?? "");
-      console.log(workspaces);
 
       if (workspaces.data.total === "0") {
         await this.handleEmptyWorkspaces();
