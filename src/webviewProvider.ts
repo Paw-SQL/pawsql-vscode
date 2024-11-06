@@ -28,7 +28,7 @@ export class WebviewProvider {
     // 创建新的面板
     this.settingPanel = vscode.window.createWebviewPanel(
       "reactWebview",
-      "React Webview",
+      "PawSQL",
       vscode.ViewColumn.One,
       {
         enableScripts: true,
