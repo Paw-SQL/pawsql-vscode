@@ -28,6 +28,7 @@
   "OPTIMIZING_SQL": "$(sync~spin) Optimizing SQL...",
   "optimize.validate.config": "$(sync~spin) Validate configuration.",
   "start.optimize": "Start optimization.",
+  "error.create.analysis.failed": "Failed to create optimization",
   "error.backendUrl.invalid": "The configured PawSQL engine is not responding.",
   "error.frontendUrl.invalid": "The configured PawSQL website is not responding.",
   "license.code.not.valid": "The license code is invalid. Please contact the administrator.",
