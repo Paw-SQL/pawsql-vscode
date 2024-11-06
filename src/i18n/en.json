@@ -55,5 +55,6 @@
   "webview.settings.save.config.failed": "Save configuration failed",
   "form.config.title": "PawSQL Configuration",
   "form.config.save": "Save Configuration",
-  "form.config.save.success": "Configuration saved"
+  "form.config.save.success": "Configuration saved",
+  "workspace.isLoading": "Workspace loading..."
 }

@@ -27,6 +27,17 @@ class WorkspaceManagerItem extends vscode.TreeItem {
   }
 }
 
+// 定义 LoadingItem，设置加载图标
+class LoadingItem extends vscode.TreeItem {
+  constructor() {
+    super(
+      LanguageService.getMessage("workspace.isLoading"),
+      vscode.TreeItemCollapsibleState.None
+    );
+    this.iconPath = new vscode.ThemeIcon("loading~spin"); // 使用 VS Code 自带的 loading 图标
+  }
+}
+
 class WorkspaceItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
@@ -106,6 +117,7 @@ export class PawSQLTreeProvider
 
   private workspaces: WorkspaceItem[] = [];
   private isConfigValid: boolean = false;
+  private isLoading: boolean = false;
   private statementsCache: Map<string, StatementItem[]> = new Map();
 
   constructor(private context: vscode.ExtensionContext) {
@@ -129,12 +141,17 @@ export class PawSQLTreeProvider
     if (!this.isConfigValid && !element) {
       return [];
     }
-    if (this.workspaces.length === 0) {
-      return [];
-    }
 
     if (!element) {
       return [new WorkspaceManagerItem()];
+    }
+
+    if (this.isLoading) {
+      return [new LoadingItem()];
+    }
+
+    if (this.workspaces.length === 0) {
+      return [];
     }
 
     if (element instanceof WorkspaceManagerItem) {
@@ -257,13 +274,6 @@ export class PawSQLTreeProvider
       "isConfigured",
       this.isConfigValid
     );
-
-    // 3. 根据配置状态更新数据
-    if (isConfigValid) {
-      await this.loadData(true);
-    } else {
-      this.workspaces = [];
-    }
 
     // 4. 刷新视图
     this.refresh(true);
@@ -410,6 +420,9 @@ export class PawSQLTreeProvider
 
   // Rest of the methods remain unchanged...
   private async loadData(hideMessage?: boolean): Promise<void> {
+    this.isLoading = true;
+    this._onDidChangeTreeData.fire(undefined);
+
     const apiKey = vscode.workspace
       .getConfiguration("pawsql")
       .get<string>("apiKey");
@@ -461,6 +474,9 @@ export class PawSQLTreeProvider
         this.isConfigValid
       );
       this.workspaces = [];
+    } finally {
+      this.isLoading = false;
+      this._onDidChangeTreeData.fire(undefined);
     }
   }
 
