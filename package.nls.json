@@ -1,4 +1,6 @@
 {
+  "extension.display name": "PA for SQL",
+  "extension.description": "VS Code 的 SQL 优化扩展",
   "commands.configureApiKey": "配置 API Key",
   "commands.configureApiURL": "配置 API URL",
   "commands.noApiKeyHint": "尚未配置 API Key，点击进行配置",
