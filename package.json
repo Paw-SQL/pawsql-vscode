@@ -11,8 +11,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "pawsql.mainMenu"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -73,22 +72,6 @@
     },
     "commands": [
       {
-        "command": "vscode-webview-react.showWebview",
-        "title": "Show React Webview"
-      },
-      {
-        "command": "pawsql.selectDefaultWorkspace",
-        "title": "%commands.selectDefaultWorkspace%"
-      },
-      {
-        "command": "pawsql.optimizeUsingDefaultWorkspace",
-        "title": "%commands.optimizeUsingDefaultWorkspace%"
-      },
-      {
-        "command": "pawsql.selectWorkspaceForOptimization",
-        "title": "%commands.selectWorkspaceForOptimization%"
-      },
-      {
         "command": "pawsql.openSettings",
         "title": "%commands.openSettings%",
         "icon": "$(gear)"
@@ -111,12 +94,6 @@
       {
         "command": "selectFileDefaultWorkspace",
         "title": "%commands.selectFileDefaultWorkspace%"
-      }
-    ],
-    "submenus": [
-      {
-        "id": "pawsql.mainMenu",
-        "label": "%menus.mainMenu%"
       }
     ],
     "configuration": [
@@ -198,9 +175,6 @@
     ],
     "menus": {
       "editor/context": [
-        {
-          "submenu": "pawsql.mainMenu"
-        },
         {
           "command": "pawsql.selectDefaultWorkspace",
           "group": "navigation"

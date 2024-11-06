@@ -214,12 +214,12 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
       codeLenses.push(
         new vscode.CodeLens(separatorRange, {
           title: defaultWorkspace.dbHost
-            ? `${LanguageService.getMessage(
+            ? `\u200B$(pawsql-icon) ${LanguageService.getMessage(
                 "codelens.file.default.workspace.title"
               )}: ${defaultWorkspace.dbType}:${defaultWorkspace.dbHost}@${
                 defaultWorkspace.dbPort
               }`
-            : `${LanguageService.getMessage(
+            : `\u200B$(pawsql-icon) ${LanguageService.getMessage(
                 "codelens.file.default.workspace.title"
               )}: ${defaultWorkspace.dbType}:${defaultWorkspace.workspaceName}`,
           command: "pawsql.selectFileDefaultWorkspace",
