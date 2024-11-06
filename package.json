@@ -1,7 +1,7 @@
 {
   "name": "pawsql",
-  "displayName": "PawSQL",
-  "description": "SQL Optimization Extension for VS Code",
+  "displayName": "%extension.display name%",
+  "description": "%extension.description%",
   "publisher": "hyliang",
   "version": "0.0.1",
   "engines": {

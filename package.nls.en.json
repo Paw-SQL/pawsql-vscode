@@ -1,4 +1,7 @@
 {
+  "extension.displayName": "PawSQL",
+  "extension.description": "SQL Optimization Extension for VS Code",
+
   "commands.configureApiKey": "Configure API Key",
   "commands.configureApiURL": "Configure API URL",
   "commands.noApiKeyHint": "API Key not configured, click to configure",

@@ -1,46 +1,52 @@
-# PawSQL VSCode 插件
+# PawSQL VSCode plugin
 
-## 简介
+[English](README.md) | [中文](README_zh-CN.md)
 
-PawSQL 是一款为 Visual Studio Code 提供的插件，旨在帮助开发者优化 SQL 查询并管理工作空间。通过与 PawSQL API 的集成，用户可以方便地执行 SQL 优化，查看优化结果。
+## Introduction
 
-## 功能
+PawSQL is a plugin for Visual Studio Code that helps developers optimize SQL queries and manage workspaces. Through integration with the PawSQL API, users can easily perform SQL optimization and view optimization results.
 
-- **SQL 优化**：选择 SQL 查询并使用 PawSQL API 进行优化。
-- **工作空间管理**：连接到 PawSQL 工作空间，方便地切换和管理。
-- **错误处理**：提供详细的错误信息和友好的提示。
+## Features
 
-## 安装
+- **SQL optimization**: Select SQL queries and optimize using the PawSQL API.
 
-1. 打开 Visual Studio Code。
-2. 转到扩展视图 (`Ctrl+Shift+X` 或 `Cmd+Shift+X`)。
-3. 搜索 “PawSQL” 并点击安装。
+- **Workspace management**: Connect to a PawSQL workspace for easy switching and management.
 
-## 使用说明
+- **Error handling**: Provides detailed error information and friendly prompts.
 
-### 配置 API 密钥
+## Installation
 
-在使用插件之前，您需要配置 PawSQL API 密钥：
+1. Open Visual Studio Code.
 
-1. 打开设置 (`Ctrl+,` 或 `Cmd+,`)。
-2. 搜索 “PawSQL”。
-3. 输入您的 API 密钥并保存。
+2. Go to the Extensions view (`Ctrl+Shift+X` or `Cmd+Shift+X`).
 
-### 优化 SQL 查询
+3. Search for "PawSQL" and click Install.
 
-1. 在编辑器中选择需要优化的 SQL 查询。
-2. 右键单击，选择 “优化 SQL” 或使用命令面板 (`Ctrl+Shift+P` 或 `Cmd+Shift+P`) 输入 “优化 SQL”。
-3. 点击选择工作空间获取，点击执行优化。
-3. 等待优化结果，并根据提示查看报告。
+## Instructions
 
-### 管理工作空间
+### Configure API key
 
-1. 使用命令面板 (`Ctrl+Shift+P` 或 `Cmd+Shift+P`) 输入 “选择工作空间”。
-2. 从列表中选择一个工作空间进行连接。
+Before using the plugin, you need to configure the PawSQL API key:
 
-## 错误处理
+1. Open Settings (`Ctrl+,` or `Cmd+,`).
+2. Search for "PawSQL".
+3. Enter your API key and save.
 
-在使用过程中，如果遇到任何问题，插件会显示详细的错误信息和解决提示。例如：
+### Optimize SQL Queries
 
-- API 密钥未配置：请在设置中添加 API 密钥。
-- SQL 查询无效：请选择有效的 SQL 文本进行优化。
+1. Select the SQL query to be optimized in the editor.
+2. Right-click and select "Optimize SQL" or use the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P`) to enter "Optimize SQL".
+3. Click Select Workspace to get it, and click Execute Optimization.
+3. Wait for the optimization results and view the report according to the prompts.
+
+### Manage Workspaces
+
+1. Use the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P`) to enter "Select Workspace".
+2. Select a workspace from the list to connect.
+
+## Error Handling
+
+During use, if you encounter any problems, the plugin will display detailed error information and solution tips. For example:
+
+- API key not configured: Please add API key in settings.
+- Invalid SQL query: Please select valid SQL text to optimize.
