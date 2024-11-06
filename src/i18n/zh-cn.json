@@ -28,6 +28,7 @@
   "OPTIMIZING_SQL": "$(sync~spin) 正在优化SQL...",
   "optimize.validate.config": "$(sync~spin) 验证配置",
   "start.optimize": "开始执行优化",
+  "error.create.analysis.failed": "创建优化失败",
   "error.backendUrl.invalid": "请检查 backendUrl 是否正确配置或服务器是否运行",
   "error.frontendUrl.invalid": "请检查 frontendUrl 是否正确配置或服务器是否运行",
   "license.code.not.valid": "许可证代码无效，请联系管理员获取",
@@ -54,5 +55,6 @@
   "webview.settings.save.config.success": "保存配置成功",
   "webview.settings.save.config.failed": "保存配置失败",
   "form.config.title": "PawSQL配置",
-  "form.config.save": "保存配置"
+  "form.config.save": "保存配置",
+  "workspace.isLoading": "工作空间加载中..."
 }

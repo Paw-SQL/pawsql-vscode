@@ -139,6 +139,11 @@ export const createAnalysis = async (
   if (!response.data.data) {
     throw Error("error.backendUrl.invalid");
   }
+
+  if (!response.data.data.status.startsWith("success")) {
+    throw Error("error.create.analysis.failed");
+  }
+
   return response.data;
 };
 

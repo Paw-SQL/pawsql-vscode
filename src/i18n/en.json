@@ -28,6 +28,7 @@
   "OPTIMIZING_SQL": "$(sync~spin) Optimizing SQL...",
   "optimize.validate.config": "$(sync~spin) Validate configuration.",
   "start.optimize": "Start optimization.",
+  "error.create.analysis.failed": "Failed to create optimization",
   "error.backendUrl.invalid": "The configured PawSQL engine is not responding.",
   "error.frontendUrl.invalid": "The configured PawSQL website is not responding.",
   "license.code.not.valid": "The license code is invalid. Please contact the administrator.",
@@ -51,9 +52,10 @@
   "codelens.optimize.sql.with.default.workspace": "⚡Optimize",
   "codelens.optimize.sql.with.selected.workspace": "⚡Optimize in ...",
   "webview.anlysis.result.title": "PawSQL Result",
-  "webview.settings.save.config.success": "Setup Completed",
-  "webview.settings.save.config.failed": "Setup Failded",
+  "webview.settings.save.config.success": "PawSQL Setup Completed",
+  "webview.settings.save.config.failed": "PawSQL Setup Failded",
   "form.config.title": "Set up PawSQL",
   "form.config.save": "Save",
-  "form.config.save.success": "Setup Completed"
+  "form.config.save.success": "Setup Completed",
+  "workspace.isLoading": "Workspace loading..."
 }

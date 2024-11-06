@@ -259,6 +259,24 @@ export class PawSQLExtension {
     // 3. 验证配置
     const isConfigValid = await this.treeProvider.validateConfig();
     if (!isConfigValid) {
+      // const range = new vscode.Range(0, 0, 0, 0); // 替换为按钮所在行的 Range
+
+      // // 创建诊断对象
+      // const diagnostic = new vscode.Diagnostic(
+      //   range,
+      //   message,
+      //   vscode.DiagnosticSeverity.Error
+      // );
+      // vscode.languages.setDiagnostics(editor.document.uri, [diagnostic]);
+
+      const message = "验证失败"; // 汇总错误信息
+      let errors = vscode.languages.createDiagnosticCollection("foo");
+      errors.clear();
+      errors.set(editor.document.uri, [new vscode.Diagnostic(range, message)]);
+
+      const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
+      console.log(diagnostics);
+
       return;
     }
 
