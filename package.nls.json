@@ -19,9 +19,9 @@
   "menus.noApiKeyHint": "尚未配置 API Key，点击进行配置",
   "menus.recentWorkspace": "最近使用的工作空间列表",
 
-  "config.initialization.title": "PawSQL 初始化",
-  "config.initialization.description": "PawSQL 扩展的基本初始化设置",
-  "config.initialization.apiKey.description": "用于 PawSQL 服务认证的 API 密钥",
+  "config.initialization.title": "PawSQL 设置",
+  "config.initialization.description": "PawSQL 插件的初始化设置",
+  "config.initialization.apiKey.description": "用于 PawSQL 优化引擎服务认证的ApiKey",
   "config.initialization.apiKey.markdownDescription": "用于 PawSQL 服务认证的 API 密钥。您可以在 PawSQL 账户设置中获取此密钥。",
   "config.initialization.backendUrl.description": "PawSQL 后端服务地址",
   "config.initialization.backendUrl.markdownDescription": "PawSQL 后端服务的基础 URL。",
