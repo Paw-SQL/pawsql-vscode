@@ -13,6 +13,8 @@
   "beta.analysis.over.limit": "β用户优化次数超过限制",
   "analysis.over.limit": "优化次数超过限制",
   "workspace.not.exist": "工作空间不存在",
+  "workspace.has.no.analysis": "工作空间优化列表为空",
+  "analysis.not.exist": "优化不存在",
   "open.in.browser": "在浏览器中查看详细优化结果",
   "SQL_OPTIMIZED": "SQL 优化已完成",
   "QUERYING_WORKSPACES": "正在查询工作空间...",

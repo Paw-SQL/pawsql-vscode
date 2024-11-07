@@ -197,15 +197,9 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     } else if (fileWorkspace?.workspaceId) {
       codeLenses.push(
         new vscode.CodeLens(separatorRange, {
-          title: fileWorkspace.dbHost
-            ? `\u200B$(pawsql-icon) ${LanguageService.getMessage(
-                "codelens.file.default.workspace.title"
-              )}: ${fileWorkspace.dbType}:${fileWorkspace.dbHost}@${
-                fileWorkspace.dbPort
-              }`
-            : `\u200B$(pawsql-icon) ${LanguageService.getMessage(
-                "codelens.file.default.workspace.title"
-              )}: ${fileWorkspace.dbType}:${fileWorkspace.workspaceName}`,
+          title: `$(pawsql-icon) ${LanguageService.getMessage(
+            "codelens.file.default.workspace.title"
+          )}: ${fileWorkspace.dbType}:${fileWorkspace.workspaceName}`,
           command: "pawsql.selectFileDefaultWorkspace",
           arguments: [document.uri],
         })
@@ -213,15 +207,9 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     } else if (defaultWorkspace?.workspaceId) {
       codeLenses.push(
         new vscode.CodeLens(separatorRange, {
-          title: defaultWorkspace.dbHost
-            ? `\u200B$(pawsql-icon) ${LanguageService.getMessage(
-                "codelens.file.default.workspace.title"
-              )}: ${defaultWorkspace.dbType}:${defaultWorkspace.dbHost}@${
-                defaultWorkspace.dbPort
-              }`
-            : `\u200B$(pawsql-icon) ${LanguageService.getMessage(
-                "codelens.file.default.workspace.title"
-              )}: ${defaultWorkspace.dbType}:${defaultWorkspace.workspaceName}`,
+          title: `$(pawsql-icon) ${LanguageService.getMessage(
+            "codelens.file.default.workspace.title"
+          )}: ${defaultWorkspace.dbType}:${defaultWorkspace.workspaceName}`,
           command: "pawsql.selectFileDefaultWorkspace",
           arguments: [document.uri],
         })
@@ -229,7 +217,7 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     } else {
       codeLenses.push(
         new vscode.CodeLens(separatorRange, {
-          title: `\u200B$(pawsql-icon) ${LanguageService.getMessage(
+          title: `$(pawsql-icon) ${LanguageService.getMessage(
             "codelens.config.file.default.workspace"
           )}`,
           command: "pawsql.selectFileDefaultWorkspace",

@@ -38,6 +38,16 @@ class LoadingItem extends vscode.TreeItem {
   }
 }
 
+class EmptyItem extends vscode.TreeItem {
+  constructor() {
+    super(
+      LanguageService.getMessage("workspace.has.no.analysis"),
+      vscode.TreeItemCollapsibleState.None
+    );
+    this.iconPath = new vscode.ThemeIcon("info"); // 使用警告图标
+  }
+}
+
 class WorkspaceItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
@@ -52,9 +62,7 @@ class WorkspaceItem extends vscode.TreeItem {
     this.contextValue = "workspaceItem";
 
     // 根据是否为默认工作空间设置图标
-    this.label = this.dbHost
-      ? `${this.dbType}:${this.dbHost}@${this.dbPort}`
-      : `${this.dbType}:${this.workspaceName}`;
+    this.label = `${this.dbType}:${this.workspaceName}`;
 
     // 从配置中读取默认工作空间
     const defaultWorkspace = vscode.workspace
@@ -72,11 +80,17 @@ class AnalysisItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
     public readonly analysisId: string,
-    public readonly workspaceId: string
+    public readonly workspaceId: string,
+    public readonly numberOfQuery: number,
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly command?: vscode.Command | undefined
   ) {
-    super(label, vscode.TreeItemCollapsibleState.Collapsed);
+    super(label, collapsibleState);
     this.contextValue = "analysisItem";
     this.iconPath = new vscode.ThemeIcon("graph");
+    if (numberOfQuery === 1) {
+      this.command = command;
+    }
   }
 }
 
@@ -114,11 +128,17 @@ export class PawSQLTreeProvider
   readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined> =
     this._onDidChangeTreeData.event;
   private treeView: vscode.TreeView<vscode.TreeItem> | undefined; // 用于管理树视图
-
+  private workspaceManagerItem: WorkspaceManagerItem =
+    new WorkspaceManagerItem();
   private workspaces: WorkspaceItem[] = [];
   private isConfigValid: boolean = false;
   private isLoading: boolean = false;
-  private statementsCache: Map<string, StatementItem[]> = new Map();
+  // 缓存工作空间和其对应的分析
+  private workspaceAnalysisCache: Map<WorkspaceItem, AnalysisItem[]> =
+    new Map();
+  // 缓存分析和其对应的语句
+  private analysisStatementCache: Map<AnalysisItem, StatementItem[]> =
+    new Map();
 
   constructor(private context: vscode.ExtensionContext) {
     // Initialize configuration items
@@ -127,7 +147,8 @@ export class PawSQLTreeProvider
   }
 
   async refresh(hideMessage?: boolean): Promise<void> {
-    this.statementsCache.clear();
+    this.workspaceAnalysisCache.clear();
+    this.analysisStatementCache.clear();
     if (this.treeView) {
       await this.validateConfiguration(hideMessage);
       this._onDidChangeTreeData.fire(undefined);
@@ -143,7 +164,8 @@ export class PawSQLTreeProvider
     }
 
     if (!element) {
-      return [new WorkspaceManagerItem()];
+      this.workspaceManagerItem = new WorkspaceManagerItem();
+      return [this.workspaceManagerItem];
     }
 
     if (this.isLoading) {
@@ -159,19 +181,118 @@ export class PawSQLTreeProvider
     }
 
     if (element instanceof WorkspaceItem) {
-      return await this.getAnalysisItems(element.workspaceId);
+      return await this.getAnalysisItems(element);
     }
 
     if (element instanceof AnalysisItem) {
-      return await this.getStatementItems(
-        element.analysisId,
-        element.workspaceId
-      );
+      if (element.numberOfQuery > 1) {
+        if (this.analysisStatementCache.has(element)) {
+          return this.analysisStatementCache.get(element)!;
+        }
+        return await this.getStatementItems(element);
+      }
     }
 
     return [];
   }
+  // getParent 方法实现
+  getParent(element: vscode.TreeItem): vscode.TreeItem | null {
+    // 语句项的父节点是对应的分析项
+    if (element instanceof StatementItem) {
+      for (const [analysis, statements] of this.analysisStatementCache) {
+        if (statements.includes(element)) {
+          return analysis;
+        }
+      }
+    }
 
+    // 分析项的父节点是对应的工作空间项
+    if (element instanceof AnalysisItem) {
+      for (const [workspace, analyses] of this.workspaceAnalysisCache) {
+        if (analyses.includes(element)) {
+          return workspace;
+        }
+      }
+    }
+
+    // 工作空间项的父节点是根节点，返回 null
+    if (element instanceof WorkspaceItem) {
+      return null;
+    }
+
+    return null; // 如果无法确定父节点，返回 null
+  }
+  async addAnalysisAndStatement(workspaceId: string, analysisId: string) {
+    const workspace = this.workspaces.find(
+      (item) => item.workspaceId === workspaceId
+    );
+    if (!workspace) {
+      throw Error("workspace.not.exist");
+    }
+
+    await this.getAnalysisItems(workspace);
+
+    const analysis = this.workspaceAnalysisCache
+      .get(workspace)
+      ?.find((item) => item.analysisId === analysisId);
+
+    if (!analysis) {
+      throw Error("analysis.not.exist");
+    }
+    await this.getStatementItems(analysis);
+    this._onDidChangeTreeData.fire(undefined);
+  }
+  // // 自动展开并聚焦到特定语句
+  // async revealStatement(statementId: string) {
+  //   const statementItem = [...this.analysisStatementCache.values()]
+  //     .flat()
+  //     .find((statement) => statement.statementId === statementId);
+
+  //   if (statementItem) {
+  //     await this.treeView?.reveal(statementItem, { expand: true });
+  //   } else {
+  //     vscode.window.showErrorMessage("找不到指定的语句。");
+  //   }
+  // }
+
+  // 自动展开并聚焦到特定语句，同时折叠整个侧边栏
+  async revealStatement(statementId: string) {
+    const statementItem = [...this.analysisStatementCache.values()]
+      .flat()
+      .find((statement) => statement.statementId === statementId);
+
+    if (statementItem) {
+      //先折叠整个侧边栏，替换 `<viewId>` 为你的视图 ID
+      await vscode.commands.executeCommand(
+        "workbench.actions.treeView.pawsqlSidebar.collapseAll"
+      );
+      await this.treeView?.reveal(this.workspaceManagerItem, { expand: true });
+      // 展开并聚焦到目标 statementItem
+      await this.treeView?.reveal(statementItem, { expand: true });
+    } else {
+      vscode.window.showErrorMessage("找不到指定的语句。");
+    }
+  }
+  async revealAnalysis(analysisId: string) {
+    const analysisItem = [...this.workspaceAnalysisCache.values()]
+      .flat()
+      .find((analysis) => analysis.analysisId === analysisId);
+    console.log([...this.workspaceAnalysisCache.values()]);
+    console.log(analysisId);
+    console.log(analysisItem);
+
+    if (analysisItem) {
+      //先折叠整个侧边栏，替换 `<viewId>` 为你的视图 ID
+      await vscode.commands.executeCommand(
+        "workbench.actions.treeView.pawsqlSidebar.collapseAll"
+      );
+      await this.treeView?.reveal(this.workspaceManagerItem, { expand: true });
+      // 展开并聚焦到目标 statementItem
+      await this.treeView?.reveal(analysisItem, { expand: true });
+    } else {
+      vscode.window.showErrorMessage("找不到指定的分析。");
+    }
+  }
   public async validateConfiguration(hideMessage?: boolean): Promise<void> {
     const config = vscode.workspace.getConfiguration("pawsql");
     const apiKey = config.get<string>("apiKey");
@@ -480,41 +601,105 @@ export class PawSQLTreeProvider
     }
   }
 
-  private async getAnalysisItems(workspaceId: string): Promise<AnalysisItem[]> {
+  private async getAnalysisItems(
+    workspace: WorkspaceItem
+  ): Promise<AnalysisItem[] | EmptyItem[]> {
     const apiKey = vscode.workspace
       .getConfiguration("pawsql")
       .get<string>("apiKey");
 
     try {
-      const response = await ApiService.getAnalyses(apiKey!, workspaceId);
+      const response = await ApiService.getAnalyses(
+        apiKey!,
+        workspace.workspaceId
+      );
 
-      return response.data.records.map(
-        (analysis: any) =>
+      // 如果没有数据，直接返回 EmptyItem
+      if (response.data.total === "0") {
+        return [new EmptyItem()];
+      }
+
+      // 使用 Promise.all 等待所有 async 操作完成
+      const commands = await Promise.all(
+        response.data.records.map(async (analysis) => {
+          let statements: StatementItem[] = [];
+
+          // 使用 await 来简化 then() 的嵌套
+          const summary = await ApiService.getAnalysisSummary({
+            userKey: apiKey!,
+            analysisId: analysis.analysisId,
+          });
+
+          statements = summary.data.summaryStatementInfo.map((stmt) => {
+            return new StatementItem(
+              `${stmt.stmtName}`,
+              stmt.analysisStmtId,
+              analysis.analysisId,
+              analysis.workspaceId,
+              stmt.stmtText
+            );
+          });
+
+          if (statements.length > 0) {
+            const firstStatement = statements[0];
+            return {
+              analysisId: firstStatement.analysisId,
+              command: "pawsql.showStatementDetail",
+              title: LanguageService.getMessage(
+                "sidebar.show.statement.detail"
+              ),
+              arguments: [
+                firstStatement.statementId,
+                firstStatement.analysisId,
+                firstStatement.workspaceId,
+                firstStatement.sql,
+              ],
+            };
+          }
+
+          return null; // 如果没有 statements, 返回 null
+        })
+      );
+
+      // 过滤掉 null 的 command
+      const validCommands = commands.filter((command) => command !== null);
+
+      // 创建分析项
+      const analyses = response.data.records.map(
+        (analysis) =>
           new AnalysisItem(
             analysis.analysisName,
             analysis.analysisId,
-            workspaceId
+            workspace.workspaceId,
+            analysis.numberOfQuery,
+            analysis.numberOfQuery === 1
+              ? vscode.TreeItemCollapsibleState.None
+              : vscode.TreeItemCollapsibleState.Collapsed,
+            analysis.numberOfQuery === 1
+              ? validCommands.find(
+                  (item) => item && item.analysisId === analysis.analysisId
+                )
+              : undefined
           )
       );
+
+      // 缓存分析项
+      this.workspaceAnalysisCache.set(workspace, analyses);
+
+      return analyses;
     } catch (error: any) {
       vscode.window.showErrorMessage(
         `${LanguageService.getMessage("error.load.data.failed")}: ${
           error.message
         }`
       );
-      return [];
+      return []; // 出现错误时返回空数组
     }
   }
 
   private async getStatementItems(
-    analysisId: string,
-    workspaceId: string
+    analysis: AnalysisItem
   ): Promise<StatementItem[]> {
-    const cacheKey = `${analysisId}-${workspaceId}`;
-    if (this.statementsCache.has(cacheKey)) {
-      return this.statementsCache.get(cacheKey)!;
-    }
-
     const apiKey = vscode.workspace
       .getConfiguration("pawsql")
       .get<string>("apiKey");
@@ -522,7 +707,7 @@ export class PawSQLTreeProvider
     try {
       const response = await ApiService.getAnalysisSummary({
         userKey: apiKey!,
-        analysisId: analysisId,
+        analysisId: analysis.analysisId,
       });
 
       const statements = response.data.summaryStatementInfo.map(
@@ -530,13 +715,14 @@ export class PawSQLTreeProvider
           new StatementItem(
             `${stmt.stmtName}`,
             stmt.analysisStmtId,
-            analysisId,
-            workspaceId,
+            analysis.analysisId,
+            analysis.workspaceId,
             stmt.sql
           )
       );
 
-      this.statementsCache.set(cacheKey, statements);
+      // 缓存分析下的语句
+      this.analysisStatementCache.set(analysis, statements);
       return statements;
     } catch (error: any) {
       vscode.window.showErrorMessage(

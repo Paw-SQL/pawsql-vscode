@@ -53,6 +53,9 @@ export class WebviewProvider {
             return;
           case "saveConfig":
             this.handleSaveConfig(message.config); // 处理保存配置
+            vscode.commands.executeCommand(
+              "workbench.view.extension.pawsqlContainer"
+            );
             return;
           case "getConfig":
             if (this.settingPanel) {

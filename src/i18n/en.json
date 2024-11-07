@@ -13,6 +13,8 @@
   "beta.analysis.over.limit": "Optimization quota is reached.",
   "analysis.over.limit": "Optimization quota is reached.",
   "workspace.not.exist": "Workspace does not exist.",
+  "workspace.has.no.analysis": "Workspace optimization list is empty",
+  "analysis.not.exist": "Analysis does not exist.",
   "open.in.browser": "Check optimization details @",
   "SQL_OPTIMIZED": "SQL optimization is complete.",
   "QUERYING_WORKSPACES": "Querying workspaces...",

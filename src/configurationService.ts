@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { WorkspaceItem } from "./types";
+import { WorkspaceItem } from "./apiService";
 
 export const ConfigurationService = {
   get config() {

@@ -6,7 +6,7 @@ import { SqlCodeLensProvider } from "./SqlCodeLensProvider";
 import { getUrls } from "./constants";
 import { DecorationManager } from "./DecorationManager";
 import { CommandManager } from "./CommandManager";
-import type { WorkspaceItem, SummaryResponse } from "./types";
+import type { WorkspaceItem, AnalysisAndSummaryResponse } from "./apiService";
 import { getEditorQueryDetails } from "./utils/pawsqlUtils";
 import { LanguageService } from "./LanguageService";
 import { ConfigurationService } from "./configurationService";
@@ -197,7 +197,7 @@ export class PawSQLExtension {
             optimizationStatusBarItem.dispose(); // 清除之前的消息
           }
 
-          await this.handleOptimizationResult(result);
+          await this.handleOptimizationResult(result, workspaceId);
         } catch (error) {
           ErrorHandler.handle("sql.optimization.failed", error);
         } finally {
@@ -302,7 +302,7 @@ export class PawSQLExtension {
       const result = await this.executeOptimization(workspaceId, query);
 
       // 6. 处理结果
-      await this.handleOptimizationResult(result);
+      await this.handleOptimizationResult(result, workspaceId);
     } catch (error) {
       ErrorHandler.handle("sql.optimization.failed", error);
     } finally {
@@ -323,7 +323,7 @@ export class PawSQLExtension {
   private async executeOptimization(
     workspaceId: string,
     sql: string
-  ): Promise<SummaryResponse> {
+  ): Promise<AnalysisAndSummaryResponse> {
     const userKey = await ConfigurationService.getApiKey();
     if (!userKey) {
       throw new Error("api.key.not.configured");
@@ -338,18 +338,38 @@ export class PawSQLExtension {
       validateFlag: true,
     });
 
-    return await OptimizationService.getAnalysisSummary({
-      userKey,
-      analysisId: analysisResponse.data.analysisId,
-    });
+    return {
+      analysis: analysisResponse,
+      analysisSummary: await OptimizationService.getAnalysisSummary({
+        userKey,
+        analysisId: analysisResponse.data.analysisId,
+      }),
+    };
   }
 
   private async handleOptimizationResult(
-    result: SummaryResponse
+    result: AnalysisAndSummaryResponse,
+    workspaceId: string
   ): Promise<void> {
-    const statementId = result.data.summaryStatementInfo[0]?.analysisStmtId;
-    if (statementId) {
-      await this.webviewProvider.createResultPanel(statementId);
+    await this.treeProvider.addAnalysisAndStatement(
+      workspaceId,
+      result.analysis.data.analysisId
+    );
+    const queryNumber = result.analysisSummary.data.basicSummary.numberOfQuery;
+    if (queryNumber === 1) {
+      const statementId =
+        result.analysisSummary.data.summaryStatementInfo[0]?.analysisStmtId;
+      if (statementId) {
+        this.webviewProvider.createResultPanel(statementId);
+        await this.treeProvider.revealAnalysis(result.analysis.data.analysisId);
+      }
+    } else {
+      const statementId =
+        result.analysisSummary.data.summaryStatementInfo[0]?.analysisStmtId;
+      if (statementId) {
+        this.webviewProvider.createResultPanel(statementId);
+        await this.treeProvider.revealStatement(statementId);
+      }
     }
   }
 

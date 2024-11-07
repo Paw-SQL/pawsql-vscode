@@ -6,6 +6,20 @@ interface ListWorkspacesParams {
   userKey: string;
 }
 
+export interface WorkspaceItem {
+  label: string;
+  workspaceId: string;
+  workspaceName: string;
+  dbType: string;
+  dbHost: string;
+  dbPort: string;
+}
+
+export interface AnalysisAndSummaryResponse {
+  analysis: CreateAnalysisResponse;
+  analysisSummary: GetAnalysisSummaryResponse;
+}
+
 interface Workspace {
   workspaceId: string;
   workspaceName: string;
@@ -16,6 +30,25 @@ interface Workspace {
   numberOfAnalysis: number;
   latestAnalysisTime: string;
   status: string;
+}
+
+export interface AnalysisBasicRead {
+  analysisId: string; // 分析ID
+  analysisName: string; // 分析名称
+  workspaceId: string; // workspaceId
+  workspaceName: string; // workspace名称
+  status: string; // 状态
+  numberOfQuery: number; // 分析的query数量
+  numberOfSyntaxError: number; // 语法错误数目
+  numberOfIndex: number; // 推荐出来的索引数量
+  numberOfRewrite: number; // 重写出来的query数量
+  numberOfRewriteRules: number; // 违反的重写规则数
+  numberOfViolations: number; // 违反的规则数量
+  numberOfViolatedQuery: number; // 违反规则的query数量
+  performanceImprove: number | null; // 性能提升比例 (可能为 null)
+  createUserId: string; // 创建人ID
+  createUserName: string; // 创建人名称
+  createTime: string; // 创建时间
 }
 
 interface ListWorkspacesResponse {
@@ -34,7 +67,7 @@ interface ListAnalysesResponse {
   code: number;
   message: string;
   data: {
-    records: any[];
+    records: AnalysisBasicRead[];
     total: string;
     size: string;
     current: string;
@@ -78,7 +111,7 @@ interface GetAnalysisSummaryParams {
 interface GetAnalysisSummaryResponse {
   code: number;
   message: string;
-  data: any; // 根据具体返回类型进行调整
+  data: AnalysisSummaryRead; // 根据具体返回类型进行调整
 }
 
 interface GetStatementDetailsParams {
@@ -89,7 +122,7 @@ interface GetStatementDetailsParams {
 interface GetStatementDetailsResponse {
   code: number;
   message: string;
-  data: any; // 根据具体返回类型进行调整
+  data: StatementDetailInfoRead; // 根据具体返回类型进行调整
 }
 
 // 获取工作空间列表
@@ -147,6 +180,92 @@ export const createAnalysis = async (
   return response.data;
 };
 
+export interface AnalysisSummaryRead {
+  status: string; // 分析状态
+  basicSummary: AnalysisSummary; // AnalysisSummary 信息
+  analysisRuleInfo: RuleQueries[]; // 规则信息
+  analysisIndexInfo: string[]; // 索引推荐信息
+  summaryStatementInfo: SummaryStatementInfo[]; // query信息
+}
+
+export interface AnalysisSummary {
+  analysisSummaryId: string; // 分析汇总ID，使用 string 类型
+  analysisId: string; // 分析ID，使用 string 类型
+  numberOfQuery: number; // query数量
+  numberOfSyntaxError: number; // 语法错误数目
+  numberOfRewrite: number; // 重写的query数量
+  numberOfRewriteRules: number; // 违反的重写规则数
+  numberOfRewrittenQuery: number; // 被重写的query数量
+  numberOfViolations: number; // 违反规则数量
+  numberOfViolatedQuery: number; // 违反规则的query数量
+  numberOfIndex: number; // 推荐索引数量
+  numberOfQueryIndex: number; // 用到推荐索引的query数量
+  performanceImprove: number; // 性能提升比例
+  summaryMarkdown: string; // 汇总信息的markdown文本
+  summaryMarkdownZh: string; // 汇总信息的中文markdown文本
+  commentCount: number; // 评论数量
+  needReply: number; // 分析反馈是否已回复 (-1:未回复, 0:未评论, 1:已回复)
+}
+
+export interface RuleQueries {
+  ruleName: string; // 规则名称
+  stmtNameStr: string; // query名称列表字符串
+}
+export interface SummaryStatementInfo {
+  analysisStmtId: string; // 推荐索引ID，使用 string 类型
+  stmtId: string; // statement ID，使用 string 类型
+  stmtName: string; // statement名称
+  stmtType: string; // statement类型
+  stmtText: string; // statement文本
+  costBefore: number; // 执行前成本
+  costAfter: number; // 执行后成本
+  numberOfRewrite: number; // 重写的query数量
+  numberOfRewriteRules: number; // 违反的重写规则数
+  numberOfViolations: number; // 违反规则的数量
+  numberOfSyntaxError: number; // 语法错误数目
+  numberOfIndex: number; // 推荐索引数量
+  numberOfHitIndex: number; // 有效的索引数量
+  performance: number; // 性能提升
+  contributingIndices: string; // 产生贡献的索引名称
+  commentCount: number; // 评论数量
+  needReply: number; // 是否已回复 (-1:未回复, 0:未评论, 1:已回复)
+}
+
+export interface StatementDetailInfoRead {
+  analysisId: string; // 分析ID，使用 string 类型
+  analysisName: string; // 分析名称
+  stmtId: string; // statement ID，使用 string 类型
+  statementName: string; // statement名称
+  stmtText: string; // statement文本（表ID）
+  detailMarkdown: string; // 详细信息markdown文本
+  detailMarkdownZh: string; // 详细信息中文markdown文本
+  openaiOptimizeTextEn: string; // openai优化结果英文
+  openaiOptimizeTextZh: string; // openai优化结果中文
+  indexRecommended: string[]; // 推荐的索引列表
+  rewrittenQuery: RuleRewrittenQuery[]; // 重写后的query列表
+  violationRule: RuleRewrittenFragments[]; // 违反的规则列表
+  validationDetails: ValidationDetails; // validate后的相关信息
+}
+export interface RuleRewrittenQuery {
+  ruleCode: string; // 规则代码
+  ruleNameZh: string; // 规则中文名称
+  ruleNameEn: string; // 规则英文名称
+  rewrittenQueriesStr: string; // 重写的queries字符串
+  violatedQueriesStr: string; // 审查的queries字符串
+}
+
+export interface RuleRewrittenFragments {
+  ruleName: string; // 规则名称
+  fragmentsStr: string; // fragment名称
+}
+export interface ValidationDetails {
+  beforeCost: number; // 索引的执行前成本
+  afterCost: number; // 索引的执行后成本
+  beforePlan: string; // 前执行计划
+  afterPlan: string; // 后执行计划
+  performImprovePer: number; // 性能提升百分比
+  stmtText: string; // statement文本（表ID）
+}
 // 查询优化概要
 export const getAnalysisSummary = async (
   params: GetAnalysisSummaryParams

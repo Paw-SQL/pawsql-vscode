@@ -174,12 +174,6 @@
       }
     ],
     "menus": {
-      "editor/context": [
-        {
-          "command": "pawsql.selectDefaultWorkspace",
-          "group": "navigation"
-        }
-      ],
       "view/title": [
         {
           "command": "pawsql.createWorkspace",

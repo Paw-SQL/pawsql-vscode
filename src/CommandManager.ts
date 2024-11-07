@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { PawSQLExtension } from "./main";
 import { getUrls } from "./constants";
-import type { WorkspaceItem } from "./types";
+import type { WorkspaceItem } from "./apiService";
 import { ApiService } from "./apiService";
 import { ErrorHandler } from "./errorHandler";
 import { SqlCodeLensProvider } from "./SqlCodeLensProvider";
@@ -111,14 +111,9 @@ export class CommandManager {
 
   public createWorkspaceItems(workspaces: any): WorkspaceItem[] {
     return workspaces.data.records.map((workspace: any) => ({
-      label: workspace.dbHost
-        ? `${workspace.dbType}:${workspace.dbHost}@${workspace.dbPort}`
-        : `${workspace.dbType}:${workspace.workspaceName}`,
+      label: `${workspace.dbType}:${workspace.workspaceName}`,
       workspaceId: workspace.workspaceId,
       workspaceName: workspace.workspaceName,
-      // workspaceName: workspace.dbHost
-      //   ? `${workspace.dbType}:${workspace.dbHost}@${workspace.dbPort}`
-      //   : `${workspace.dbType}:${workspace.workspaceName}`,
       dbType: workspace.dbType,
       dbHost: workspace.dbHost,
       dbPort: workspace.dbPort,
