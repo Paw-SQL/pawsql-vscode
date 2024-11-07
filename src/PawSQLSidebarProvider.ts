@@ -75,7 +75,7 @@ class WorkspaceItem extends vscode.TreeItem {
         this.workspaceDefinitionId ? "workspace" : "database",
         `${
           this.workspaceDefinitionId
-            ? this.workspaceDefinitionId.toLowerCase()
+            ? this.workspaceDefinitionId
             : this.dbType.toLowerCase()
         }.svg`
       ),
@@ -88,7 +88,7 @@ class WorkspaceItem extends vscode.TreeItem {
         this.workspaceDefinitionId ? "workspace" : "database",
         `${
           this.workspaceDefinitionId
-            ? this.workspaceDefinitionId.toLowerCase()
+            ? this.workspaceDefinitionId
             : this.dbType.toLowerCase()
         }.svg`
       ),
@@ -610,6 +610,9 @@ export class PawSQLTreeProvider
         this.workspaces.length === 0
       );
     } catch (error: any) {
+      console.log(1);
+      console.log(error);
+
       if (error.code === "ECONNREFUSED") {
         !hideMessage &&
           vscode.window.showErrorMessage(
@@ -728,6 +731,9 @@ export class PawSQLTreeProvider
       this.isAnalysisLoading.set(workspace.workspaceId, false);
       return analyses;
     } catch (error: any) {
+      console.log(2);
+      console.log(error);
+
       vscode.window.showErrorMessage(
         `${LanguageService.getMessage("error.load.data.failed")}: ${
           error.message
@@ -767,6 +773,8 @@ export class PawSQLTreeProvider
       this.analysisStatementCache.set(analysis, statements);
       return statements;
     } catch (error: any) {
+      console.log(3);
+      console.log(error);
       vscode.window.showErrorMessage(
         `${LanguageService.getMessage("error.load.data.failed")}: ${
           error.message
