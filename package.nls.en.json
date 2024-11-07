@@ -1,23 +1,20 @@
 {
   "extension.display name": "PawSQL Advisor for VSCode",
   "extension.description": "SQL Optimizer, Index Advisor for MySQL/PostgreSQL/Oracle/openGauss and etc, Tune SQL by Clicks",
-  "commands.openSettings": "Modify Settings",
-  "commands.refreshTree": "Refresh Configuration",
+  "commands.openSettings": "Modify",
+  "commands.refreshTree": "Refresh",
   "commands.createWorkspace": "Create Workspace",
   "commands.setDefaultWorkspace": "Set as Default Workspace",
-  "commands.selectFileDefaultWorkspace": "Select File Default Workspace",
 
-  "config.initialization.title": "PawSQL Initialization",
-  "config.initialization.description": "Basic initialization settings for PawSQL extension",
-  "config.initialization.apiKey.description": "API key for authenticating with PawSQL services",
-  "config.initialization.apiKey.markdownDescription": "API key used for authenticating with PawSQL services. You can get this from your PawSQL account settings.",
-  "config.initialization.backendUrl.description": "URL of the PawSQL backend service",
-  "config.initialization.backendUrl.markdownDescription": "The base URL for PawSQL backend service.",
-  "config.initialization.frontendUrl.description": "URL of the PawSQL frontend service",
-  "config.initialization.frontendUrl.markdownDescription": "The base URL for PawSQL frontend service.",
+  "config.initialization.title": "PawSQL Engine Setup",
+  "config.initialization.description": "Set up the URL of PawSQL Engine and ApiKey for user",
+  "config.initialization.apiKey.description": "ApiKey for this user to use PawSQL Engine",
+  "config.initialization.apiKey.markdownDescription": "ApiKey for this user to use PawSQL Engine. You can find it in your PawSQL account settings menu.",
+  "config.initialization.backendUrl.description": "URL of the PawSQL Engine service",
+  "config.initialization.backendUrl.markdownDescription": "The URL for PawSQL Engine service.",
+  "config.initialization.frontendUrl.description": "URL of the PawSQL front page",
+  "config.initialization.frontendUrl.markdownDescription": "The base URL for PawSQL front page to display result of SQL optimization.",
 
-  "config.workspace.title": "PawSQL Workspace Configuration",
-  "config.workspace.description": "Workspace-related settings for PawSQL",
 
   "config.workspace.default.title": "Default Workspace",
   "config.workspace.default.description": "Default workspace configuration settings",
@@ -37,8 +34,8 @@
   "config.workspace.fileMapping.description": "Mapping between files and workspaces",
   "config.workspace.fileMapping.markdownDescription": "Configure which workspace should be used for specific files or file patterns",
 
-  "views.activitybar.pawsqlContainerTitle": "PawSQL Setup",
+  "views.activitybar.pawsqlContainerTitle": "PawSQL Engine Setup",
   "views.welcome.noConfiguration": "$(gear) No configuration found.\n\n[Configure Now](command:pawsql.openSettings)\n\nClick to setup your configuration.",
   "views.welcome.noWorkspace": "No workspace found.\n\n[Create Now](command:pawsql.createWorkspace)\n\nClick to create your workspace.",
-  "views.sidebar.pawsqlSidebarName": "PawSQL Advisor"
+  "views.sidebar.pawsqlSidebarName": "PawSQL Optimizer"
 }

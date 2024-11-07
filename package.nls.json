@@ -1,23 +1,19 @@
 {
-  "extension.display name": "PawSQL Advisor for VSCode",
+  "extension.display name": "PawSQL Optimizer for VSCode",
   "extension.description": "SQL Optimizer, Index Advisor for MySQL/PostgreSQL/Oracle/openGauss and etc, Tune SQL by Clicks",
-  "commands.openSettings": "修改配置",
-  "commands.refreshTree": "刷新配置",
+  "commands.openSettings": "修改",
+  "commands.refreshTree": "刷新",
   "commands.createWorkspace": "创建工作空间",
   "commands.setDefaultWorkspace": "设置为默认工作空间",
-  "commands.selectFileDefaultWorkspace": "选择文件默认工作空间",
 
-  "config.initialization.title": "PawSQL 设置",
-  "config.initialization.description": "PawSQL 插件的初始化设置",
+  "config.initialization.title": "PawSQL 优化引擎设置",
+  "config.initialization.description": "配置 PawSQL 优化引擎的地址和用户的ApiKey",
   "config.initialization.apiKey.description": "用于 PawSQL 优化引擎服务认证的ApiKey",
-  "config.initialization.apiKey.markdownDescription": "用于 PawSQL 服务认证的 API 密钥。您可以在 PawSQL 账户设置中获取此密钥。",
-  "config.initialization.backendUrl.description": "PawSQL 后端服务地址",
-  "config.initialization.backendUrl.markdownDescription": "PawSQL 后端服务的基础 URL。",
-  "config.initialization.frontendUrl.description": "PawSQL 前端服务地址",
-  "config.initialization.frontendUrl.markdownDescription": "PawSQL 前端服务的基础 URL。",
-
-  "config.workspace.title": "PawSQL 工作空间配置",
-  "config.workspace.description": "PawSQL 的工作空间相关设置",
+  "config.initialization.apiKey.markdownDescription": "用于 PawSQL 服务认证的ApiKey。您可以在 PawSQL 账户设置中获取此密钥。",
+  "config.initialization.backendUrl.description": "PawSQL 优化引擎的后端服务地址",
+  "config.initialization.backendUrl.markdownDescription": "PawSQL 优化引擎的后端服务地址，用于提供SQL优化能力",
+  "config.initialization.frontendUrl.description": "PawSQL 优化引擎的前端服务地址",
+  "config.initialization.frontendUrl.markdownDescription": "PawSQL 优化引擎的前端服务地址，用于展示优化结果",
 
   "config.workspace.default.title": "默认工作空间",
   "config.workspace.default.description": "默认工作空间配置设置",
@@ -33,12 +29,8 @@
   "config.workspace.default.dbPort.description": "数据库端口号",
   "config.workspace.default.dbPort.markdownDescription": "数据库监听的端口号",
 
-  "config.workspace.fileMapping.title": "文件工作空间映射",
-  "config.workspace.fileMapping.description": "文件与工作空间之间的映射关系",
-  "config.workspace.fileMapping.markdownDescription": "配置特定文件或文件模式应使用的工作空间",
-
-  "views.activitybar.pawsqlContainerTitle": "PawSQL",
-  "views.welcome.noConfiguration": "尚未完成PawSQL配置，单击以设置配置。\n\n[立即配置](command:pawsql.openSettings)\n\n",
+  "views.activitybar.pawsqlContainerTitle": "PawSQL 优化引擎配置",
+  "views.welcome.noConfiguration": "尚未完成PawSQL优化引擎配置，单击以设置配置。\n\n[立即配置](command:pawsql.openSettings)\n\n",
   "views.welcome.noWorkspace": "未找到工作空间，单击以创建您的工作空间。\n\n[立即创建](command:pawsql.createWorkspace)\n\n",
-  "views.sidebar.pawsqlSidebarName": "PawSQL 侧边栏"
+  "views.sidebar.pawsqlSidebarName": "PawSQL Optimizer"
 }

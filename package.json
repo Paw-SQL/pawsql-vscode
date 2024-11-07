@@ -90,10 +90,6 @@
         "command": "pawsql.setDefaultWorkspace",
         "title": "%commands.setDefaultWorkspace%",
         "icon": "$(star)"
-      },
-      {
-        "command": "selectFileDefaultWorkspace",
-        "title": "%commands.selectFileDefaultWorkspace%"
       }
     ],
     "configuration": [
