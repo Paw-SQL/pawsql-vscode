@@ -226,7 +226,7 @@ export class PawSQLExtension {
     e: vscode.ConfigurationChangeEvent
   ): Promise<void> {
     try {
-      if (this.isApiConfigChanged(e)) {
+      if (this.treeProvider.isApiConfigChanged(e)) {
         ConfigurationService.clearUserDefaultWorkspace();
         ConfigurationService.clearFileDefaultWorkspace();
         await this.treeProvider.refresh();
@@ -237,13 +237,6 @@ export class PawSQLExtension {
     }
   }
 
-  private isApiConfigChanged(e: vscode.ConfigurationChangeEvent): boolean {
-    return (
-      e.affectsConfiguration("pawsql.apiKey") ||
-      e.affectsConfiguration("pawsql.frontendUrl") ||
-      e.affectsConfiguration("pawsql.backendUrl")
-    );
-  }
   // optimizeSqlBelowButton 方法修改
   public async optimizeSqlBelowButton(
     query: string,
@@ -269,13 +262,12 @@ export class PawSQLExtension {
       // );
       // vscode.languages.setDiagnostics(editor.document.uri, [diagnostic]);
 
-      const message = "验证失败"; // 汇总错误信息
-      let errors = vscode.languages.createDiagnosticCollection("foo");
-      errors.clear();
-      errors.set(editor.document.uri, [new vscode.Diagnostic(range, message)]);
+      // const message = "验证失败"; // 汇总错误信息
+      // let errors = vscode.languages.createDiagnosticCollection("foo");
+      // errors.clear();
+      // errors.set(editor.document.uri, [new vscode.Diagnostic(range, message)]);
 
-      const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
-      console.log(diagnostics);
+      // const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
 
       return;
     }

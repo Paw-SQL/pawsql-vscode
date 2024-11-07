@@ -48,5 +48,6 @@
   "webview.settings.save.config.failed": "PawSQL Setup Failded",
   "form.config.title": "PawSQL",
   "form.config.save": "Save",
-  "workspace.isLoading": "Loading Workspace"
+  "workspaces.isLoading": "Loading Workspaces",
+  "analyses.isLoading": "Loading Analyses"
 }

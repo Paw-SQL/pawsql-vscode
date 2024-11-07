@@ -48,5 +48,6 @@
   "webview.settings.save.config.failed": "保存配失败",
   "form.config.title": "PawSQL 配置",
   "form.config.save": "保存",
-  "workspace.isLoading": "工作空间加载中..."
+  "workspaces.isLoading": "工作空间列表加载中...",
+  "analyses.isLoading": "优化列表加载中..."
 }

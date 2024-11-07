@@ -23,6 +23,7 @@ export interface AnalysisAndSummaryResponse {
 interface Workspace {
   workspaceId: string;
   workspaceName: string;
+  workspaceDefinitionId: string;
   dbType: string;
   dbHost: string;
   dbPort: string;

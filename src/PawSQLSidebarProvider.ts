@@ -29,9 +29,11 @@ class WorkspaceManagerItem extends vscode.TreeItem {
 
 // 定义 LoadingItem，设置加载图标
 class LoadingItem extends vscode.TreeItem {
-  constructor() {
+  constructor(public readonly type: string) {
     super(
-      LanguageService.getMessage("workspace.isLoading"),
+      LanguageService.getMessage(
+        type === "workspace" ? "workspaces.isLoading" : "analyses.isLoading"
+      ),
       vscode.TreeItemCollapsibleState.None
     );
     this.iconPath = new vscode.ThemeIcon("loading~spin"); // 使用 VS Code 自带的 loading 图标
@@ -53,6 +55,7 @@ class WorkspaceItem extends vscode.TreeItem {
     public readonly label: string,
     public readonly workspaceId: string,
     public readonly workspaceName: string,
+    public readonly workspaceDefinitionId: string,
     public readonly dbType: string,
     public readonly dbHost: string,
     public readonly dbPort: string,
@@ -61,20 +64,45 @@ class WorkspaceItem extends vscode.TreeItem {
     super(label, collapsibleState);
     this.contextValue = "workspaceItem";
 
-    // 根据是否为默认工作空间设置图标
-    this.label = this.dbHost
-      ? `${this.dbType}:${this.dbHost}@${this.dbPort}`
-      : `${this.dbType}:${this.workspaceName}`;
+    // 先根据数据库类型设置基础图标
+    this.iconPath = {
+      light: path.join(
+        __filename,
+        "..",
+        "..",
+        "resources",
+        "icon",
+        this.workspaceDefinitionId ? "workspace" : "database",
+        `${
+          this.workspaceDefinitionId
+            ? this.workspaceDefinitionId.toLowerCase()
+            : this.dbType.toLowerCase()
+        }.svg`
+      ),
+      dark: path.join(
+        __filename,
+        "..",
+        "..",
+        "resources",
+        "icon",
+        this.workspaceDefinitionId ? "workspace" : "database",
+        `${
+          this.workspaceDefinitionId
+            ? this.workspaceDefinitionId.toLowerCase()
+            : this.dbType.toLowerCase()
+        }.svg`
+      ),
+    };
 
-    // 从配置中读取默认工作空间
+    // 判断是否为默认工作空间
     const defaultWorkspace = vscode.workspace
       .getConfiguration("pawsql")
       .get<{ workspaceId: string }>("defaultWorkspace");
 
-    // 根据是否为默认工作空间设置图标
-    this.iconPath = new vscode.ThemeIcon(
-      defaultWorkspace?.workspaceId === workspaceId ? "star-full" : "workspace"
-    );
+    if (defaultWorkspace?.workspaceId === this.workspaceId) {
+      // 如果是默认工作空间,则在数据库图标前添加一个 ThemeIcon
+      this.iconPath = new vscode.ThemeIcon("star-full");
+    }
   }
 }
 
@@ -134,7 +162,8 @@ export class PawSQLTreeProvider
     new WorkspaceManagerItem();
   private workspaces: WorkspaceItem[] = [];
   private isConfigValid: boolean = false;
-  private isLoading: boolean = false;
+  private isWorkspaceLoading: boolean = false;
+  private isAnalysisLoading: Map<string, boolean> = new Map();
   // 缓存工作空间和其对应的分析
   private workspaceAnalysisCache: Map<WorkspaceItem, AnalysisItem[]> =
     new Map();
@@ -170,8 +199,8 @@ export class PawSQLTreeProvider
       return [this.workspaceManagerItem];
     }
 
-    if (this.isLoading) {
-      return [new LoadingItem()];
+    if (this.isWorkspaceLoading) {
+      return [new LoadingItem("workspace")];
     }
 
     if (this.workspaces.length === 0) {
@@ -180,6 +209,16 @@ export class PawSQLTreeProvider
 
     if (element instanceof WorkspaceManagerItem) {
       return this.workspaces;
+    }
+
+    if (element instanceof WorkspaceItem) {
+      return await this.getAnalysisItems(element);
+    }
+
+    if (element instanceof WorkspaceItem) {
+      if (this.isAnalysisLoading.get(element.workspaceId)) {
+        return [new LoadingItem("analysis")];
+      }
     }
 
     if (element instanceof WorkspaceItem) {
@@ -279,9 +318,6 @@ export class PawSQLTreeProvider
     const analysisItem = [...this.workspaceAnalysisCache.values()]
       .flat()
       .find((analysis) => analysis.analysisId === analysisId);
-    console.log([...this.workspaceAnalysisCache.values()]);
-    console.log(analysisId);
-    console.log(analysisItem);
 
     if (analysisItem) {
       //先折叠整个侧边栏，替换 `<viewId>` 为你的视图 ID
@@ -409,7 +445,7 @@ export class PawSQLTreeProvider
       }
     });
   }
-  private isApiConfigChanged(e: vscode.ConfigurationChangeEvent): boolean {
+  public isApiConfigChanged(e: vscode.ConfigurationChangeEvent): boolean {
     return (
       e.affectsConfiguration("pawsql.apiKey") ||
       e.affectsConfiguration("pawsql.frontendUrl") ||
@@ -543,7 +579,7 @@ export class PawSQLTreeProvider
 
   // Rest of the methods remain unchanged...
   private async loadData(hideMessage?: boolean): Promise<void> {
-    this.isLoading = true;
+    this.isWorkspaceLoading = true;
     this._onDidChangeTreeData.fire(undefined);
 
     const apiKey = vscode.workspace
@@ -556,11 +592,12 @@ export class PawSQLTreeProvider
       ]);
 
       this.workspaces = workspacesResponse.data.records.map(
-        (workspace: any) =>
+        (workspace) =>
           new WorkspaceItem(
             workspace.workspaceName,
             workspace.workspaceId,
             workspace.workspaceName,
+            workspace.workspaceDefinitionId,
             workspace.dbType,
             workspace.dbHost,
             workspace.dbPort,
@@ -598,7 +635,7 @@ export class PawSQLTreeProvider
       );
       this.workspaces = [];
     } finally {
-      this.isLoading = false;
+      this.isWorkspaceLoading = false;
       this._onDidChangeTreeData.fire(undefined);
     }
   }
@@ -606,6 +643,7 @@ export class PawSQLTreeProvider
   private async getAnalysisItems(
     workspace: WorkspaceItem
   ): Promise<AnalysisItem[] | EmptyItem[]> {
+    this.isAnalysisLoading.set(workspace.workspaceId, true);
     const apiKey = vscode.workspace
       .getConfiguration("pawsql")
       .get<string>("apiKey");
@@ -687,7 +725,7 @@ export class PawSQLTreeProvider
 
       // 缓存分析项
       this.workspaceAnalysisCache.set(workspace, analyses);
-
+      this.isAnalysisLoading.set(workspace.workspaceId, false);
       return analyses;
     } catch (error: any) {
       vscode.window.showErrorMessage(
@@ -696,6 +734,8 @@ export class PawSQLTreeProvider
         }`
       );
       return []; // 出现错误时返回空数组
+    } finally {
+      this.isAnalysisLoading.set(workspace.workspaceId, false);
     }
   }
 
@@ -768,6 +808,7 @@ export class PawSQLTreeProvider
           workspace.label,
           workspace.workspaceId,
           workspace.workspaceName,
+          workspace.workspaceDefinitionId,
           workspace.dbType,
           workspace.dbHost,
           workspace.dbPort,
