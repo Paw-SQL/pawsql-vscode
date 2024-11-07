@@ -62,7 +62,9 @@ class WorkspaceItem extends vscode.TreeItem {
     this.contextValue = "workspaceItem";
 
     // 根据是否为默认工作空间设置图标
-    this.label = `${this.dbType}:${this.workspaceName}`;
+    this.label = this.dbHost
+      ? `${this.dbType}:${this.dbHost}@${this.dbPort}`
+      : `${this.dbType}:${this.workspaceName}`;
 
     // 从配置中读取默认工作空间
     const defaultWorkspace = vscode.workspace
@@ -678,7 +680,7 @@ export class PawSQLTreeProvider
             analysis.numberOfQuery === 1
               ? validCommands.find(
                   (item) => item && item.analysisId === analysis.analysisId
-                )
+                ) ?? undefined
               : undefined
           )
       );
