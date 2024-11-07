@@ -106,6 +106,7 @@ export class PawSQLExtension {
     this.context.subscriptions.push(
       vscode.commands.registerCommand("pawsql.refreshTree", () => {
         this.treeProvider.refresh();
+        this.sqlCodeLensProvider.refresh();
       })
     );
 
