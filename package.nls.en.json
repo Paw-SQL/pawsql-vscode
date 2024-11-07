@@ -1,6 +1,6 @@
 {
-  "extension.displayName": "PawSQL",
-  "extension.description": "SQL Optimization Extension for VS Code",
+  "extension.display name": "PawSQL Advisor for VSCode",
+  "extension.description": "SQL Optimizer, Index Advisor for MySQL/PostgreSQL/Oracle/openGauss and etc, Tune SQL by Clicks",
   "commands.openSettings": "Modify Settings",
   "commands.refreshTree": "Refresh Configuration",
   "commands.createWorkspace": "Create Workspace",

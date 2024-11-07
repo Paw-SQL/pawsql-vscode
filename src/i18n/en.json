@@ -46,7 +46,7 @@
   "webview.anlysis.result.title": "PawSQL Result",
   "webview.settings.save.config.success": "PawSQL Setup Completed",
   "webview.settings.save.config.failed": "PawSQL Setup Failded",
-  "form.config.title": "Set up PawSQL",
+  "form.config.title": "PawSQL",
   "form.config.save": "Save",
-  "workspace.isLoading": "Workspace loading..."
+  "workspace.isLoading": "Loading Workspace"
 }

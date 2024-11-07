@@ -1,6 +1,6 @@
 {
-  "extension.display name": "PA for SQL",
-  "extension.description": "VS Code 的 SQL 优化扩展",
+  "extension.display name": "PawSQL Advisor for VSCode",
+  "extension.description": "SQL Optimizer, Index Advisor for MySQL/PostgreSQL/Oracle/openGauss and etc, Tune SQL by Clicks",
   "commands.openSettings": "修改配置",
   "commands.refreshTree": "刷新配置",
   "commands.createWorkspace": "创建工作空间",
