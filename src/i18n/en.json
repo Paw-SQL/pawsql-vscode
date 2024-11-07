@@ -37,7 +37,7 @@
   "error.config.validate.failed": "Setting up PawSQL Failed",
   "error.config.validate.success": "Setting up PawSQL Succeed",
   "error.load.data.failed": "Loading workspaces failed",
-  "pawsql.config.validate.failed": "PawSQL Setup Vaildation Failed",
+  "pawsql.config.validate.failed": "PawSQL Vaildation Failed",
   "init.pawsql.config": "Set up PawSQL",
   "codelens.file.default.workspace.title": "Default Workspace ",
   "codelens.config.file.default.workspace": "Setup PawSQL Workspace",
