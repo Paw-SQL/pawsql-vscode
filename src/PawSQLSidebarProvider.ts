@@ -76,7 +76,9 @@ class WorkspaceItem extends vscode.TreeItem {
         `${
           this.workspaceDefinitionId
             ? this.workspaceDefinitionId
-            : this.dbType.toLowerCase()
+            : this.dbType
+            ? this.dbType.toLowerCase()
+            : "mysql"
         }.svg`
       ),
       dark: path.join(
@@ -89,7 +91,9 @@ class WorkspaceItem extends vscode.TreeItem {
         `${
           this.workspaceDefinitionId
             ? this.workspaceDefinitionId
-            : this.dbType.toLowerCase()
+            : this.dbType
+            ? this.dbType.toLowerCase()
+            : "mysql"
         }.svg`
       ),
     };
