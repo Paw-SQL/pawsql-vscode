@@ -1,5 +1,5 @@
 npm install
-
+npm run compile
 npm run build-webview
 
 F5启动
