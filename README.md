@@ -1,10 +1,10 @@
-# PawSQL VSCode plugin
+# PawSQL Client
 
 [English](README.md) | [中文](README_zh-CN.md)
 
 ## Introduction
 
-PawSQL is a plugin for Visual Studio Code that helps developers optimize SQL queries and manage workspaces. Through integration with the PawSQL API, users can easily perform SQL optimization and view optimization results.
+PawSQL Client is a plugin for Visual Studio Code that helps developers optimize SQL queries and manage workspaces. Through integration with the PawSQL API, users can easily perform SQL optimization and view optimization results.
 
 ## Features
 

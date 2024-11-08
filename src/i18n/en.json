@@ -15,7 +15,7 @@
   "workspace.not.exist": "Workspace does not exist.",
   "workspace.has.no.analysis": "Workspace optimization list is empty",
   "analysis.not.exist": "Analysis does not exist.",
-  "open.in.browser": "Check optimization details @",
+  "open.in.browser": "More Details at ",
   "SQL_OPTIMIZED": "SQL optimization is complete.",
   "QUERYING_WORKSPACES": "Querying workspaces...",
   "config.file.default.workspace": "Setup a default PawSQL workspace...",
@@ -46,7 +46,7 @@
   "webview.anlysis.result.title": "PawSQL Result",
   "webview.settings.save.config.success": "PawSQL Setup Completed",
   "webview.settings.save.config.failed": "PawSQL Setup Failded",
-  "form.config.title": "PawSQL",
+  "form.config.title": "PawSQL Client",
   "form.config.save": "Save",
   "workspaces.isLoading": "Loading Workspaces",
   "analyses.isLoading": "Loading Analyses"

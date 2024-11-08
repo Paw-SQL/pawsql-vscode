@@ -1,10 +1,10 @@
-# PawSQL VSCode 插件
+# PawSQL Client
 
 [English](README.md) | [中文](README_zh-CN.md)
 
 ## 简介
 
-PawSQL 是一款为 Visual Studio Code 提供的插件，旨在帮助开发者优化 SQL 查询并管理工作空间。通过与 PawSQL API 的集成，用户可以方便地执行 SQL 优化，查看优化结果。
+PawSQL Client是一款为 Visual Studio Code 提供的插件，旨在帮助开发者优化 SQL 查询并管理工作空间。通过与 PawSQL API 的集成，用户可以方便地执行 SQL 优化，查看优化结果。
 
 ## 功能
 

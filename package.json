@@ -1,14 +1,14 @@
 {
-  "name": "pawsql",
+  "name": "pawsql.client",
   "displayName": "%extension.display name%",
   "description": "%extension.description%",
-  "publisher": "PawSQL",
+  "publisher": "PawSQL Team",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
-    "Other"
+    "Data Science",  "Programming Languages",  "Other",  "Linters",  "Snippets",  "Testing"
   ],
   "activationEvents": [
     "onStartupFinished"
