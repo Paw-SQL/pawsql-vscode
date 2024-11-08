@@ -23,10 +23,10 @@ export class PawSQLExtension {
   private readonly treeProvider: PawSQLTreeProvider;
 
   constructor(private readonly context: vscode.ExtensionContext) {
-    this.webviewProvider = new WebviewProvider(context);
     this.decorationManager = new DecorationManager(context);
     this.sqlCodeLensProvider = new SqlCodeLensProvider(context);
     this.treeProvider = new PawSQLTreeProvider(context);
+    this.webviewProvider = new WebviewProvider(context, this.treeProvider);
     this.commandManager = new CommandManager(
       this,
       context,
@@ -150,7 +150,8 @@ export class PawSQLExtension {
     query: string,
     range: vscode.Range
   ): Promise<void> {
-    const isConfigValid = this.treeProvider.validateConfig();
+    const isConfigValid = await this.treeProvider.validateConfig();
+
     if (!isConfigValid) {
       return;
     }

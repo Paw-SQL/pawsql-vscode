@@ -2,14 +2,21 @@ import path from "path";
 import { getUrls } from "./constants";
 import { LanguageService } from "./LanguageService";
 import * as vscode from "vscode";
+import { PawSQLTreeProvider } from "./PawSQLSidebarProvider";
 
 export class WebviewProvider {
   private context: vscode.ExtensionContext;
+  private treeProvider: PawSQLTreeProvider;
+
   private settingPanel: vscode.WebviewPanel | undefined;
   private resultPanels: Map<string, vscode.WebviewPanel> = new Map();
 
-  constructor(context: vscode.ExtensionContext) {
+  constructor(
+    context: vscode.ExtensionContext,
+    treeProvider: PawSQLTreeProvider
+  ) {
     this.context = context;
+    this.treeProvider = treeProvider;
   }
 
   public createSettingsPanel() {
@@ -115,7 +122,7 @@ export class WebviewProvider {
       await vscode.workspace
         .getConfiguration("pawsql")
         .update("frontendUrl", config.frontendUrl, true);
-
+      await this.treeProvider.refresh();
       // 配置保存成功反馈
       vscode.window.showInformationMessage(
         LanguageService.getMessage("webview.settings.save.config.success")
@@ -186,7 +193,7 @@ export class WebviewProvider {
     const scriptUri = webview.asWebviewUri(scriptPath);
 
     return `<!DOCTYPE html>
-      <html lang="en">
+      <html lang=${vscode.env.language}>
       <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -215,8 +222,8 @@ export class WebviewProvider {
 
   private getWebviewContent(analysisStmtId: string): string {
     const { URLS } = getUrls();
-    const queryUrl = `${URLS.QUERY_BASE}/${analysisStmtId}`;
-    const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
+    const queryUrl = `${URLS.QUERY_BASE}/${analysisStmtId}?lang=${vscode.env.language}`;
+    const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}?lang=${vscode.env.language}`;
 
     return `<!DOCTYPE html>
 <html lang=${vscode.env.language}>
@@ -275,6 +282,7 @@ export class WebviewProvider {
     </div>
     <script>
         const vscode = acquireVsCodeApi();
+        document.documentElement.lang = "${vscode.env.language}";
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('openLink').addEventListener('click', () => {
                 vscode.postMessage({ command: 'openLink', url: '${statementUrl}' });

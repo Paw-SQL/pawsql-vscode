@@ -429,15 +429,6 @@ export class PawSQLTreeProvider
       this.context.subscriptions.push(this.treeView);
     }
 
-    // 2. 验证配置
-    const isConfigValid = await this.validateConfig();
-    this.isConfigValid = isConfigValid;
-    vscode.commands.executeCommand(
-      "setContext",
-      "isConfigured",
-      this.isConfigValid
-    );
-
     // 4. 刷新视图
     this.refresh(true);
   }

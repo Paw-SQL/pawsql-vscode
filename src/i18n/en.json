@@ -47,6 +47,7 @@
   "webview.settings.save.config.success": "PawSQL Setup Completed",
   "webview.settings.save.config.failed": "PawSQL Setup Failded",
   "form.config.title": "PawSQL",
+  "form.config.description": "Rich query rewrites, intelligent index recommendations and performance validation help you optimize your SQLs in three steps!",
   "form.config.save": "Save",
   "workspaces.isLoading": "Loading Workspaces",
   "analyses.isLoading": "Loading Analyses"

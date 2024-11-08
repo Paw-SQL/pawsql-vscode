@@ -1,12 +1,13 @@
 import * as vscode from "vscode";
 import { PawSQLExtension } from "./main";
 import { getUrls } from "./constants";
-import type { WorkspaceItem } from "./apiService";
+import type { ListWorkspacesResponse, WorkspaceItem } from "./apiService";
 import { ApiService } from "./apiService";
 import { ErrorHandler } from "./errorHandler";
 import { SqlCodeLensProvider } from "./SqlCodeLensProvider";
 import { ConfigurationService } from "./configurationService";
 import { LanguageService } from "./LanguageService";
+import path from "path";
 
 export class CommandManager {
   constructor(
@@ -109,15 +110,54 @@ export class CommandManager {
     }
   }
 
-  public createWorkspaceItems(workspaces: any): WorkspaceItem[] {
-    return workspaces.data.records.map((workspace: any) => ({
-      label: `${workspace.dbType}:${workspace.workspaceName}`,
-      workspaceId: workspace.workspaceId,
-      workspaceName: workspace.workspaceName,
-      dbType: workspace.dbType,
-      dbHost: workspace.dbHost,
-      dbPort: workspace.dbPort,
-    }));
+  public createWorkspaceItems(
+    workspaces: ListWorkspacesResponse
+  ): WorkspaceItem[] {
+    return workspaces.data.records.map((workspace) => {
+      // 先根据数据库类型设置基础图标
+      const iconPath = {
+        light: path.join(
+          __filename,
+          "..",
+          "..",
+          "resources",
+          "icon",
+          workspace.workspaceDefinitionId ? "workspace" : "database",
+          `${
+            workspace.workspaceDefinitionId
+              ? workspace.workspaceDefinitionId
+              : workspace.dbType
+              ? workspace.dbType.toLowerCase()
+              : "mysql"
+          }.svg`
+        ),
+        dark: path.join(
+          __filename,
+          "..",
+          "..",
+          "resources",
+          "icon",
+          workspace.workspaceDefinitionId ? "workspace" : "database",
+          `${
+            workspace.workspaceDefinitionId
+              ? workspace.workspaceDefinitionId
+              : workspace.dbType
+              ? workspace.dbType.toLowerCase()
+              : "mysql"
+          }.svg`
+        ),
+      };
+
+      return {
+        label: `${workspace.workspaceName}`,
+        iconPath: iconPath,
+        workspaceId: workspace.workspaceId,
+        workspaceName: workspace.workspaceName,
+        dbType: workspace.dbType,
+        dbHost: workspace.dbHost,
+        dbPort: workspace.dbPort,
+      };
+    });
   }
 
   public async showWorkspaceQuickPick(

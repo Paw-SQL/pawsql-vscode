@@ -14,6 +14,7 @@ import PublicIcon from "@mui/icons-material/Public";
 import LinkIcon from "@mui/icons-material/Link";
 import PawIcon from "./PawIcon";
 import { FormattedMessage, useIntl } from "react-intl";
+import PawIconWithText from "./PawIconWithText";
 
 interface Config {
   apiKey: string;
@@ -66,13 +67,22 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
   return (
     <Container maxWidth="sm" sx={{ padding: "20px" }}>
       <div
-        style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          marginBottom: "20px",
+        }}
       >
-        <PawIcon />
+        <PawIconWithText />
         <Typography variant="h4" align="center" gutterBottom>
           <FormattedMessage id="form.config.title" />
         </Typography>
+        <Typography variant="body1" align="center" color="textSecondary">
+          <FormattedMessage id="form.config.description" />
+        </Typography>
       </div>
+
       <form onSubmit={handleSubmit}>
         <TextField
           fullWidth
