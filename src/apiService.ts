@@ -20,7 +20,7 @@ export interface AnalysisAndSummaryResponse {
   analysisSummary: GetAnalysisSummaryResponse;
 }
 
-interface Workspace {
+export interface Workspace {
   workspaceId: string;
   workspaceName: string;
   workspaceDefinitionId: string;
@@ -52,7 +52,7 @@ export interface AnalysisBasicRead {
   createTime: string; // 创建时间
 }
 
-interface ListWorkspacesResponse {
+export interface ListWorkspacesResponse {
   code: number;
   message: string;
   data: {
