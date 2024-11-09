@@ -47,7 +47,7 @@
   "webview.settings.save.config.success": "PawSQL Setup Completed",
   "webview.settings.save.config.failed": "PawSQL Setup Failded",
   "form.config.title": "PawSQL Client",
-  "form.config.description": "PawSQL Client enables developers to access core capabilities of the PawSQL directly within their VS Code development environment. PawSQL provides sosophisticated SQL optimization features including smart index recommendations and query rewriting suggestions. More about PawSQL's capabilities, please visit ",
+  "form.config.description": "PawSQL Client enables developers to access core capabilities of the PawSQL directly within their VS Code development environment. PawSQL provides sophisticated SQL optimization features including smart index recommendations and query rewriting suggestions. More about PawSQL's capabilities, please visit ",
   "form.config.documentation.link": "docs.pawsql.com",
   "form.config.save": "Save",
   "workspaces.isLoading": "Loading Workspaces",
