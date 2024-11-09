@@ -47,7 +47,7 @@
   "webview.settings.save.config.success": "保存成功",
   "webview.settings.save.config.failed": "保存配失败",
   "form.config.title": "PawSQL 配置",
-  "form.config.description": "丰富的查询重写、智能索引推荐，三步完成您的SQL性能优化!",
+  "form.config.description": "PawSQL Client让开发者能够在VS Code开发环境中直接使用PawSQL优化引擎的强大功能，包括智能索引推荐、查询重写建议、自动化性能验证等。想要了解更详细的PawSQL的SQL优化能力，请参考<a href=\"https://docs.pawsql.com\">PawSQL官方文档</a>。",
   "form.config.save": "保存",
   "workspaces.isLoading": "工作空间列表加载中...",
   "analyses.isLoading": "优化列表加载中..."
