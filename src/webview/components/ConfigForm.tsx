@@ -1,4 +1,3 @@
-// ConfigForm.tsx
 import React from "react";
 import {
   TextField,
@@ -9,15 +8,16 @@ import {
   Alert,
   InputAdornment,
 } from "@mui/material";
-import ApiIcon from "@mui/icons-material/Api";
 import PublicIcon from "@mui/icons-material/Public";
 import LinkIcon from "@mui/icons-material/Link";
-import PawIcon from "./PawIcon";
+import PersonIcon from "@mui/icons-material/Person";
+import LockIcon from "@mui/icons-material/Lock";
 import { FormattedMessage, useIntl } from "react-intl";
 import PawIconWithText from "./PawIconWithText";
 
 interface Config {
-  apiKey: string;
+  email: string;
+  password: string;
   backendUrl: string;
   frontendUrl: string;
 }
@@ -36,7 +36,11 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
   initialConfig,
   onSubmit,
 }) => {
-  const [formState, setFormState] = React.useState<Config>(initialConfig);
+  const defaultConfig = {
+    ...initialConfig,
+  };
+
+  const [formState, setFormState] = React.useState<Config>(defaultConfig);
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarMessage, setSnackbarMessage] = React.useState("");
   const [snackbarSeverity, setSnackbarSeverity] = React.useState<
@@ -44,9 +48,8 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
   >("success");
   const { formatMessage } = useIntl();
 
-  // Update form state when initialConfig changes
   React.useEffect(() => {
-    setFormState(initialConfig);
+    setFormState(defaultConfig);
   }, [initialConfig]);
 
   const openExternalLink = (url: string) => {
@@ -56,114 +59,174 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    // if (!formState.apiKey || !formState.backendUrl || !formState.frontendUrl) {
-    //   setSnackbarMessage("请填写所有字段");
-    //   setSnackbarSeverity("error");
-    //   setSnackbarOpen(true);
-    //   return;
-    // }
+    if (!formState.email || !formState.password) {
+      setSnackbarMessage(
+        formatMessage({ id: "form.config.validation.credentials.required" })
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (!formState.backendUrl || !formState.frontendUrl) {
+      setSnackbarMessage(
+        formatMessage({ id: "form.config.validation.urls.required" })
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
 
     onSubmit(formState);
-    // setSnackbarMessage(formatMessage({ id: "webview.settings.save.config.success" }));
-    // setSnackbarSeverity("success");
-    // setSnackbarOpen(true);
+    setSnackbarMessage(
+      formatMessage({ id: "webview.settings.save.config.success" })
+    );
+    setSnackbarSeverity("success");
+    setSnackbarOpen(true);
   };
 
-  const handleInputChange =
-    (field: keyof Config) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFormState((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
-    };
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setFormState((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   return (
-    <Container maxWidth="sm" sx={{ padding: "20px" }}>
+    <Container
+      maxWidth="sm"
+      sx={{
+        padding: "20px",
+        "& .MuiTextField-root": {
+          backgroundColor: "#ffffff",
+          borderRadius: "4px",
+          "& .MuiOutlinedInput-root": {
+            "&:hover fieldset": {
+              borderColor: "#007acc",
+            },
+          },
+        },
+      }}
+    >
       <div
         style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          marginBottom: "20px",
-          gap: "10px",
+          marginBottom: "24px",
+          gap: "12px",
           textAlign: "center",
         }}
       >
         <PawIconWithText scale={0.5} />
-        <Typography variant="body1" align="center" color="textSecondary">
-          <span
-            data-br=":r1:"
-            data-brr="1"
+        <Typography
+          variant="body1"
+          align="center"
+          color="textSecondary"
+          sx={{ maxWidth: "460px" }}
+        >
+          <FormattedMessage id="form.config.description" />{" "}
+          <a
+            href="#"
+            onClick={() => openExternalLink("https://docs.pawsql.com")}
             style={{
-              display: "inline-block",
-              verticalAlign: "top",
-              textDecoration: "inherit",
+              color: "#007acc",
+              textDecoration: "underline",
             }}
           >
-            <FormattedMessage id="form.config.description" />{" "}
-            <a
-              href="#"
-              onClick={() => openExternalLink("https://docs.pawsql.com")}
-              style={{ color: "#3f51b5", textDecoration: "underline" }}
-            >
-              <FormattedMessage id="form.config.documentation.link" />
-            </a>
-          </span>
+            <FormattedMessage id="form.config.documentation.link" />
+          </a>
         </Typography>
       </div>
 
       <form onSubmit={handleSubmit}>
         <TextField
           fullWidth
-          label={formatMessage({ id: "sidebar.apiKey.label" })}
+          name="email"
+          label={formatMessage({ id: "form.config.email.label" })}
           variant="outlined"
           margin="normal"
-          value={formState.apiKey}
-          onChange={handleInputChange("apiKey")}
+          value={formState.email}
+          onChange={handleInputChange}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <ApiIcon />
+                <PersonIcon sx={{ color: "#666" }} />
               </InputAdornment>
             ),
           }}
+          sx={{ mb: 2 }}
         />
         <TextField
           fullWidth
-          label={formatMessage({ id: "sidebar.backendUrl.label" })}
+          name="password"
+          type="password"
+          label={formatMessage({ id: "form.config.password.label" })}
+          variant="outlined"
+          margin="normal"
+          value={formState.password}
+          onChange={handleInputChange}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockIcon sx={{ color: "#666" }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ mb: 2 }}
+        />
+        <TextField
+          fullWidth
+          name="backendUrl"
+          label={formatMessage({ id: "form.config.backendUrl.label" })}
           variant="outlined"
           margin="normal"
           value={formState.backendUrl}
-          onChange={handleInputChange("backendUrl")}
+          onChange={handleInputChange}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <PublicIcon />
+                <PublicIcon sx={{ color: "#666" }} />
               </InputAdornment>
             ),
           }}
+          sx={{ mb: 2 }}
         />
         <TextField
           fullWidth
-          label={formatMessage({ id: "sidebar.frontendUrl.label" })}
+          name="frontendUrl"
+          label={formatMessage({ id: "form.config.frontendUrl.label" })}
           variant="outlined"
           margin="normal"
           value={formState.frontendUrl}
-          onChange={handleInputChange("frontendUrl")}
+          onChange={handleInputChange}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <LinkIcon />
+                <LinkIcon sx={{ color: "#666" }} />
               </InputAdornment>
             ),
           }}
+          sx={{ mb: 3 }}
         />
         <Button
           type="submit"
           variant="contained"
-          color="primary"
           fullWidth
-          sx={{ marginTop: "16px" }}
+          sx={{
+            height: "48px",
+            fontSize: "16px",
+            backgroundColor: "#007acc",
+            color: "#ffffff",
+            textTransform: "none",
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+            "&:hover": {
+              backgroundColor: "#005999",
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.15)",
+            },
+            transition: "all 0.3s ease",
+          }}
         >
           <FormattedMessage id="form.config.save" />
         </Button>
@@ -172,11 +235,15 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackbarOpen(false)}
           severity={snackbarSeverity}
-          sx={{ width: "100%" }}
+          sx={{
+            width: "100%",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+          }}
         >
           {snackbarMessage}
         </Alert>

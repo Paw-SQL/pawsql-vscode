@@ -183,6 +183,7 @@ export const createAnalysis = async (
 
 export interface AnalysisSummaryRead {
   status: string; // 分析状态
+  analysisName: string;
   basicSummary: AnalysisSummary; // AnalysisSummary 信息
   analysisRuleInfo: RuleQueries[]; // 规则信息
   analysisIndexInfo: string[]; // 索引推荐信息
@@ -305,6 +306,28 @@ export const validateUserKey = async (userKey: string): Promise<boolean> => {
   } catch (error: any) {
     console.log(error);
     return false;
+  }
+};
+
+export const getUserKey = async (
+  email: string,
+  password: string
+): Promise<string | null> => {
+  const { DOMAIN } = getUrls();
+  const url = `${DOMAIN.Backend}/api/v1/getUserKey`;
+
+  try {
+    // 发送请求以验证 userKey
+    const response = await axios.post(
+      url,
+      { email, password },
+      { timeout: 3000 }
+    );
+
+    return response.data.data; // 假设返回码 200 表示有效
+  } catch (error: any) {
+    console.log(error);
+    return null;
   }
 };
 
@@ -517,4 +540,5 @@ export const ApiService = {
   getAnalysisSummary,
   getStatementDetails,
   validateUserKey,
+  getUserKey,
 };

@@ -96,8 +96,8 @@ export class PawSQLExtension {
     this.context.subscriptions.push(
       vscode.commands.registerCommand(
         "pawsql.showStatementDetail",
-        async (statementId: string) => {
-          await this.showStatementResult(statementId);
+        async (statementId, analysisId, analysisName) => {
+          await this.showStatementResult(statementId, analysisName);
         }
       )
     );
@@ -220,8 +220,11 @@ export class PawSQLExtension {
     const { URLS } = getUrls();
     await vscode.env.openExternal(vscode.Uri.parse(URLS.NEW_WORKSPACE));
   }
-  private async showStatementResult(analysisStmtId: string): Promise<void> {
-    this.webviewProvider.createResultPanel(analysisStmtId);
+  private async showStatementResult(
+    analysisStmtId: string,
+    analysisName: string
+  ): Promise<void> {
+    this.webviewProvider.createResultPanel(analysisStmtId, analysisName);
   }
 
   private async handleConfigurationChange(
@@ -354,14 +357,20 @@ export class PawSQLExtension {
       const statementId =
         result.analysisSummary.data.summaryStatementInfo[0]?.analysisStmtId;
       if (statementId) {
-        this.webviewProvider.createResultPanel(statementId);
+        this.webviewProvider.createResultPanel(
+          statementId,
+          result.analysisSummary.data.analysisName
+        );
         await this.treeProvider.revealAnalysis(result.analysis.data.analysisId);
       }
     } else {
       const statementId =
         result.analysisSummary.data.summaryStatementInfo[0]?.analysisStmtId;
       if (statementId) {
-        this.webviewProvider.createResultPanel(statementId);
+        this.webviewProvider.createResultPanel(
+          statementId,
+          result.analysisSummary.data.analysisName
+        );
         await this.treeProvider.revealStatement(statementId);
       }
     }

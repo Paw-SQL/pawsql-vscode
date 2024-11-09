@@ -26,6 +26,7 @@
   "CONFIG_FILE_DEFAULT_WORKSPACE_PLACEHOLDER": "Setup a default workspace for PawSQL.",
   "OPTIMIZING_SQL": "$(sync~spin) Optimizing SQL...",
   "error.create.analysis.failed": "Fail to optimize",
+  "error.login.invalidCredentials": "PawSQL registration email or password is incorrect. Please check your PawSQL configuration to ensure that the information is correct.",
   "error.backendUrl.invalid": "The PawSQL engine is not responding.",
   "error.frontendUrl.invalid": "The PawSQL website is not responding.",
   "license.code.not.valid": "The license code is invalid. Please contact the administrator.",
@@ -46,10 +47,16 @@
   "webview.anlysis.result.title": "PawSQL Result",
   "webview.settings.save.config.success": "PawSQL Setup Completed",
   "webview.settings.save.config.failed": "PawSQL Setup Failded",
-  "form.config.title": "PawSQL Client",
+  "form.config.title": "PawSQL Setup",
+  "form.config.email.label": "PawSQL Email",
+  "form.config.password.label": "Password",
+  "form.config.backendUrl.label": "PawSQL Engine",
+  "form.config.frontendUrl.label": "PawSQL Website",
   "form.config.description": "PawSQL Client enables developers to access core capabilities of the PawSQL directly within their VS Code development environment. PawSQL provides sophisticated SQL optimization features including smart index recommendations and query rewriting suggestions. More about PawSQL's capabilities, please visit ",
   "form.config.documentation.link": "docs.pawsql.com",
   "form.config.save": "Save",
   "workspaces.isLoading": "Loading Workspaces",
-  "analyses.isLoading": "Loading Analyses"
+  "analyses.isLoading": "Loading Analyses",
+  "nonexistent": "Email not exist.",
+  "unactive": "Sorry, your email address has not been activated yet. Please log in with your registered email address to complete the activation."
 }

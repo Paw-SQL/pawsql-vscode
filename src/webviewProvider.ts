@@ -3,10 +3,12 @@ import { getUrls } from "./constants";
 import { LanguageService } from "./LanguageService";
 import * as vscode from "vscode";
 import { PawSQLTreeProvider } from "./PawSQLSidebarProvider";
+import { PasswordManager } from "./PasswordManager";
 
 export class WebviewProvider {
   private context: vscode.ExtensionContext;
   private treeProvider: PawSQLTreeProvider;
+  private passwordManager: PasswordManager;
 
   private settingPanel: vscode.WebviewPanel | undefined;
   private resultPanels: Map<string, vscode.WebviewPanel> = new Map();
@@ -17,6 +19,7 @@ export class WebviewProvider {
   ) {
     this.context = context;
     this.treeProvider = treeProvider;
+    this.passwordManager = new PasswordManager(context);
   }
 
   public createSettingsPanel() {
@@ -35,12 +38,18 @@ export class WebviewProvider {
     // 创建新的面板
     this.settingPanel = vscode.window.createWebviewPanel(
       "reactWebview",
-      "PawSQL",
+      LanguageService.getMessage("form.config.title"),
       vscode.ViewColumn.One,
       {
         enableScripts: true,
       }
     );
+
+    const iconPath = path.join(
+      __dirname,
+      "../resources/icon/pawsql-black-icon.svg"
+    ); // 向上移动到 src 同级
+    this.settingPanel.iconPath = vscode.Uri.file(iconPath);
 
     const webviewJsPath = vscode.Uri.file(
       path.join(this.context.extensionPath, "dist", "webview.js")
@@ -96,9 +105,13 @@ export class WebviewProvider {
     });
   }
 
-  private handleGetConfig(panel: vscode.WebviewPanel) {
+  private async handleGetConfig(panel: vscode.WebviewPanel) {
+    console.log("this.passwordManager.getPassword()");
+    console.log(this.passwordManager.getPassword());
+
     const config = {
-      apiKey: vscode.workspace.getConfiguration("pawsql").get("apiKey") || "",
+      email: vscode.workspace.getConfiguration("pawsql").get("email") || "",
+      password: await this.passwordManager.getPassword(),
       backendUrl:
         vscode.workspace.getConfiguration("pawsql").get("backendUrl") || "",
       frontendUrl:
@@ -110,7 +123,8 @@ export class WebviewProvider {
 
   // 修改保存配置的方法
   private async handleSaveConfig(config: {
-    apiKey: string;
+    email: string;
+    password: string;
     backendUrl: string;
     frontendUrl: string;
   }) {
@@ -118,29 +132,40 @@ export class WebviewProvider {
       // 分别更新每个配置项
       await vscode.workspace
         .getConfiguration("pawsql")
-        .update("apiKey", config.apiKey, true);
+        .update("email", config.email, true);
+
+      await vscode.workspace
+        .getConfiguration("pawsql")
+        .update("password", config.password, true);
+
+      await this.passwordManager.storePassword(config.password);
+
       await vscode.workspace
         .getConfiguration("pawsql")
         .update("backendUrl", config.backendUrl, true);
       await vscode.workspace
         .getConfiguration("pawsql")
         .update("frontendUrl", config.frontendUrl, true);
+      await this.treeProvider.updateApikey(config);
       await this.treeProvider.refresh();
       // 配置保存成功反馈
       vscode.window.showInformationMessage(
         LanguageService.getMessage("webview.settings.save.config.success")
       );
-    } catch (error) {
+    } catch (error: any) {
+      console.log(error);
+
       // 错误处理
       vscode.window.showErrorMessage(
-        `${LanguageService.getMessage(
-          "webview.settings.save.config.failed"
-        )}: ${error}`
+        `${LanguageService.getMessage(error.message)}`
       );
     }
   }
 
-  public createResultPanel(analysisStmtId: string): vscode.WebviewPanel {
+  public createResultPanel(
+    analysisStmtId: string,
+    analysisName: string
+  ): vscode.WebviewPanel {
     // 检查是否已经存在对应的面板
     if (this.resultPanels.has(analysisStmtId)) {
       const existingPanel = this.resultPanels.get(analysisStmtId)!; // 获取已存在的面板
@@ -152,7 +177,10 @@ export class WebviewProvider {
     // 创建新的面板
     const newPanel = vscode.window.createWebviewPanel(
       "pawsqlOptimizationResult",
-      LanguageService.getMessage("webview.anlysis.result.title"),
+      `${
+        analysisName ??
+        LanguageService.getMessage("webview.anlysis.result.title")
+      }`,
       vscode.ViewColumn.Two,
       {
         enableScripts: true,
@@ -160,6 +188,11 @@ export class WebviewProvider {
       }
     );
 
+    const iconPath = path.join(
+      __dirname,
+      "../resources/icon/pawsql-black-icon.svg"
+    ); // 向上移动到 src 同级
+    newPanel.iconPath = vscode.Uri.file(iconPath);
     newPanel.webview.html = this.getWebviewContent(analysisStmtId);
 
     // 存储新面板
@@ -233,7 +266,6 @@ export class WebviewProvider {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${LanguageService.getMessage("webview.anlysis.result.title")}</title>
     <style>
         body, html { 
             margin: 0;
@@ -279,7 +311,6 @@ export class WebviewProvider {
     <div class="iframe-container">
         <iframe 
             src="${queryUrl}"
-            title=${LanguageService.getMessage("webview.anlysis.result.title")}
             allowfullscreen>
         </iframe>
     </div>

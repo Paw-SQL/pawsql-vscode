@@ -12,7 +12,10 @@ import { getUrls } from "./constants";
 // Previous classes remain unchanged...
 class WorkspaceManagerItem extends vscode.TreeItem {
   constructor() {
-    const iconPath = path.join(__dirname, "../resources/icon/paw.svg"); // 向上移动到 src 同级
+    const iconPath = path.join(
+      __dirname,
+      "../resources/icon/pawsql-black-icon.svg"
+    ); // 向上移动到 src 同级
 
     super(
       // LanguageService.getMessage("sidebar.workspace.manager"),
@@ -133,6 +136,7 @@ class StatementItem extends vscode.TreeItem {
     public readonly label: string,
     public readonly statementId: string,
     public readonly analysisId: string,
+    public readonly analysisName: string,
     public readonly workspaceId: string,
     public readonly sql: string
   ) {
@@ -145,6 +149,7 @@ class StatementItem extends vscode.TreeItem {
       arguments: [
         this.statementId,
         this.analysisId,
+        this.analysisName,
         this.workspaceId,
         this.sql,
       ],
@@ -673,6 +678,7 @@ export class PawSQLTreeProvider
               `${stmt.stmtName}`,
               stmt.analysisStmtId,
               analysis.analysisId,
+              analysis.analysisName,
               analysis.workspaceId,
               stmt.stmtText
             );
@@ -689,6 +695,7 @@ export class PawSQLTreeProvider
               arguments: [
                 firstStatement.statementId,
                 firstStatement.analysisId,
+                analysis.analysisName,
                 firstStatement.workspaceId,
                 firstStatement.sql,
               ],
@@ -759,6 +766,7 @@ export class PawSQLTreeProvider
             `${stmt.stmtName}`,
             stmt.analysisStmtId,
             analysis.analysisId,
+            analysis.label,
             analysis.workspaceId,
             stmt.sql
           )
@@ -821,5 +829,23 @@ export class PawSQLTreeProvider
 
     // 刷新 Tree View
     this._onDidChangeTreeData.fire(undefined);
+  }
+
+  async updateApikey(config: {
+    email: string;
+    password: string;
+    backendUrl: string;
+    frontendUrl: string;
+  }) {
+    const apiKey = await ApiService.getUserKey(config.email, config.password);
+    console.log(apiKey);
+    if (!apiKey) {
+      throw Error("error.login.invalidCredentials");
+    }
+    await vscode.workspace
+      .getConfiguration("pawsql")
+      .update("apiKey", apiKey, true);
+
+    return apiKey;
   }
 }

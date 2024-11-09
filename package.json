@@ -8,7 +8,12 @@
     "vscode": "^1.80.0"
   },
   "categories": [
-    "Data Science",  "Programming Languages",  "Other",  "Linters",  "Snippets",  "Testing"
+    "Data Science",
+    "Programming Languages",
+    "Other",
+    "Linters",
+    "Snippets",
+    "Testing"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -103,28 +108,42 @@
             "default": "",
             "description": "%config.initialization.apiKey.description%",
             "markdownDescription": "%config.initialization.apiKey.markdownDescription%",
-            "order": 1
+            "order": 5
+          },
+          "pawsql.email": {
+            "type": "string",
+            "default": "",
+            "description": "%config.initialization.email.description%",
+            "markdownDescription": "%config.initialization.email.markdownDescription%",
+            "order": 3
+          },
+          "pawsql.password": {
+            "type": "string",
+            "markdownDescription": "%config.initialization.password.markdownDescription%",
+            "description": "%config.initialization.password.description%",
+            "order": 4,
+            "scope": "user",
+            "secret": true
           },
           "pawsql.backendUrl": {
             "type": "string",
             "default": "",
             "description": "%config.initialization.backendUrl.description%",
             "markdownDescription": "%config.initialization.backendUrl.markdownDescription%",
-            "order": 2
+            "order": 1
           },
           "pawsql.frontendUrl": {
             "type": "string",
             "default": "",
             "description": "%config.initialization.frontendUrl.description%",
             "markdownDescription": "%config.initialization.frontendUrl.markdownDescription%",
-            "order": 3
+            "order": 2
           }
         }
       },
       {
         "id": "pawsqlWorkspace",
         "title": "%config.workspace.title%",
-        "description": "%config.workspace.description%",
         "properties": {
           "pawsql.defaultWorkspace": {
             "type": "object",
@@ -169,6 +188,11 @@
         }
       }
     ],
+    "capabilities": {
+      "untrustedWorkspaces": {
+        "supported": true
+      }
+    },
     "menus": {
       "view/title": [
         {

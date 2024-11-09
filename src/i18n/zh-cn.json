@@ -26,6 +26,7 @@
   "CONFIG_FILE_DEFAULT_WORKSPACE_PLACEHOLDER": "请选择一个工作空间作为当前SQL文件的默认工作空间",
   "OPTIMIZING_SQL": "$(sync~spin) 正在优化SQL...",
   "error.create.analysis.failed": "SQL优化失败",
+  "error.login.invalidCredentials": "PawSQL注册邮箱或密码错误。请检查您的PawSQL配置，确保信息正确无误。",
   "error.backendUrl.invalid": "请检查 backendUrl 是否正确配置或服务器是否运行",
   "error.frontendUrl.invalid": "请检查 frontendUrl 是否正确配置或服务器是否运行",
   "license.code.not.valid": "许可证代码无效，请联系管理员获取",
@@ -45,11 +46,17 @@
   "codelens.optimize.sql.with.selected.workspace": "⚡Optimize in ...",
   "webview.anlysis.result.title": "SQL优化结果",
   "webview.settings.save.config.success": "保存成功",
-  "webview.settings.save.config.failed": "保存配失败",
+  "webview.settings.save.config.failed": "保存配置失败",
   "form.config.title": "PawSQL 配置",
+  "form.config.email.label": "PawSQL注册邮箱",
+  "form.config.password.label": "密码",
+  "form.config.backendUrl.label": "PawSQL 引擎地址",
+  "form.config.frontendUrl.label": "PawSQL 前端地址",
   "form.config.description": "PawSQL Client让开发者能够在VS Code开发环境中直接使用PawSQL优化引擎的强大功能，包括智能索引推荐、查询重写建议、自动化性能验证等。想要了解更详细的PawSQL的SQL优化能力，请参考",
   "form.config.documentation.link": "PawSQL官方文档",
   "form.config.save": "保存",
   "workspaces.isLoading": "工作空间列表加载中...",
-  "analyses.isLoading": "优化列表加载中..."
+  "analyses.isLoading": "优化列表加载中...",
+  "nonexistent": "邮箱不存在.",
+  "unactive": "很抱歉，您的邮箱尚未激活，请登录您的注册邮箱完成激活。"
 }

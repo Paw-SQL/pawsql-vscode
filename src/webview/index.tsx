@@ -16,14 +16,16 @@ const messages: { [key: string]: Messages } = {
 };
 
 interface Config {
-  apiKey: string;
+  email: string;
+  password: string;
   backendUrl: string;
   frontendUrl: string;
 }
 
 const App: React.FC = () => {
   const [config, setConfig] = React.useState<Config>({
-    apiKey: "",
+    email: "",
+    password: "",
     backendUrl: "",
     frontendUrl: "",
   });
@@ -51,7 +53,8 @@ const App: React.FC = () => {
 
       if (message.command === "configResponse") {
         const newConfig = {
-          apiKey: message.apiKey || "",
+          email: message.email || "",
+          password: message.password || "",
           backendUrl: message.backendUrl || "",
           frontendUrl: message.frontendUrl || "",
         };
