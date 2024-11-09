@@ -19,7 +19,6 @@ interface Config {
   email: string;
   password: string;
   backendUrl: string;
-  frontendUrl: string;
 }
 
 interface ConfigFormProps {
@@ -58,24 +57,6 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-
-    if (!formState.email || !formState.password) {
-      setSnackbarMessage(
-        formatMessage({ id: "form.config.validation.credentials.required" })
-      );
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
-
-    if (!formState.backendUrl || !formState.frontendUrl) {
-      setSnackbarMessage(
-        formatMessage({ id: "form.config.validation.urls.required" })
-      );
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
 
     onSubmit(formState);
     setSnackbarMessage(
@@ -192,23 +173,6 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
             ),
           }}
           sx={{ mb: 2 }}
-        />
-        <TextField
-          fullWidth
-          name="frontendUrl"
-          label={formatMessage({ id: "form.config.frontendUrl.label" })}
-          variant="outlined"
-          margin="normal"
-          value={formState.frontendUrl}
-          onChange={handleInputChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <LinkIcon sx={{ color: "#666" }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 3 }}
         />
         <Button
           type="submit"

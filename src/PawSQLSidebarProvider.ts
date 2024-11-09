@@ -835,17 +835,19 @@ export class PawSQLTreeProvider
     email: string;
     password: string;
     backendUrl: string;
-    frontendUrl: string;
   }) {
-    const apiKey = await ApiService.getUserKey(config.email, config.password);
-    console.log(apiKey);
-    if (!apiKey) {
+    const result = await ApiService.getUserKey(config.email, config.password);
+    if (!result) {
       throw Error("error.login.invalidCredentials");
     }
+    const { apikey, frontendUrl } = result;
+
     await vscode.workspace
       .getConfiguration("pawsql")
-      .update("apiKey", apiKey, true);
+      .update("frontendUrl", frontendUrl, true);
 
-    return apiKey;
+    await vscode.workspace
+      .getConfiguration("pawsql")
+      .update("apiKey", apikey, true);
   }
 }
