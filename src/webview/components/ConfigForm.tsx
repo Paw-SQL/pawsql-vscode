@@ -75,9 +75,9 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
         }}
       >
         <PawIconWithText />
-        <Typography variant="h4" align="center" gutterBottom>
+        {/* <Typography variant="h4" align="center" gutterBottom>
           <FormattedMessage id="form.config.title" />
-        </Typography>
+        </Typography> */}
         <Typography variant="body1" align="center" color="textSecondary">
           <FormattedMessage id="form.config.description" />
         </Typography>

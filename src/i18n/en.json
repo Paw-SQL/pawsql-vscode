@@ -47,7 +47,7 @@
   "webview.settings.save.config.success": "PawSQL Setup Completed",
   "webview.settings.save.config.failed": "PawSQL Setup Failded",
   "form.config.title": "PawSQL Client",
-  "form.config.description": "Rich query rewrites, intelligent index recommendations and performance validation help you optimize your SQLs in three steps!",
+  "form.config.description": "PawSQL Client 是一款 Visual Studio Code 插件，帮助开发人员在VS Code的开发环境中，利用PawSQL优化引擎的能力，提供智能索引推荐、查询重写等SQL优化能力。PawSQL Client需要结合PawSQL优化平台（PawSQL Cloud或企业私域部署的PawSQL优化平台）一起使用。关于更全面的PawSQL的SQL优化能力，请参考[PawSQL官方文档](https://docs.pawsql.com)。",
   "form.config.save": "Save",
   "workspaces.isLoading": "Loading Workspaces",
   "analyses.isLoading": "Loading Analyses"
