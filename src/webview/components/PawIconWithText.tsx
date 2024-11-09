@@ -1,13 +1,13 @@
 import React from "react";
 
-const PawIconWithText = ({ size = 40 }) => {
+const PawIconWithText = ({ scale }: { scale: number }) => {
   return (
     <svg
       version="1.1"
       xmlns="http://www.w3.org/2000/svg"
-      width="300"
-      height="100"
-      viewBox="0 0 300 100"
+      width={scale * 532}
+      height={scale * 176}
+      viewBox="0 0  532 176"
       preserveAspectRatio="xMidYMid meet"
     >
       <path
