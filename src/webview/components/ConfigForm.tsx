@@ -74,7 +74,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
           marginBottom: "20px",
         }}
       >
-        <PawIconWithText />
+        <PawIconWithText scale={0.5} />
         {/* <Typography variant="h4" align="center" gutterBottom>
           <FormattedMessage id="form.config.title" />
         </Typography> */}
