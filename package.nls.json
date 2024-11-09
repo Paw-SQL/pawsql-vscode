@@ -32,5 +32,5 @@
   "views.activitybar.pawsqlContainerTitle": "PawSQL 优化引擎配置",
   "views.welcome.noConfiguration": "尚未完成PawSQL优化引擎配置，单击以设置配置。\n\n[立即配置](command:pawsql.openSettings)\n\n",
   "views.welcome.noWorkspace": "未找到工作空间，单击以创建您的工作空间。\n\n[立即创建](command:pawsql.createWorkspace)\n\n",
-  "views.sidebar.pawsqlSidebarName": "PawSQL Optimizer"
+  "views.sidebar.pawsqlSidebarName": "PawSQL Client"
 }
