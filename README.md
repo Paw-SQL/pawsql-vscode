@@ -1,52 +1,52 @@
 # PawSQL Client
-
 [English](README.md) | [中文](README_zh-CN.md)
 
 ## Introduction
+PawSQL Client enables developers to access core capabilities of the PawSQL directly within their VS Code development environment. PawSQL provides sosophisticated SQL optimization features including smart index recommendations and query rewriting suggestions.. PawSQL Client requires integration with the PawSQL optimization platform (either [PawSQL Cloud](https://pawsql.com) or enterprise private deployment). For comprehensive SQL optimization capabilities, please refer to the [PawSQL Technical Documentation](https://docs.pawsql.com).
 
-PawSQL Client is a plugin for Visual Studio Code that helps developers optimize SQL queries and manage workspaces. Through integration with the PawSQL API, users can easily perform SQL optimization and view optimization results.
+[Watch PawSQL Client Demo](https://www.bilibili.com/video/BV19aDBYAEcr/)
 
 ## Features
-
-- **SQL optimization**: Select SQL queries and optimize using the PawSQL API.
-
-- **Workspace management**: Connect to a PawSQL workspace for easy switching and management.
-
-- **Error handling**: Provides detailed error information and friendly prompts.
+- **SQL Optimization**: Get optimization recommendation by one click.
+- **Intelligent index recommendation**: Recommend optimal indexes based on input SQL syntax, database objects and statistics information
+- **Rewrite Optimization**: Recommend semantically equivalent, but more efficient SQLs
+- **Performance Validation**: Ensure better performance after SQL rewrite and index recommendation
 
 ## Installation
+1. Open Visual Studio Code
+2. Navigate to Extensions view (`Ctrl+Shift+X` or `Cmd+Shift+X`)
+3. Search for "PawSQL Client" and click Install
 
-1. Open Visual Studio Code.
+## Initial Setup
+When using the extension for the first time, complete these configuration steps:
+1. Click the PawSQL icon in the VSCode sidebar to access configuration
+2. Fill in the following configuration fields:
+   - Backend URL (e.g., `https://pawsql.com`)
+   - Frontend URL (e.g., `https://pawsql.com`)
+   - API Key (Your PawSQL API key, available in the platform's user settings)
+3. Click "Save"
 
-2. Go to the Extensions view (`Ctrl+Shift+X` or `Cmd+Shift+X`).
+Upon successful configuration, the sidebar will load your workspace list (last 100 workspaces at most).
 
-3. Search for "PawSQL" and click Install.
+## Usage Guide
+### SQL Optimization in VS Code
+Two optimization methods are available in SQL files:
+1. **Optimize Using Default Workspace**:
+   - Click the "Optimize" button in the SQL statement prompt
+2. **Optimize Using Specific Workspace**:
+   - Click the "Optimize..." button in the SQL statement prompt
+   - Select a workspace from the dropdown menu
 
-## Instructions
+### Optimization Results
+After optimization completion:
+- Results are displayed in VSCode's WebView
+- Click "View Detailed Optimization in Browser" for additional information, including:
+  - SQL comparison
+  - Execution plan comparison
+  - Detailed analysis
 
-### Configure API key
+Recent optimization results (last 10 per workspace) automatically appear in the sidebar under their respective workspaces.
 
-Before using the plugin, you need to configure the PawSQL API key:
-
-1. Open Settings (`Ctrl+,` or `Cmd+,`).
-2. Search for "PawSQL".
-3. Enter your API key and save.
-
-### Optimize SQL Queries
-
-1. Select the SQL query to be optimized in the editor.
-2. Right-click and select "Optimize SQL" or use the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P`) to enter "Optimize SQL".
-3. Click Select Workspace to get it, and click Execute Optimization.
-3. Wait for the optimization results and view the report according to the prompts.
-
-### Manage Workspaces
-
-1. Use the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P`) to enter "Select Workspace".
-2. Select a workspace from the list to connect.
-
-## Error Handling
-
-During use, if you encounter any problems, the plugin will display detailed error information and solution tips. For example:
-
-- API key not configured: Please add API key in settings.
-- Invalid SQL query: Please select valid SQL text to optimize.
+## Important Notes
+- Ensure PawSQL Backend URL and Frontend URL are accessible
+- API Key is your unique identifier for [PawSQL Cloud](https://pawsql.com) or private deployment platform, available in the platform's user settings

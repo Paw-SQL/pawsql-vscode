@@ -4,45 +4,62 @@
 
 ## 简介
 
-PawSQL Client是一款为 Visual Studio Code 提供的插件，旨在帮助开发者优化 SQL 查询并管理工作空间。通过与 PawSQL API 的集成，用户可以方便地执行 SQL 优化，查看优化结果。
+PawSQL Client让开发者能够在VS Code开发环境中直接使用PawSQL引擎强大的SQL优化能力，包括智能索引推荐、查询重写建议、自动化性能验证等。PawSQL Client需要结合PawSQL优化平台（[PawSQL Cloud](https://pawsql.com)或企业私域部署的PawSQL优化平台）一起使用。关于更全面的PawSQL的SQL优化能力，请参考[PawSQL官方文档](https://docs.pawsql.com)。
+
+[PawSQL Client](https://www.bilibili.com/video/BV19aDBYAEcr/)
 
 ## 功能
 
-- **SQL 优化**：选择 SQL 查询并使用 PawSQL API 进行优化。
-- **工作空间管理**：连接到 PawSQL 工作空间，方便地切换和管理。
-- **错误处理**：提供详细的错误信息和友好的提示。
+- **SQL 优化**：一键完成SQL性能优化
+- **智能索引推荐**: 推荐各种语法组合条件下的最优索引组合
+- **查询重写优化**: 推荐语义等价，但执行性能更高的SQL语句
+- **自动化性能验证**: 精确了解优化后的SQL性能提示效果 
+- **优化结果展示**：支持在 VSCode 内查看优化结果，并可跳转至浏览器查看更详细信息
 
-## 安装
+## 插件安装
 
-1. 打开 Visual Studio Code。
-2. 转到扩展视图 (`Ctrl+Shift+X` 或 `Cmd+Shift+X`)。
-3. 搜索 “PawSQL” 并点击安装。
+1. 打开 Visual Studio Code
+2. 转到插件视图 (`Ctrl+Shift+X` 或 `Cmd+Shift+X`)
+3. 搜索 "PawSQL Client" 并点击安装
+
+## 初始配置
+
+首次使用插件时，需要完成以下配置步骤：
+
+1. 点击 VSCode 左侧边栏的 PawSQL 图标，进行PawSQL配置
+2. 在配置页面中正确填写以下配置项：
+   - Backend URL (例如：`https://pawsql.com`)
+   - Frontend URL (例如：`https://pawsql.com`)
+   - API Key (您的 PawSQL API 密钥，可以在优化平台的用户设置页面查看)
+3. 点击"保存"按钮
+
+配置成功后，左侧边栏将加载当前用户的工作空间列表（最近 100 个）。
 
 ## 使用说明
 
-### 配置 API 密钥
+### 在VS Code环境中进行SQL 优化
 
-在使用插件之前，您需要配置 PawSQL API 密钥：
+在 SQL 文件中提供两种优化方式：
 
-1. 打开设置 (`Ctrl+,` 或 `Cmd+,`)。
-2. 搜索 “PawSQL”。
-3. 输入您的 API 密钥并保存。
+1. **使用默认工作空间执行优化**：
+   - 在 SQL 语句上方的提示中点击"Optimize"按钮
+2. **选择特定工作空间优化**：
+   - 点击 SQL 语句提示中的"Optimize..."按钮
+   - 从弹出的下拉列表中选择工作空间，进行优化
 
-### 优化 SQL 查询
+### 查看优化结果
 
-1. 在编辑器中选择需要优化的 SQL 查询。
-2. 右键单击，选择 “优化 SQL” 或使用命令面板 (`Ctrl+Shift+P` 或 `Cmd+Shift+P`) 输入 “优化 SQL”。
-3. 点击选择工作空间获取，点击执行优化。
-3. 等待优化结果，并根据提示查看报告。
+优化完成后：
 
-### 管理工作空间
+- 优化结果将在 VSCode 内的 WebView 中显示
+- 点击"在浏览器中查看优化详情"可查看更多信息，包括：
+  - SQL 对比
+  - 执行计划对比
+  - 其他详细分析
 
-1. 使用命令面板 (`Ctrl+Shift+P` 或 `Cmd+Shift+P`) 输入 “选择工作空间”。
-2. 从列表中选择一个工作空间进行连接。
+已执行的优化结果将自动显示在左侧边栏对应工作空间的优化列表中（每个工作空间的最近10个优化）。
 
-## 错误处理
+## 注意事项
 
-在使用过程中，如果遇到任何问题，插件会显示详细的错误信息和解决提示。例如：
-
-- API 密钥未配置：请在设置中添加 API 密钥。
-- SQL 查询无效：请选择有效的 SQL 文本进行优化。
+- 确保配置的PawSQL的 Backend URL 和 Frontend URL 可以正常访问
+- API Key为您在[PawSQL Cloud](https://pawsql.com)或私域部署的PawSQL优化平台上的唯一标识，可以在优化平台的用户设置页面查看
