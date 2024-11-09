@@ -79,7 +79,11 @@ const App: React.FC = () => {
   return (
     <IntlProvider locale={locale} messages={messages[locale]}>
       <div>
-        <ConfigForm initialConfig={config} onSubmit={handleConfigSubmit} />
+        <ConfigForm
+          vscode={vscode}
+          initialConfig={config}
+          onSubmit={handleConfigSubmit}
+        />
       </div>
     </IntlProvider>
   );

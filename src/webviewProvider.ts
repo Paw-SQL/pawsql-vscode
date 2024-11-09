@@ -74,6 +74,9 @@ export class WebviewProvider {
               this.handleGetLanguage(this.settingPanel);
             }
             return;
+          case "openLink":
+            vscode.env.openExternal(vscode.Uri.parse(message.url));
+            break;
         }
       },
       undefined,

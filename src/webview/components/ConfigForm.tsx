@@ -23,11 +23,19 @@ interface Config {
 }
 
 interface ConfigFormProps {
+  vscode: {
+    postMessage: (message: any) => void;
+    getState: () => any;
+  };
   initialConfig: Config;
   onSubmit: (config: Config) => void;
 }
 
-const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
+const ConfigForm: React.FC<ConfigFormProps> = ({
+  vscode,
+  initialConfig,
+  onSubmit,
+}) => {
   const [formState, setFormState] = React.useState<Config>(initialConfig);
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarMessage, setSnackbarMessage] = React.useState("");
@@ -35,10 +43,15 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
     "success" | "error"
   >("success");
   const { formatMessage } = useIntl();
+
   // Update form state when initialConfig changes
   React.useEffect(() => {
     setFormState(initialConfig);
   }, [initialConfig]);
+
+  const openExternalLink = (url: string) => {
+    vscode.postMessage({ command: "openLink", url });
+  };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -72,21 +85,37 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
           flexDirection: "column",
           alignItems: "center",
           marginBottom: "20px",
+          gap: "10px",
+          textAlign: "center",
         }}
       >
         <PawIconWithText scale={0.5} />
-        {/* <Typography variant="h4" align="center" gutterBottom>
-          <FormattedMessage id="form.config.title" />
-        </Typography> */}
         <Typography variant="body1" align="center" color="textSecondary">
-          <FormattedMessage id="form.config.description" />
+          <span
+            data-br=":r1:"
+            data-brr="1"
+            style={{
+              display: "inline-block",
+              verticalAlign: "top",
+              textDecoration: "inherit",
+            }}
+          >
+            <FormattedMessage id="form.config.description" />{" "}
+            <a
+              href="#"
+              onClick={() => openExternalLink("https://docs.pawsql.com")}
+              style={{ color: "#3f51b5", textDecoration: "underline" }}
+            >
+              <FormattedMessage id="form.config.documentation.link" />
+            </a>
+          </span>
         </Typography>
       </div>
 
       <form onSubmit={handleSubmit}>
         <TextField
           fullWidth
-          label="API Key"
+          label={formatMessage({ id: "sidebar.apiKey.label" })}
           variant="outlined"
           margin="normal"
           value={formState.apiKey}
@@ -101,7 +130,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
         />
         <TextField
           fullWidth
-          label="Backend URL"
+          label={formatMessage({ id: "sidebar.backendUrl.label" })}
           variant="outlined"
           margin="normal"
           value={formState.backendUrl}
@@ -116,7 +145,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({ initialConfig, onSubmit }) => {
         />
         <TextField
           fullWidth
-          label="Frontend URL"
+          label={formatMessage({ id: "sidebar.frontendUrl.label" })}
           variant="outlined"
           margin="normal"
           value={formState.frontendUrl}
