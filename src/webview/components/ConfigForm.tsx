@@ -105,7 +105,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
           variant="body1"
           align="center"
           color="textSecondary"
-          sx={{ maxWidth: "460px" }}
+          sx={{ maxWidth: "560px" }}
         >
           <FormattedMessage id="form.config.description" />{" "}
           <a
@@ -120,7 +120,23 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
           </a>
         </Typography>
       </div>
-
+      <TextField
+          fullWidth
+          name="backendUrl"
+          label={formatMessage({ id: "form.config.backendUrl.label" })}
+          variant="outlined"
+          margin="normal"
+          value={formState.backendUrl}
+          onChange={handleInputChange}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PublicIcon sx={{ color: "#666" }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ mb: 2 }}
+        />
       <form onSubmit={handleSubmit}>
         <TextField
           fullWidth
@@ -157,23 +173,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
           }}
           sx={{ mb: 2 }}
         />
-        <TextField
-          fullWidth
-          name="backendUrl"
-          label={formatMessage({ id: "form.config.backendUrl.label" })}
-          variant="outlined"
-          margin="normal"
-          value={formState.backendUrl}
-          onChange={handleInputChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <PublicIcon sx={{ color: "#666" }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 2 }}
-        />
+
         <Button
           type="submit"
           variant="contained"
