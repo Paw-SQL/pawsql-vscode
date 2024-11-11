@@ -5,8 +5,10 @@
   "commands.refreshTree": "刷新",
   "commands.createWorkspace": "创建工作空间",
   "commands.setDefaultWorkspace": "设置为默认工作空间",
-
   "config.initialization.title": "PawSQL Client",
+  "config.initialization.backendUrl.title": "PawSQL 服务器",
+  "config.initialization.email.title": "PawSQL 账号",
+  "config.initialization.apiKey.title": "ApiKey",
   "config.initialization.description": "配置 PawSQL 优化引擎的地址和用户的ApiKey",
   "config.initialization.apiKey.description": "用于 PawSQL 优化引擎服务认证的ApiKey",
   "config.initialization.apiKey.markdownDescription": "用于 PawSQL 服务认证的ApiKey。您可以在 PawSQL 账户设置中获取此密钥。",
@@ -37,5 +39,5 @@
   "views.activitybar.pawsqlContainerTitle": "PawSQL 优化引擎配置",
   "views.welcome.noConfiguration": "尚未完成PawSQL优化引擎配置，单击以设置配置。\n\n[立即配置](command:pawsql.openSettings)\n\n",
   "views.welcome.noWorkspace": "未找到工作空间，单击以创建您的工作空间。\n\n[立即创建](command:pawsql.createWorkspace)\n\n",
-  "views.sidebar.pawsqlSidebarName": "PawSQL Optimizer"
+  "views.sidebar.pawsqlSidebarName": "PawSQL Client"
 }
