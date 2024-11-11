@@ -12,6 +12,7 @@
   "license.code.not.exist": "Apikey不存在，请联系PawSQL管理员",
   "beta.analysis.over.limit": "β用户优化次数超过限制",
   "analysis.over.limit": "优化次数超过限制",
+  "plan.user.exceeded.maximum.opt.times": "优化次数已超出当前计划限制。如需继续使用，请升级您的计划。",
   "workspace.not.exist": "工作空间不存在",
   "workspace.has.no.analysis": "工作空间优化列表为空",
   "analysis.not.exist": "优化不存在",

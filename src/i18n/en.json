@@ -12,6 +12,7 @@
   "license.code.not.exist": "License code does not exist. Please contact the administrator to obtain it.",
   "beta.analysis.over.limit": "Optimization quota is reached.",
   "analysis.over.limit": "Optimization quota is reached.",
+  "plan.user.exceeded.maximum.opt.times": "The number of optimizations has exceeded the current plan limit. To continue using it, please upgrade your plan.",
   "workspace.not.exist": "Workspace does not exist.",
   "workspace.has.no.analysis": "Workspace optimization list is empty",
   "analysis.not.exist": "Analysis does not exist.",
