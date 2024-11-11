@@ -1,6 +1,7 @@
+
 {
   "name": "pawsqlClient",
-  "displayName": "%extension.display name%",
+  "displayName": "%extension.display.name%",
   "description": "%extension.description%",
   "publisher": "pawsql",
   "version": "0.0.1",
@@ -261,5 +262,12 @@
     "react-intl": "^6.8.7",
     "supports-color": "^9.4.0",
     "vscode-nls": "^5.2.0"
+  },  
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Paw-SQL/pawsql-vscode-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Paw-SQL/pawsql-vscode-plugin/issues"
   }
 }
