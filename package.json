@@ -117,14 +117,6 @@
             "markdownDescription": "%config.initialization.email.markdownDescription%",
             "order": 3
           },
-          "pawsql.password": {
-            "type": "string",
-            "markdownDescription": "%config.initialization.password.markdownDescription%",
-            "description": "%config.initialization.password.description%",
-            "order": 4,
-            "scope": "user",
-            "secret": true
-          },
           "pawsql.backendUrl": {
             "type": "string",
             "default": "",

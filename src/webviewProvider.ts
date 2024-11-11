@@ -131,10 +131,6 @@ export class WebviewProvider {
         .getConfiguration("pawsql")
         .update("email", config.email, true);
 
-      await vscode.workspace
-        .getConfiguration("pawsql")
-        .update("password", config.password, true);
-
       await this.passwordManager.storePassword(config.password);
 
       await vscode.workspace
