@@ -7,6 +7,9 @@
   "commands.setDefaultWorkspace": "Set as Default Workspace",
 
   "config.initialization.title": "PawSQL Setup",
+  "config.initialization.backendUrl.title": "PawSQL Server",
+  "config.initialization.email.title": "PawSQL Account",
+  "config.initialization.apiKey.title": "ApiKey",
   "config.initialization.description": "Set up the URL of PawSQL Engine and ApiKey for user",
   "config.initialization.apiKey.description": "ApiKey for this user to use PawSQL Engine",
   "config.initialization.apiKey.markdownDescription": "ApiKey for this user to use PawSQL Engine. You can find it in your PawSQL account settings menu.",
