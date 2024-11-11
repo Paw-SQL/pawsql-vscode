@@ -1,5 +1,5 @@
 {
-  "extension.display name": "PawSQL Client",
+  "extension.display.name": "PawSQL Client",
   "extension.description": "SQL Optimizer, Index Advisor for MySQL/PostgreSQL/Oracle/openGauss and etc, Tune SQL by Clicks",
   "commands.openSettings": "Modify",
   "commands.refreshTree": "Refresh",

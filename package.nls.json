@@ -6,7 +6,7 @@
   "commands.createWorkspace": "创建工作空间",
   "commands.setDefaultWorkspace": "设置为默认工作空间",
 
-  "config.initialization.title": "PawSQL 优化引擎设置",
+  "config.initialization.title": "PawSQL Client",
   "config.initialization.description": "配置 PawSQL 优化引擎的地址和用户的ApiKey",
   "config.initialization.apiKey.description": "用于 PawSQL 优化引擎服务认证的ApiKey",
   "config.initialization.apiKey.markdownDescription": "用于 PawSQL 服务认证的ApiKey。您可以在 PawSQL 账户设置中获取此密钥。",
