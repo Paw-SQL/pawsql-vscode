@@ -312,7 +312,7 @@ export const validateUserKey = async (userKey: string): Promise<boolean> => {
 export const getUserKey = async (
   email: string,
   password: string
-): Promise<string | null> => {
+): Promise<{ apikey: string; frontendUrl: string } | null> => {
   const { DOMAIN } = getUrls();
   const url = `${DOMAIN.Backend}/api/v1/getUserKey`;
 

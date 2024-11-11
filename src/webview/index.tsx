@@ -19,7 +19,6 @@ interface Config {
   email: string;
   password: string;
   backendUrl: string;
-  frontendUrl: string;
 }
 
 const App: React.FC = () => {
@@ -27,7 +26,6 @@ const App: React.FC = () => {
     email: "",
     password: "",
     backendUrl: "",
-    frontendUrl: "",
   });
 
   const [locale, setLocale] = React.useState<"en" | "zh-cn">("en"); // 使用字面量类型
@@ -56,7 +54,6 @@ const App: React.FC = () => {
           email: message.email || "",
           password: message.password || "",
           backendUrl: message.backendUrl || "",
-          frontendUrl: message.frontendUrl || "",
         };
         console.log("Updating config:", newConfig);
         setConfig(newConfig);

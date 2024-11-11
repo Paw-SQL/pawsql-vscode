@@ -114,8 +114,6 @@ export class WebviewProvider {
       password: await this.passwordManager.getPassword(),
       backendUrl:
         vscode.workspace.getConfiguration("pawsql").get("backendUrl") || "",
-      frontendUrl:
-        vscode.workspace.getConfiguration("pawsql").get("frontendUrl") || "",
     };
 
     panel.webview.postMessage({ command: "configResponse", ...config });
@@ -126,7 +124,6 @@ export class WebviewProvider {
     email: string;
     password: string;
     backendUrl: string;
-    frontendUrl: string;
   }) {
     try {
       // 分别更新每个配置项
@@ -143,9 +140,7 @@ export class WebviewProvider {
       await vscode.workspace
         .getConfiguration("pawsql")
         .update("backendUrl", config.backendUrl, true);
-      await vscode.workspace
-        .getConfiguration("pawsql")
-        .update("frontendUrl", config.frontendUrl, true);
+
       await this.treeProvider.updateApikey(config);
       await this.treeProvider.refresh();
       // 配置保存成功反馈

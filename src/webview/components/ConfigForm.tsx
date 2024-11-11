@@ -19,7 +19,6 @@ interface Config {
   email: string;
   password: string;
   backendUrl: string;
-  frontendUrl: string;
 }
 
 interface ConfigFormProps {
@@ -58,24 +57,6 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-
-    if (!formState.email || !formState.password) {
-      setSnackbarMessage(
-        formatMessage({ id: "form.config.validation.credentials.required" })
-      );
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
-
-    if (!formState.backendUrl || !formState.frontendUrl) {
-      setSnackbarMessage(
-        formatMessage({ id: "form.config.validation.urls.required" })
-      );
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
 
     onSubmit(formState);
     setSnackbarMessage(
@@ -141,23 +122,6 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
       </div>
 
       <form onSubmit={handleSubmit}>
-      <TextField
-          fullWidth
-          name="backendUrl"
-          label={formatMessage({ id: "form.config.backendUrl.label" })}
-          variant="outlined"
-          margin="normal"
-          value={formState.backendUrl}
-          onChange={handleInputChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <PublicIcon sx={{ color: "#666" }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 2 }}
-        />
         <TextField
           fullWidth
           name="email"
@@ -195,20 +159,20 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
         />
         <TextField
           fullWidth
-          name="frontendUrl"
-          label={formatMessage({ id: "form.config.frontendUrl.label" })}
+          name="backendUrl"
+          label={formatMessage({ id: "form.config.backendUrl.label" })}
           variant="outlined"
           margin="normal"
-          value={formState.frontendUrl}
+          value={formState.backendUrl}
           onChange={handleInputChange}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <LinkIcon sx={{ color: "#666" }} />
+                <PublicIcon sx={{ color: "#666" }} />
               </InputAdornment>
             ),
           }}
-          sx={{ mb: 3 }}
+          sx={{ mb: 2 }}
         />
         <Button
           type="submit"
