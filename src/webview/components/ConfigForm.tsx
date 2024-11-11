@@ -141,6 +141,23 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
       </div>
 
       <form onSubmit={handleSubmit}>
+      <TextField
+          fullWidth
+          name="backendUrl"
+          label={formatMessage({ id: "form.config.backendUrl.label" })}
+          variant="outlined"
+          margin="normal"
+          value={formState.backendUrl}
+          onChange={handleInputChange}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PublicIcon sx={{ color: "#666" }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ mb: 2 }}
+        />
         <TextField
           fullWidth
           name="email"
@@ -171,23 +188,6 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
             startAdornment: (
               <InputAdornment position="start">
                 <LockIcon sx={{ color: "#666" }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          fullWidth
-          name="backendUrl"
-          label={formatMessage({ id: "form.config.backendUrl.label" })}
-          variant="outlined"
-          margin="normal"
-          value={formState.backendUrl}
-          onChange={handleInputChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <PublicIcon sx={{ color: "#666" }} />
               </InputAdornment>
             ),
           }}

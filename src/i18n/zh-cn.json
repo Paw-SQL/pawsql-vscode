@@ -48,7 +48,7 @@
   "webview.settings.save.config.success": "保存成功",
   "webview.settings.save.config.failed": "保存配置失败",
   "form.config.title": "PawSQL 配置",
-  "form.config.email.label": "PawSQL注册邮箱",
+  "form.config.email.label": "PawSQL 账号",
   "form.config.password.label": "密码",
   "form.config.backendUrl.label": "PawSQL 引擎地址",
   "form.config.frontendUrl.label": "PawSQL 前端地址",
