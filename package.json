@@ -1,8 +1,9 @@
+
 {
-  "name": "pawsql.client",
-  "displayName": "%extension.display name%",
+  "name": "pawsqlClient",
+  "displayName": "%extension.display.name%",
   "description": "%extension.description%",
-  "publisher": "PawSQL Team",
+  "publisher": "pawsql",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.80.0"
@@ -165,9 +166,6 @@
           },
           "pawsql.fileWorkspaceMappings": {
             "type": "object",
-            "title": "%config.workspace.fileMapping.title%",
-            "description": "%config.workspace.fileMapping.description%",
-            "markdownDescription": "%config.workspace.fileMapping.markdownDescription%",
             "default": {}
           }
         }
@@ -226,7 +224,7 @@
     "@types/node": "^16.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@types/vscode": "^1.95.0",
+    "@types/vscode": "~1.80.0",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "css-loader": "^7.1.2",
@@ -249,5 +247,12 @@
     "react-intl": "^6.8.7",
     "supports-color": "^9.4.0",
     "vscode-nls": "^5.2.0"
+  },  
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Paw-SQL/pawsql-vscode-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Paw-SQL/pawsql-vscode-plugin/issues"
   }
 }
