@@ -123,13 +123,6 @@
             "description": "%config.initialization.backendUrl.description%",
             "markdownDescription": "%config.initialization.backendUrl.markdownDescription%",
             "order": 1
-          },
-          "pawsql.frontendUrl": {
-            "type": "string",
-            "default": "",
-            "description": "%config.initialization.frontendUrl.description%",
-            "markdownDescription": "%config.initialization.frontendUrl.markdownDescription%",
-            "order": 2
           }
         }
       },
