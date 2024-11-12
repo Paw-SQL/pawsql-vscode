@@ -8,6 +8,7 @@
 
   "config.initialization.title": "PawSQL Setup",
   "config.initialization.backendUrl.title": "PawSQL Server",
+  "config.initialization.frontendUrl.title": "PawSQL Web",
   "config.initialization.email.title": "PawSQL Account",
   "config.initialization.apiKey.title": "ApiKey",
   "config.initialization.description": "Set up the URL of PawSQL Engine and ApiKey for user",

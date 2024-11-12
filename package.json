@@ -120,6 +120,12 @@
             "default": "",
             "title": "%config.initialization.backendUrl.title%",
             "order": 1
+          },
+          "pawsql.frontendUrl": {
+            "type": "string",
+            "default": "",
+            "title": "%config.initialization.frontendUrl.title%",
+            "order": 2
           }
         }
       },
