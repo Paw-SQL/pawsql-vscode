@@ -121,22 +121,22 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
         </Typography>
       </div>
       <TextField
-          fullWidth
-          name="backendUrl"
-          label={formatMessage({ id: "form.config.backendUrl.label" })}
-          variant="outlined"
-          margin="normal"
-          value={formState.backendUrl}
-          onChange={handleInputChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <PublicIcon sx={{ color: "#666" }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 2 }}
-        />
+        fullWidth
+        name="backendUrl"
+        label={formatMessage({ id: "form.config.backendUrl.label" })}
+        variant="outlined"
+        margin="normal"
+        value={formState.backendUrl}
+        onChange={handleInputChange}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <PublicIcon sx={{ color: "#666" }} />
+            </InputAdornment>
+          ),
+        }}
+        sx={{ mb: 2 }}
+      />
       <form onSubmit={handleSubmit}>
         <TextField
           fullWidth
@@ -190,9 +190,31 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
               boxShadow: "0 4px 8px rgba(0, 0, 0, 0.15)",
             },
             transition: "all 0.3s ease",
+            mb: 2,
           }}
         >
           <FormattedMessage id="form.config.save" />
+        </Button>
+
+        {/* 新增的“Join PawSQL”按钮 */}
+        <Button
+          variant="outlined"
+          fullWidth
+          onClick={() => openExternalLink("https://www.pawsql.com/signup")}
+          sx={{
+            height: "48px",
+            fontSize: "16px",
+            color: "#007acc",
+            borderColor: "#007acc",
+            textTransform: "none",
+            "&:hover": {
+              backgroundColor: "#f0f8ff",
+              borderColor: "#005999",
+            },
+            transition: "all 0.3s ease",
+          }}
+        >
+          <FormattedMessage id="form.config.joinPawSQL" />
         </Button>
       </form>
       <Snackbar
