@@ -7,29 +7,27 @@ PawSQL Client enables developers to access core capabilities of the PawSQL direc
 [Watch PawSQL Client Demo](https://www.bilibili.com/video/BV19aDBYAEcr/)
 
 ## Features
-- **Tune by Clicks**: Get optimization recommendation by one click.
+- **Optimize by Clicks**: Get optimization recommendation for your SQL query by one click.
 - **Index Advise**: Recommend optimal indexes based on input SQL syntax, database objects and statistics information
 - **Query Rewrite**: Recommend semantically equivalent, but more efficient SQLs
 - **Performance Validation**: Ensure better performance after SQL rewrite and index recommendation
 
 ## Installation
-1. Open Visual Studio Code
-2. Navigate to Extensions view (`Ctrl+Shift+X` or `Cmd+Shift+X`)
+1. Open VS Code
+2. Navigate to Extensions (`Ctrl+Shift+X` or `Cmd+Shift+X`)
 3. Search for "PawSQL Client" and click Install
 
 ## Initial Setup
-When using the extension for the first time, complete these configuration steps:
-1. Click the PawSQL icon in the VSCode sidebar to access configuration
-2. Fill in the following configuration fields:
+You need to do some initial setup before your start to use PawSQL Client:
+1. Click the PawSQL icon on the VSCode sidebar
+2. Fill in the following fields:
    - PawSQL Server Address (e.g., `https://pawsql.com`)
-   - PawSQL Account
-   - Password
+   - PawSQL Account (your account on PawSQL Server)
+   - Password (password of your account)
 3. Click "Save"
 
-Upon successful configuration, the sidebar will load your workspace list (last 100 workspaces at most).
-
 ## Usage Guide
-### SQL Optimization in VS Code
+### Optimize SQLs in VS Code
 Two optimization methods are available in SQL files:
 1. **Optimize Using Default Workspace**:
    - Click the "Optimize" button in the SQL statement prompt

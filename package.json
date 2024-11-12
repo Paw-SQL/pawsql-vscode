@@ -3,7 +3,7 @@
   "displayName": "%extension.display.name%",
   "description": "%extension.description%",
   "icon": "resources/icon/favicon.png",  
-  "publisher": "pawsql",
+  "publisher": "PawSQL",
 	"author": {
 		"name": "PawSQL",
 		"email": "support@pawsql.com"
