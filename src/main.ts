@@ -7,11 +7,9 @@ import { getUrls } from "./constants";
 import { DecorationManager } from "./DecorationManager";
 import { CommandManager } from "./CommandManager";
 import type { WorkspaceItem, AnalysisAndSummaryResponse } from "./apiService";
-import { getEditorQueryDetails } from "./utils/pawsqlUtils";
 import { LanguageService } from "./LanguageService";
 import { ConfigurationService } from "./configurationService";
 import { ErrorHandler } from "./errorHandler";
-import { OptimizationService } from "./optimizationService";
 import { WebviewProvider } from "./webviewProvider";
 import { ApiService } from "./apiService";
 
@@ -37,17 +35,17 @@ export class PawSQLExtension {
   public async activate(): Promise<void> {
     try {
       LanguageService.loadLanguage(vscode.env.language);
-      await this.registerSettingsWebview();
+      this.registerSettingsWebview();
       await this.commandManager.initializeCommands();
       await this.decorationManager.registerDecorationListeners();
-      await this.registerEventListeners();
-      await this.registerSqlCodeLensProvider();
+      this.registerEventListeners();
+      this.registerSqlCodeLensProvider();
     } catch (error) {
       ErrorHandler.handle("extension.activation.failed", error);
     }
   }
 
-  private async registerSettingsWebview() {
+  private registerSettingsWebview() {
     let disposable = vscode.commands.registerCommand(
       "pawsql.openSettings",
       () => {
@@ -58,17 +56,15 @@ export class PawSQLExtension {
     this.context.subscriptions.push(disposable);
   }
 
-  // 注册 CodeLens Provider 的辅助函数
-  private async registerSqlCodeLensProvider() {
+  private registerSqlCodeLensProvider() {
     const disposable = vscode.languages.registerCodeLensProvider(
       { language: "sql", scheme: "file" },
       this.sqlCodeLensProvider
     );
     this.context.subscriptions.push(disposable);
 
-    // 确保在文件打开时创建分隔符
     this.context.subscriptions.push(
-      vscode.workspace.onDidOpenTextDocument(async (document) => {
+      vscode.workspace.onDidOpenTextDocument((document) => {
         if (document.languageId === "sql") {
           this.sqlCodeLensProvider.refresh();
         }
@@ -78,31 +74,27 @@ export class PawSQLExtension {
   }
 
   private registerEventListeners(): void {
-    // 注册配置变更事件
     this.context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration(
         this.handleConfigurationChange.bind(this)
       )
     );
 
-    // 注册验证配置命令
     this.context.subscriptions.push(
       vscode.commands.registerCommand("pawsql.validateConfig", async () => {
         await this.treeProvider.validateConfiguration();
       })
     );
 
-    // 注册显示语句详情命令
     this.context.subscriptions.push(
       vscode.commands.registerCommand(
         "pawsql.showStatementDetail",
-        async (statementId, analysisId, analysisName) => {
-          await this.showStatementResult(statementId, analysisName);
+        (statementId, analysisId, analysisName) => {
+          this.showStatementResult(statementId, analysisName);
         }
       )
     );
 
-    // 注册刷新命令
     this.context.subscriptions.push(
       vscode.commands.registerCommand("pawsql.refreshTree", () => {
         this.treeProvider.refresh();
@@ -155,6 +147,7 @@ export class PawSQLExtension {
     if (!isConfigValid) {
       return;
     }
+
     const apiKey = await ConfigurationService.getApiKey();
     const workspaces = await ApiService.getWorkspaces(apiKey ?? "");
     if (workspaces.data.total === "0") {
@@ -166,6 +159,7 @@ export class PawSQLExtension {
     const statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left
     );
+
     try {
       statusBarItem.text = LanguageService.getMessage("QUERYING_WORKSPACES");
       statusBarItem.show();
@@ -178,7 +172,6 @@ export class PawSQLExtension {
 
       if (selected) {
         statusBarItem.dispose();
-
         const workspaceId = selected.workspaceId;
 
         const editor = vscode.window.activeTextEditor;
@@ -191,10 +184,9 @@ export class PawSQLExtension {
         );
 
         try {
-          // 设置优化状态为 true
-          await this.selectAndRevealQuery(editor, range);
-          const result = await this.executeOptimization(workspaceId, query); // 使用获取到的 SQL 文本
-          // 3. 优化完成后更新消息
+          this.selectAndRevealQuery(editor, range);
+          const result = await this.executeOptimization(workspaceId, query);
+
           if (optimizationStatusBarItem) {
             optimizationStatusBarItem.dispose(); // 清除之前的消息
           }
@@ -209,7 +201,7 @@ export class PawSQLExtension {
     } catch (error) {
       ErrorHandler.handle("workspace.operation.failed", error);
     } finally {
-      this.sqlCodeLensProvider.setOptimizing(range, false);
+      await this.sqlCodeLensProvider.setOptimizing(range, false);
       if (statusBarItem) {
         statusBarItem.dispose();
       }
@@ -220,10 +212,11 @@ export class PawSQLExtension {
     const { URLS } = getUrls();
     await vscode.env.openExternal(vscode.Uri.parse(URLS.NEW_WORKSPACE));
   }
-  private async showStatementResult(
+
+  private showStatementResult(
     analysisStmtId: string,
     analysisName: string
-  ): Promise<void> {
+  ): void {
     this.webviewProvider.createResultPanel(analysisStmtId, analysisName);
   }
 
@@ -242,38 +235,18 @@ export class PawSQLExtension {
     }
   }
 
-  // optimizeSqlBelowButton 方法修改
   public async optimizeSqlBelowButton(
     query: string,
     workspaceId: string,
     range: vscode.Range
   ): Promise<void> {
-    // 2. 确保编辑器存在
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       throw new Error("no.active.editor");
     }
 
-    // 3. 验证配置
     const isConfigValid = await this.treeProvider.validateConfig();
     if (!isConfigValid) {
-      // const range = new vscode.Range(0, 0, 0, 0); // 替换为按钮所在行的 Range
-
-      // // 创建诊断对象
-      // const diagnostic = new vscode.Diagnostic(
-      //   range,
-      //   message,
-      //   vscode.DiagnosticSeverity.Error
-      // );
-      // vscode.languages.setDiagnostics(editor.document.uri, [diagnostic]);
-
-      // const message = "验证失败"; // 汇总错误信息
-      // let errors = vscode.languages.createDiagnosticCollection("foo");
-      // errors.clear();
-      // errors.set(editor.document.uri, [new vscode.Diagnostic(range, message)]);
-
-      // const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
-
       return;
     }
 
@@ -284,7 +257,6 @@ export class PawSQLExtension {
       return;
     }
 
-    // 1. 先设置状态并等待UI更新完成
     await this.sqlCodeLensProvider.setOptimizing(range, true);
 
     const statusBarItem = this.createStatusBarItem(
@@ -292,27 +264,21 @@ export class PawSQLExtension {
     );
 
     try {
-      // 4. 选择并显示查询
-      await this.selectAndRevealQuery(editor, range);
-
-      // 5. 执行优化
+      this.selectAndRevealQuery(editor, range);
       const result = await this.executeOptimization(workspaceId, query);
-
-      // 6. 处理结果
       await this.handleOptimizationResult(result, workspaceId);
     } catch (error) {
       ErrorHandler.handle("sql.optimization.failed", error);
     } finally {
       statusBarItem.dispose();
-      // 7. 重置状态
       await this.sqlCodeLensProvider.setOptimizing(range, false);
     }
   }
-  private async selectAndRevealQuery(
+
+  private selectAndRevealQuery(
     editor: vscode.TextEditor,
     range: vscode.Range
-  ): Promise<void> {
-    // 将光标定位到指定的 SQL 查询范围，并确保该范围在编辑器中可见
+  ): void {
     editor.selection = new Selection(range.start, range.end);
     editor.revealRange(range);
   }
@@ -326,7 +292,7 @@ export class PawSQLExtension {
       throw new Error("api.key.not.configured");
     }
 
-    const analysisResponse = await OptimizationService.createAnalysis({
+    const analysisResponse = await ApiService.createAnalysis({
       userKey,
       workspace: workspaceId,
       workload: sql,
@@ -337,7 +303,7 @@ export class PawSQLExtension {
 
     return {
       analysis: analysisResponse,
-      analysisSummary: await OptimizationService.getAnalysisSummary({
+      analysisSummary: await ApiService.getAnalysisSummary({
         userKey,
         analysisId: analysisResponse.data.analysisId,
       }),
@@ -352,6 +318,7 @@ export class PawSQLExtension {
       workspaceId,
       result.analysis.data.analysisId
     );
+
     const queryNumber = result.analysisSummary.data.basicSummary.numberOfQuery;
     if (queryNumber === 1) {
       const statementId =

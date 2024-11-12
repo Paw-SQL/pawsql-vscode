@@ -13,7 +13,7 @@ export class CommandManager {
   constructor(
     private readonly extension: PawSQLExtension,
     private readonly context: vscode.ExtensionContext,
-    private readonly sqlCodeLensProvider: SqlCodeLensProvider // 接受 SqlCodeLensProvider 实例
+    private readonly sqlCodeLensProvider: SqlCodeLensProvider
   ) {}
 
   public async initializeCommands(): Promise<void> {
@@ -25,17 +25,6 @@ export class CommandManager {
   }
 
   private registerApiKeyCommands(): void {
-    // const commands = [
-    //   {
-    //     command: COMMANDS.PAWSQL_CONFIG,
-    //     callback: () => ConfigurationService.openSettings("pawsqlInit"),
-    //   },
-    // ];
-    // commands.forEach(({ command, callback }) => {
-    //   const disposable = vscode.commands.registerCommand(command, callback);
-    //   this.context.subscriptions.push(disposable);
-    // });
-
     const configFileDefaultDisposable = vscode.commands.registerCommand(
       "pawsql.selectFileDefaultWorkspace",
       () => this.handleFileDefaultWorkspaceSelection()
@@ -69,19 +58,16 @@ export class CommandManager {
       );
 
       if (selected) {
-        // 更新配置
         const currentFile =
           vscode.window.activeTextEditor?.document.uri.toString();
         if (currentFile) {
           const config = vscode.workspace.getConfiguration("pawsql");
-
           const mappings =
             config.get<Record<string, WorkspaceItem>>(
               "fileWorkspaceMappings"
             ) || {};
-          mappings[currentFile] = selected; // 保存映射关系
+          mappings[currentFile] = selected;
 
-          // 更新配置
           await config.update(
             "fileWorkspaceMappings",
             mappings,
@@ -114,7 +100,6 @@ export class CommandManager {
     workspaces: ListWorkspacesResponse
   ): WorkspaceItem[] {
     return workspaces.data.records.map((workspace) => {
-      // 先根据数据库类型设置基础图标
       const iconPath = {
         light: path.join(
           __filename,

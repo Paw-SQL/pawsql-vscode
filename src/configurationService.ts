@@ -6,72 +6,68 @@ export const ConfigurationService = {
     return vscode.workspace.getConfiguration("pawsql");
   },
 
-  async getApiKey(): Promise<string | undefined> {
-    return this.config.get("apiKey");
+  getApiKey(): string | undefined {
+    return this.config.get("apiKey"); // 返回值为 string 或 undefined
   },
 
-  async getFrontendUrl(): Promise<string | undefined> {
-    return this.config.get("frontendUrl");
+  getFrontendUrl(): string | undefined {
+    return this.config.get("frontendUrl"); // 返回值为 string 或 undefined
   },
 
-  async getBackendUrl(): Promise<string | undefined> {
-    return this.config.get("backendUrl");
+  getBackendUrl(): string | undefined {
+    return this.config.get("backendUrl"); // 返回值为 string 或 undefined
   },
 
-  // 获取用户级别的默认工作空间
-  async getUserDefaultWorkspace(): Promise<WorkspaceItem | undefined> {
-    return this.config.get<WorkspaceItem>("defaultWorkspace");
+  getUserDefaultWorkspace(): WorkspaceItem | undefined {
+    return this.config.get<WorkspaceItem>("defaultWorkspace"); // 返回值为 WorkspaceItem 或 undefined
   },
 
-  // 设置用户级别的默认工作空间
-  async setUserDefaultWorkspace(workspaceItem: WorkspaceItem): Promise<void> {
-    await this.config.update(
+  setUserDefaultWorkspace(workspaceItem: WorkspaceItem): Thenable<void> {
+    return this.config.update(
       "defaultWorkspace",
       workspaceItem,
       vscode.ConfigurationTarget.Global
-    );
+    ); // 返回 Thenable<void>
   },
 
-  // 设置用户级别的默认工作空间
-  async clearUserDefaultWorkspace(): Promise<void> {
-    await this.config.update(
+  // 清除用户级别的默认工作空间，返回类型为 void
+  clearUserDefaultWorkspace(): Thenable<void> {
+    return this.config.update(
       "defaultWorkspace",
       null,
       vscode.ConfigurationTarget.Global
-    );
+    ); // 返回 Thenable<void>
   },
 
-  // 设置用户级别的默认工作空间
-  async clearFileDefaultWorkspace(): Promise<void> {
-    const config = vscode.workspace.getConfiguration("pawsql");
-    await config.update(
+  // 清除文件的默认工作空间，返回类型为 void
+  clearFileDefaultWorkspace(): Thenable<void> {
+    return this.config.update(
       "fileWorkspaceMappings",
-      {}, // 设置为空对象，清空所有映射关系
+      {},
       vscode.ConfigurationTarget.Global
-    );
+    ); // 返回 Thenable<void>
   },
 
-  async getFileDefaultWorkspace(
-    fileUri: string
-  ): Promise<WorkspaceItem | undefined> {
-    const config = vscode.workspace.getConfiguration("pawsql");
+  // 获取文件级别的默认工作空间，返回类型是 WorkspaceItem | null
+  getFileDefaultWorkspace(fileUri: string): WorkspaceItem | null {
     const mappings =
-      config.get<Record<string, any>>("fileWorkspaceMappings") || {};
-    return mappings[fileUri] || null; // 返回整个 workspaceItem
-  },
-  async getDefaultWorkspace(): Promise<any> {
-    const config = vscode.workspace.getConfiguration("pawsql");
-    return config.get("defaultWorkspace");
+      this.config.get<Record<string, WorkspaceItem>>("fileWorkspaceMappings") ||
+      {};
+    return mappings[fileUri] || null; // 返回值为 WorkspaceItem 或 null
   },
 
-  async openSettings(section: string): Promise<void> {
-    await vscode.commands.executeCommand(
-      "workbench.action.openSettings",
-      section
-    );
-    // 打开 pawsql sidebar
-    await vscode.commands.executeCommand(
-      "workbench.view.extension.pawsqlContainer"
-    );
+  getDefaultWorkspace(): WorkspaceItem | undefined {
+    return this.config.get("defaultWorkspace"); // 返回值为 WorkspaceItem 或 undefined
+  },
+
+  // 打开设置界面并显示 pawsql 侧边栏，返回类型为 void
+  openSettings(section: string): Thenable<void> {
+    return vscode.commands
+      .executeCommand("workbench.action.openSettings", section)
+      .then(() =>
+        vscode.commands.executeCommand(
+          "workbench.view.extension.pawsqlContainer"
+        )
+      ); // 返回 Thenable<void>
   },
 };

@@ -353,6 +353,7 @@ export class PawSQLTreeProvider
       // Validate backend connectivity
 
       const backendResult = await validateBackend(backendUrl ?? "");
+
       const isBackendConnected = backendResult.isAvailable;
 
       if (!isBackendConnected) {
@@ -407,6 +408,8 @@ export class PawSQLTreeProvider
       );
       await this.loadData(hideMessage);
     } catch (error: any) {
+      console.error(error);
+
       this.isConfigValid = false;
       vscode.commands.executeCommand(
         "setContext",
@@ -454,12 +457,17 @@ export class PawSQLTreeProvider
   }
   public async validateConfig(): Promise<boolean> {
     const config = vscode.workspace.getConfiguration("pawsql");
-    const apiKey = config.get<string>("apiKey");
-    const frontendUrl = config.get<string>("frontendUrl");
-    const backendUrl = config.get<string>("backendUrl");
+    const apiKey = config.get<string>("apiKey") ?? "";
+    const frontendUrl = config.get<string>("frontendUrl") ?? "";
+    const backendUrl = config.get<string>("backendUrl") ?? "";
     let failedCommand = [];
     try {
-      const backendResult = await validateBackend(backendUrl ?? "");
+      const [backendResult, frontendResult, isApikeyValid] = await Promise.all([
+        validateBackend(backendUrl),
+        validateFrontend(frontendUrl),
+        validateUserKey(apiKey),
+      ]);
+
       const isBackendConnected = backendResult.isAvailable;
       if (!isBackendConnected) {
         failedCommand.push(
@@ -468,8 +476,7 @@ export class PawSQLTreeProvider
       }
 
       // Validate frontend connectivity
-      const frontendReuslt = await validateFrontend(frontendUrl ?? "");
-      const isFrontendConnected = frontendReuslt.isAvailable;
+      const isFrontendConnected = frontendResult.isAvailable;
       if (!isFrontendConnected) {
         failedCommand.push(
           LanguageService.getMessage("sidebar.frontendUrl.label")
@@ -477,7 +484,6 @@ export class PawSQLTreeProvider
       }
 
       // Validate API key
-      const isApikeyValid = await validateUserKey(apiKey ?? "");
       if (!isFrontendConnected) {
         failedCommand.push(LanguageService.getMessage("sidebar.apiKey.label"));
       }
@@ -496,6 +502,7 @@ export class PawSQLTreeProvider
       }
       return isBackendConnected && isFrontendConnected && isApikeyValid;
     } catch (error: any) {
+      console.error(error);
       vscode.window.showErrorMessage(
         `${LanguageService.getMessage(
           "error.config.validate.failed"
@@ -562,6 +569,7 @@ export class PawSQLTreeProvider
         }
       }
     } catch (error: any) {
+      console.error(error);
       this.workspaces = [];
       vscode.window.showErrorMessage(
         `${LanguageService.getMessage(
@@ -610,7 +618,6 @@ export class PawSQLTreeProvider
         this.workspaces.length === 0
       );
     } catch (error: any) {
-      console.log(1);
       console.log(error);
 
       if (error.code === "ECONNREFUSED") {
@@ -733,7 +740,6 @@ export class PawSQLTreeProvider
       this.isAnalysisLoading.set(workspace.workspaceId, false);
       return analyses;
     } catch (error: any) {
-      console.log(2);
       console.log(error);
 
       vscode.window.showErrorMessage(
@@ -776,7 +782,6 @@ export class PawSQLTreeProvider
       this.analysisStatementCache.set(analysis, statements);
       return statements;
     } catch (error: any) {
-      console.log(3);
       console.log(error);
       vscode.window.showErrorMessage(
         `${LanguageService.getMessage("error.load.data.failed")}: ${

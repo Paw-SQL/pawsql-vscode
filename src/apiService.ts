@@ -93,6 +93,7 @@ interface CreateAnalysisParams {
   maxSpace?: number;
   closeRewrite?: boolean;
   rules?: Array<{ ruleCode: string; rewrite: boolean; threshold?: string }>;
+  singleQueryFlag?: boolean;
 }
 
 interface CreateAnalysisResponse {

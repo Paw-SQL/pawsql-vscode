@@ -62,7 +62,6 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
   ): Promise<void> {
     const rangeKey = this.getRangeKey(range);
 
-    // 立即更新状态
     if (isOptimizing) {
       this.state.optimizingRanges.set(rangeKey, {
         range,
@@ -74,10 +73,8 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
 
     this.state.isOptimizing = this.state.optimizingRanges.size > 0;
 
-    // 使用防抖处理刷新
+    // 这两个调用都需要保留await，因为它们涉及UI更新和状态同步
     await this.debouncedRefresh();
-
-    // 确保状态已更新
     await this.ensureStateUpdate();
   }
 
@@ -94,8 +91,8 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     });
   }
 
-  private async ensureStateUpdate(): Promise<void> {
-    await new Promise<void>((resolve) => {
+  private ensureStateUpdate(): Promise<void> {
+    return new Promise<void>((resolve) => {
       if (typeof window !== "undefined" && window.requestAnimationFrame) {
         window.requestAnimationFrame(() => {
           setTimeout(resolve, 16);
@@ -132,14 +129,16 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     const codeLenses: vscode.CodeLens[] = [];
 
     try {
-      // 使用缓存的范围信息来加速状态检查
       const optimizingRanges = Array.from(this.state.optimizingRanges.values());
 
-      // 1. 处理文件级别的配置
-      await this.addFileConfigurationLens(document, codeLenses);
+      // 需要保留await，因为这涉及文件系统操作
+      const fileWorkspace = await this.addFileConfigurationLens(
+        document,
+        codeLenses
+      );
 
-      // 2. 处理 SQL 查询级别的操作
       if (!token.isCancellationRequested) {
+        // 需要保留await，因为这涉及文本解析和工作区配置
         await this.addSqlQueryLenses(
           document,
           codeLenses,
@@ -159,19 +158,17 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     document: vscode.TextDocument,
     codeLenses: vscode.CodeLens[]
   ) {
-    // 获取文件和用户的工作空间设置
     const fileUri = document.uri.toString();
+    // 需要保留await，因为这涉及文件系统操作
     const fileWorkspace = await ConfigurationService.getFileDefaultWorkspace(
       fileUri
     );
 
-    // 在文件开头添加注释分隔符
     const separatorRange = new vscode.Range(
       new vscode.Position(0, 0),
       new vscode.Position(1, 0)
     );
 
-    // 从配置中读取默认工作空间
     const defaultWorkspace = vscode.workspace.getConfiguration("pawsql").get<{
       workspaceId: string;
       workspaceName: string;
@@ -184,6 +181,7 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
       .getConfiguration("pawsql")
       .get<string>("apiKey");
 
+    // 需要保留await，因为这是API调用
     const isApikeyValid = await ApiService.validateUserKey(apiKey ?? "");
 
     if (!isApikeyValid) {
@@ -236,11 +234,13 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     optimizingRanges: Array<{ range: vscode.Range; timestamp: number }>
   ) {
     const text = document.getText();
+    // 需要保留await，因为这涉及文本解析
     const queries = await this.parseWithThrottle(text);
+    // 需要保留await，因为这涉及文件系统操作
     const fileWorkspace = await ConfigurationService.getFileDefaultWorkspace(
       document.uri.toString()
     );
-
+    // 需要保留await，因为这涉及工作区配置
     const defaultWorkspace = await ConfigurationService.getDefaultWorkspace();
 
     let lastIndex = 0;
@@ -257,7 +257,6 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
 
       const queryRange = new vscode.Range(startPos, endPos);
 
-      // 使用缓存的优化状态
       const isOptimizing = optimizingRanges.some((item) =>
         this.rangesEqual(item.range, queryRange)
       );
@@ -285,7 +284,7 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
       codeLenses.push(
         new vscode.CodeLens(queryRange, {
           title: LanguageService.getMessage("OPTIMIZING_SQL"),
-          command: "", // 空命令使其不可点击
+          command: "",
         })
       );
     } else {
@@ -312,7 +311,7 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
   }
 
   private parseThrottleTimeout: NodeJS.Timeout | null = null;
-  private async parseWithThrottle(text: string): Promise<string[]> {
+  private parseWithThrottle(text: string): Promise<string[]> {
     return new Promise((resolve) => {
       if (this.parseThrottleTimeout) {
         clearTimeout(this.parseThrottleTimeout);
