@@ -6,7 +6,7 @@
 
 PawSQL Client让开发者能够在VS Code开发环境中直接使用PawSQL引擎强大的SQL优化能力，包括智能索引推荐、查询重写建议、自动化性能验证等。PawSQL Client需要结合PawSQL优化平台（[PawSQL Cloud](https://pawsql.com)或企业私域部署的PawSQL优化平台）一起使用。关于更全面的PawSQL的SQL优化能力，请参考[PawSQL官方文档](https://docs.pawsql.com)。
 
-[PawSQL Client](https://www.bilibili.com/video/BV19aDBYAEcr/)
+[PawSQL Client Demo](/resources/demo.gif)
 
 ## 功能
 
@@ -28,12 +28,10 @@ PawSQL Client让开发者能够在VS Code开发环境中直接使用PawSQL引擎
 
 1. 点击 VSCode 左侧边栏的 PawSQL 图标，进行PawSQL配置
 2. 在配置页面中正确填写以下配置项：
-   - Backend URL (例如：`https://pawsql.com`)
-   - Frontend URL (例如：`https://pawsql.com`)
-   - API Key (您的 PawSQL API 密钥，可以在优化平台的用户设置页面查看)
+   - PawSQL Server (例如：`https://pawsql.com`)
+   - Account (您在PawSQL Server的账号)
+   - Password (PawSQL Server账号的密码)
 3. 点击"保存"按钮
-
-配置成功后，左侧边栏将加载当前用户的工作空间列表（最近 100 个）。
 
 ## 使用说明
 
@@ -51,13 +49,12 @@ PawSQL Client让开发者能够在VS Code开发环境中直接使用PawSQL引擎
 
 优化完成后：
 
-- 优化结果将在 VSCode 内的 WebView 中显示
-- 点击"在浏览器中查看优化详情"可查看更多信息，包括：
+- 您可以在VSCode中打开的tab页中查看优化结果
+- 还可以点击"在浏览器中查看优化详情"可查看更多信息，包括：
   - SQL 对比
   - 执行计划对比
   - 其他详细分析
 
-已执行的优化结果将自动显示在左侧边栏对应工作空间的优化列表中（每个工作空间的最近10个优化）。
 
 ## 注意事项
 

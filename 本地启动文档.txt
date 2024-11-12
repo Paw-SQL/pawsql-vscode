@@ -2,4 +2,6 @@ npm install
 npm run compile
 npm run build-webview
 
+vsce package
+
 F5启动
