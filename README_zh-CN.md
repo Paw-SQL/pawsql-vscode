@@ -61,5 +61,4 @@ PawSQL Client让开发者能够在VS Code开发环境中直接使用PawSQL引擎
 
 ## 注意事项
 
-- 确保配置的PawSQL的 Backend URL 和 Frontend URL 可以正常访问
-- API Key为您在[PawSQL Cloud](https://pawsql.com)或私域部署的PawSQL优化平台上的唯一标识，可以在优化平台的用户设置页面查看
+- 您必须在[PawSQL Cloud](https://pawsql.com)或私域部署的PawSQL优化平台有对应的账号

@@ -1,5 +1,5 @@
 {
-  "extension.display name": "PawSQL Client",
+  "extension.display.name": "PawSQL Client",
   "extension.description": "SQL Optimizer, Index Advisor for MySQL/PostgreSQL/Oracle/openGauss and etc, Tune SQL by Clicks",
   "commands.openSettings": "Modify",
   "commands.refreshTree": "Refresh",
@@ -44,7 +44,7 @@
   "config.workspace.fileMapping.markdownDescription": "Configure which workspace should be used for specific files or file patterns",
 
   "views.activitybar.pawsqlContainerTitle": "PawSQL Client",
-  "views.welcome.noConfiguration": "$(gear) You need to setup PawSQL engine first.\n\n[Setup PawSQL](command:pawsql.openSettings)\n\nClick to setup your PawSQL Engine.",
+  "views.welcome.noConfiguration": "$(gear) You need to setup PawSQL server first.\n\n[Setup PawSQL](command:pawsql.openSettings)\n\nClick to setup your PawSQL Engine.",
   "views.welcome.noWorkspace": "No PawSQL workspace found.\n\n[Create Now](command:pawsql.createWorkspace)\n\nClick to create a workspace for SQL optimization.",
   "views.sidebar.pawsqlSidebarName": "PawSQL Client"
 }

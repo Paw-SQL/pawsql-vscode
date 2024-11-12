@@ -2,7 +2,12 @@
   "name": "pawsqlClient",
   "displayName": "%extension.display.name%",
   "description": "%extension.description%",
-  "publisher": "pawsql",
+  "icon": "resources/icon/favicon.png",  
+  "publisher": "PawSQL",
+	"author": {
+		"name": "PawSQL",
+		"email": "support@pawsql.com"
+	},
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.80.0"
