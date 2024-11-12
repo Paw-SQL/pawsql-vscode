@@ -4,7 +4,7 @@
 ## Introduction
 PawSQL Client enables developers to access core capabilities of the PawSQL directly within VSCode enviroment. PawSQL provides sophisticated SQL optimization features including smart index recommendations and query rewrites. More about PawSQL's capabilities, please visit [https://docs.pawsql.com](https://docs.pawsql.com).
 
-[PawSQL Client Demo](/resources/demo.gif)
+![PawSQL Client Demo](/resources/demo.gif)
 
 ## Features
 - **Optimize by Clicks**: Get optimization recommendation for your SQL query by one click.
