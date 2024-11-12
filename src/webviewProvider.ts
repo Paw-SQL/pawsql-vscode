@@ -126,18 +126,18 @@ export class WebviewProvider {
     backendUrl: string;
   }) {
     try {
+      await this.treeProvider.updateApikey(config);
+      await this.passwordManager.storePassword(config.password);
+
       // 分别更新每个配置项
       await vscode.workspace
         .getConfiguration("pawsql")
         .update("email", config.email, true);
 
-      await this.passwordManager.storePassword(config.password);
-
       await vscode.workspace
         .getConfiguration("pawsql")
         .update("backendUrl", config.backendUrl, true);
 
-      await this.treeProvider.updateApikey(config);
       await this.treeProvider.refresh();
       // 配置保存成功反馈
       vscode.window.showInformationMessage(
