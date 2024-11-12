@@ -33,19 +33,18 @@ PawSQL Client让开发者能够在VS Code开发环境中直接使用PawSQL引擎
    - Password (PawSQL Server账号的密码)
 3. 点击"保存"按钮
 
-## 使用说明
-
-### 在VS Code环境中进行SQL 优化
+## 在VS Code环境中进行SQL 优化
 
 在 SQL 文件中提供两种优化方式：
 
-1. **使用默认工作空间执行优化**：
+1. **使用默认工作空间优化SQL**：
    - 在 SQL 语句上方的提示中点击"Optimize"按钮
-2. **选择特定工作空间优化**：
+   
+2. **选择特定工作空间优化SQL**：
    - 点击 SQL 语句提示中的"Optimize..."按钮
    - 从弹出的下拉列表中选择工作空间，进行优化
 
-### 查看优化结果
+## 查看优化结果
 
 优化完成后：
 
@@ -55,7 +54,6 @@ PawSQL Client让开发者能够在VS Code开发环境中直接使用PawSQL引擎
   - 执行计划对比
   - 其他详细分析
 
-
-## 注意事项
+**注意事项**
 
 - 您必须在[PawSQL Cloud](https://pawsql.com)或私域部署的PawSQL优化平台有对应的账号
