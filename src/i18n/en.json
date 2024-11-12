@@ -1,7 +1,7 @@
 {
   "workload.only.support.single.query": "Only single query is supported.",
   "workload.has.no.query": "No valid SQL Query.",
-  "unknown.error": "An unknown error occurred in PawSQL engine, please try again later.",
+  "unknown.error": "An unknown error occurred in PawSQL Server, please try again later.",
   "extension.activation.failed": "Plugin activation failed.",
   "initialize.commands.failed": "Failed to initialize commands.",
   "configuration.update.failed": "Configuration update failed.",
@@ -33,7 +33,7 @@
   "sidebar.workspace.manager": "Workspace Manager",
   "sidebar.show.statement.detail": "Show optimization details",
   "sidebar.apiKey.label": "API Key",
-  "sidebar.backendUrl.label": "PawSQL Engine",
+  "sidebar.backendUrl.label": "PawSQL Server",
   "sidebar.frontendUrl.label": "PawSQL Website",
   "error.config.validate.failed": "Setting up PawSQL Failed",
   "error.config.validate.success": "Setting up PawSQL Succeed",

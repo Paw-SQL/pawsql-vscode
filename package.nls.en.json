@@ -11,16 +11,16 @@
   "config.initialization.frontendUrl.title": "PawSQL Web",
   "config.initialization.email.title": "PawSQL Account",
   "config.initialization.apiKey.title": "ApiKey",
-  "config.initialization.description": "Set up the URL of PawSQL Engine and ApiKey for user",
-  "config.initialization.apiKey.description": "ApiKey for this user to use PawSQL Engine",
-  "config.initialization.apiKey.markdownDescription": "ApiKey for this user to use PawSQL Engine. You can find it in your PawSQL account settings menu.",
+  "config.initialization.description": "Set up the URL of PawSQL Server and ApiKey for user",
+  "config.initialization.apiKey.description": "ApiKey for this user to use PawSQL Server",
+  "config.initialization.apiKey.markdownDescription": "ApiKey for this user to use PawSQL Server. You can find it in your PawSQL account settings menu.",
   "config.initialization.email.description": "Email address used for authentication with the PawSQL optimization engine service",
   "config.initialization.email.markdownDescription": "The email address used to authenticate with the PawSQL service. Please use the email linked to your PawSQL account.",
   "config.initialization.password.description": "Password used for authentication with the PawSQL optimization engine service",
   "config.initialization.password.markdownDescription": "The password used to authenticate with the PawSQL service. Please use the password set in your PawSQL account.",
 
-  "config.initialization.backendUrl.description": "URL of the PawSQL Engine service",
-  "config.initialization.backendUrl.markdownDescription": "The URL for PawSQL Engine service.",
+  "config.initialization.backendUrl.description": "URL of the PawSQL Server service",
+  "config.initialization.backendUrl.markdownDescription": "The URL for PawSQL Server service.",
   "config.initialization.frontendUrl.description": "URL of the PawSQL front page",
   "config.initialization.frontendUrl.markdownDescription": "The base URL for PawSQL front page to display result of SQL optimization.",
 
@@ -44,7 +44,7 @@
   "config.workspace.fileMapping.markdownDescription": "Configure which workspace should be used for specific files or file patterns",
 
   "views.activitybar.pawsqlContainerTitle": "PawSQL Client",
-  "views.welcome.noConfiguration": "$(gear) You need to setup PawSQL server first.\n\n[Setup PawSQL](command:pawsql.openSettings)\n\nClick to setup your PawSQL Engine.",
+  "views.welcome.noConfiguration": "$(gear) You need to setup PawSQL server first.\n\n[Setup PawSQL](command:pawsql.openSettings)\n\nClick to setup your PawSQL Server.",
   "views.welcome.noWorkspace": "No PawSQL workspace found.\n\n[Create Now](command:pawsql.createWorkspace)\n\nClick to create a workspace for SQL optimization.",
   "views.sidebar.pawsqlSidebarName": "PawSQL Client"
 }
