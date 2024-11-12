@@ -8,19 +8,18 @@
 
   "config.initialization.title": "PawSQL Setup",
   "config.initialization.backendUrl.title": "PawSQL Server",
-  "config.initialization.frontendUrl.title": "PawSQL Web",
   "config.initialization.email.title": "PawSQL Account",
   "config.initialization.apiKey.title": "ApiKey",
   "config.initialization.description": "Set up the URL of PawSQL Server and ApiKey for user",
   "config.initialization.apiKey.description": "ApiKey for this user to use PawSQL Server",
   "config.initialization.apiKey.markdownDescription": "ApiKey for this user to use PawSQL Server. You can find it in your PawSQL account settings menu.",
-  "config.initialization.email.description": "Email address used for authentication with the PawSQL optimization engine service",
+  "config.initialization.email.description": "Email address used for authentication with the PawSQL optimization engine",
   "config.initialization.email.markdownDescription": "The email address used to authenticate with the PawSQL service. Please use the email linked to your PawSQL account.",
-  "config.initialization.password.description": "Password used for authentication with the PawSQL optimization engine service",
+  "config.initialization.password.description": "Password used for authentication with the PawSQL optimization engine",
   "config.initialization.password.markdownDescription": "The password used to authenticate with the PawSQL service. Please use the password set in your PawSQL account.",
 
-  "config.initialization.backendUrl.description": "URL of the PawSQL Server service",
-  "config.initialization.backendUrl.markdownDescription": "The URL for PawSQL Server service.",
+  "config.initialization.backendUrl.description": "URL of the PawSQL Server",
+  "config.initialization.backendUrl.markdownDescription": "The URL for PawSQL Server.",
   "config.initialization.frontendUrl.description": "URL of the PawSQL front page",
   "config.initialization.frontendUrl.markdownDescription": "The base URL for PawSQL front page to display result of SQL optimization.",
 
