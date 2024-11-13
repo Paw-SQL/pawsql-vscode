@@ -11,7 +11,7 @@
 <br/>
 </h1>
 
-<h3><a href="https://aiven.io">PawSQL</a> , Optimize your SQL Queries by Clicks! </h3>
+<h3><a href="https://pawsql.com">PawSQL</a> , Optimize your SQL Queries by Clicks within your VSCode! </h3>
 
 [![Version](https://img.shields.io/visual-studio-marketplace/v/PawSQL.pawsqlClient?style=for-the-badge&color=%23e38a14
 )](https://marketplace.visualstudio.com/items?itemName=PawSQL.pawsqlClient)
