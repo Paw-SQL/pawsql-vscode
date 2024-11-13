@@ -302,7 +302,7 @@ export const validateUserKey = async (userKey: string): Promise<boolean> => {
 
   try {
     // 发送请求以验证 userKey
-    const response = await axios.post(url, { userKey }, { timeout: 3000 });
+    const response = await axios.post(url, { userKey });
     return response.data.code === 200; // 假设返回码 200 表示有效
   } catch (error: any) {
     console.log(error);
@@ -319,11 +319,7 @@ export const getUserKey = async (
 
   try {
     // 发送请求以验证 userKey
-    const response = await axios.post(
-      url,
-      { email, password },
-      { timeout: 3000 }
-    );
+    const response = await axios.post(url, { email, password });
 
     return response.data.data; // 假设返回码 200 表示有效
   } catch (error: any) {
@@ -353,8 +349,6 @@ export const validateBackend = async (
   backendUrl: string,
   options: ValidationOptions = {}
 ): Promise<ValidationResult> => {
-  const timeout = options.timeout || 3000;
-
   try {
     // 处理 URL，确保格式正确
     const url = backendUrl.endsWith("/") ? backendUrl.slice(0, -1) : backendUrl;
@@ -363,7 +357,6 @@ export const validateBackend = async (
     const response = await axios({
       method: "get",
       url: url,
-      timeout,
       headers: {
         Accept: "application/json, text/plain, */*",
       },

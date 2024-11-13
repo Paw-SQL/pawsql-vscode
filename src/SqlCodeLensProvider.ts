@@ -1,47 +1,57 @@
 import * as vscode from "vscode";
 import { ConfigurationService } from "./configurationService";
-import parse from "./utils/parse";
 import { LanguageService } from "./LanguageService";
-import { ApiService } from "./apiService";
+import { ApiService, WorkspaceItem } from "./apiService";
+import parse from "./utils/parse";
 
-interface OptimizeState {
-  isOptimizing: boolean;
-  optimizingRanges: Map<
-    string,
-    {
-      range: vscode.Range;
-      timestamp: number;
-    }
-  >;
+interface OptimizingRange {
+  range: vscode.Range;
+  timestamp: number;
+}
+
+interface Workspace {
+  workspaceId: string;
+  workspaceName: string;
+  dbType: string;
+  dbHost: string;
+  dbPort: string;
 }
 
 export class SqlCodeLensProvider implements vscode.CodeLensProvider {
-  private _onDidChangeCodeLenses: vscode.EventEmitter<void> =
-    new vscode.EventEmitter<void>();
-  public readonly onDidChangeCodeLenses: vscode.Event<void> =
-    this._onDidChangeCodeLenses.event;
+  private static readonly STALE_THRESHOLD = 30000; // 30 seconds
+  private static readonly PARSE_DELAY = 250; // ms
 
-  private disposables: vscode.Disposable[] = [];
-  private refreshDebounceTimeout: NodeJS.Timeout | null = null;
-  private readonly DEBOUNCE_DELAY = 50; // ms
+  private readonly _onDidChangeCodeLenses = new vscode.EventEmitter<void>();
+  public readonly onDidChangeCodeLenses = this._onDidChangeCodeLenses.event;
 
-  private state: OptimizeState = {
-    isOptimizing: false,
-    optimizingRanges: new Map(),
-  };
+  private readonly optimizingRanges = new Map<string, OptimizingRange>();
+  private readonly disposables: vscode.Disposable[] = [];
 
-  constructor(private context: vscode.ExtensionContext) {
+  constructor(private readonly context: vscode.ExtensionContext) {
+    this.initializeEventListeners();
+  }
+
+  private initializeEventListeners(): void {
+    // 文档改变事件
     this.disposables.push(
       vscode.workspace.onDidChangeTextDocument((e) => {
         if (e.document.languageId === "sql") {
           this.refresh();
         }
-      }),
+      })
+    );
+
+    // 活动编辑器改变事件
+    this.disposables.push(
       vscode.window.onDidChangeActiveTextEditor((editor) => {
         if (editor?.document.languageId === "sql") {
           this.refresh();
         }
-      }),
+      })
+    );
+
+    // 配置改变事件
+    this.disposables.push(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration("pawsql")) {
           this.refresh();
@@ -49,76 +59,10 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
       })
     );
 
-    context.subscriptions.push(...this.disposables);
+    this.context.subscriptions.push(...this.disposables);
   }
 
-  private getRangeKey(range: vscode.Range): string {
-    return `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
-  }
-
-  public async setOptimizing(
-    range: vscode.Range,
-    isOptimizing: boolean
-  ): Promise<void> {
-    const rangeKey = this.getRangeKey(range);
-
-    if (isOptimizing) {
-      this.state.optimizingRanges.set(rangeKey, {
-        range,
-        timestamp: Date.now(),
-      });
-    } else {
-      this.state.optimizingRanges.delete(rangeKey);
-    }
-
-    this.state.isOptimizing = this.state.optimizingRanges.size > 0;
-
-    // 这两个调用都需要保留await，因为它们涉及UI更新和状态同步
-    await this.debouncedRefresh();
-    await this.ensureStateUpdate();
-  }
-
-  private debouncedRefresh(): Promise<void> {
-    return new Promise((resolve) => {
-      if (this.refreshDebounceTimeout) {
-        clearTimeout(this.refreshDebounceTimeout);
-      }
-
-      this.refreshDebounceTimeout = setTimeout(() => {
-        this._onDidChangeCodeLenses.fire();
-        resolve();
-      }, this.DEBOUNCE_DELAY);
-    });
-  }
-
-  private ensureStateUpdate(): Promise<void> {
-    return new Promise<void>((resolve) => {
-      if (typeof window !== "undefined" && window.requestAnimationFrame) {
-        window.requestAnimationFrame(() => {
-          setTimeout(resolve, 16);
-        });
-      } else {
-        setTimeout(resolve, 16);
-      }
-    });
-  }
-
-  public isRangeOptimizing(range: vscode.Range): boolean {
-    return Array.from(this.state.optimizingRanges.values()).some((item) =>
-      this.rangesEqual(item.range, range)
-    );
-  }
-
-  private rangesEqual(range1: vscode.Range, range2: vscode.Range): boolean {
-    return (
-      range1.start.line === range2.start.line &&
-      range1.start.character === range2.start.character &&
-      range1.end.line === range2.end.line &&
-      range1.end.character === range2.end.character
-    );
-  }
-
-  async provideCodeLenses(
+  public async provideCodeLenses(
     document: vscode.TextDocument,
     token: vscode.CancellationToken
   ): Promise<vscode.CodeLens[]> {
@@ -126,24 +70,21 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
       return [];
     }
 
-    const codeLenses: vscode.CodeLens[] = [];
-
     try {
-      const optimizingRanges = Array.from(this.state.optimizingRanges.values());
+      this.cleanupStaleOptimizingStates();
 
-      // 需要保留await，因为这涉及文件系统操作
+      const codeLenses: vscode.CodeLens[] = [];
       const fileWorkspace = await this.addFileConfigurationLens(
         document,
         codeLenses
       );
 
       if (!token.isCancellationRequested) {
-        // 需要保留await，因为这涉及文本解析和工作区配置
         await this.addSqlQueryLenses(
           document,
           codeLenses,
           token,
-          optimizingRanges
+          fileWorkspace
         );
       }
 
@@ -157,71 +98,30 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
   private async addFileConfigurationLens(
     document: vscode.TextDocument,
     codeLenses: vscode.CodeLens[]
-  ) {
+  ): Promise<WorkspaceItem | null> {
     const fileUri = document.uri.toString();
-    // 需要保留await，因为这涉及文件系统操作
     const fileWorkspace = await ConfigurationService.getFileDefaultWorkspace(
       fileUri
     );
+    const config = vscode.workspace.getConfiguration("pawsql");
+    const defaultWorkspace = config.get<WorkspaceItem>("defaultWorkspace");
+    const apiKey = config.get<string>("apiKey");
 
-    const separatorRange = new vscode.Range(
-      new vscode.Position(0, 0),
-      new vscode.Position(1, 0)
-    );
-
-    const defaultWorkspace = vscode.workspace.getConfiguration("pawsql").get<{
-      workspaceId: string;
-      workspaceName: string;
-      dbType: string;
-      dbHost: string;
-      dbPort: string;
-    }>("defaultWorkspace");
-
-    const apiKey = vscode.workspace
-      .getConfiguration("pawsql")
-      .get<string>("apiKey");
-
-    // 需要保留await，因为这是API调用
+    const separatorRange = new vscode.Range(0, 0, 1, 0);
     const isApikeyValid = await ApiService.validateUserKey(apiKey ?? "");
 
     if (!isApikeyValid) {
+      codeLenses.push(this.createInitConfigLens(separatorRange, document));
+    } else if (fileWorkspace?.workspaceId || defaultWorkspace?.workspaceId) {
       codeLenses.push(
-        new vscode.CodeLens(separatorRange, {
-          title: LanguageService.getMessage("init.pawsql.config"),
-          command: "pawsql.openSettings",
-          arguments: [document.uri],
-        })
-      );
-    } else if (fileWorkspace?.workspaceId) {
-      codeLenses.push(
-        new vscode.CodeLens(separatorRange, {
-          title: `$(pawsql-icon) ${LanguageService.getMessage(
-            "codelens.file.default.workspace.title"
-          )}: ${fileWorkspace.dbType}:${fileWorkspace.workspaceName}`,
-          command: "pawsql.selectFileDefaultWorkspace",
-          arguments: [document.uri],
-        })
-      );
-    } else if (defaultWorkspace?.workspaceId) {
-      codeLenses.push(
-        new vscode.CodeLens(separatorRange, {
-          title: `$(pawsql-icon) ${LanguageService.getMessage(
-            "codelens.file.default.workspace.title"
-          )}: ${defaultWorkspace.dbType}:${defaultWorkspace.workspaceName}`,
-          command: "pawsql.selectFileDefaultWorkspace",
-          arguments: [document.uri],
-        })
+        this.createWorkspaceLens(
+          separatorRange,
+          document,
+          fileWorkspace ?? defaultWorkspace!
+        )
       );
     } else {
-      codeLenses.push(
-        new vscode.CodeLens(separatorRange, {
-          title: `$(pawsql-icon) ${LanguageService.getMessage(
-            "codelens.config.file.default.workspace"
-          )}`,
-          command: "pawsql.selectFileDefaultWorkspace",
-          arguments: [document.uri],
-        })
-      );
+      codeLenses.push(this.createSelectWorkspaceLens(separatorRange, document));
     }
 
     return fileWorkspace;
@@ -231,122 +131,225 @@ export class SqlCodeLensProvider implements vscode.CodeLensProvider {
     document: vscode.TextDocument,
     codeLenses: vscode.CodeLens[],
     token: vscode.CancellationToken,
-    optimizingRanges: Array<{ range: vscode.Range; timestamp: number }>
-  ) {
+    fileWorkspace?: Workspace | null
+  ): Promise<void> {
     const text = document.getText();
-    // 需要保留await，因为这涉及文本解析
-    const queries = await this.parseWithThrottle(text);
-    // 需要保留await，因为这涉及文件系统操作
-    const fileWorkspace = await ConfigurationService.getFileDefaultWorkspace(
-      document.uri.toString()
-    );
-    // 需要保留await，因为这涉及工作区配置
+    const queries = await this.parseQueriesWithThrottle(text);
     const defaultWorkspace = await ConfigurationService.getDefaultWorkspace();
+    const workspace = fileWorkspace ?? defaultWorkspace;
 
+    for (const query of this.findQueriesInDocument(document, queries)) {
+      if (token.isCancellationRequested) return;
+
+      const isOptimizing = this.isRangeOptimizing(query.range);
+      this.addQueryCodeLenses(
+        codeLenses,
+        query.range,
+        query.text,
+        workspace,
+        isOptimizing
+      );
+    }
+  }
+
+  private *findQueriesInDocument(
+    document: vscode.TextDocument,
+    queries: string[]
+  ): Generator<{ range: vscode.Range; text: string }> {
+    const text = document.getText();
     let lastIndex = 0;
-    for (const query of queries) {
-      if (token.isCancellationRequested) {
-        return;
-      }
 
+    for (const query of queries) {
       const queryIndex = text.indexOf(query, lastIndex);
       if (queryIndex === -1) continue;
 
       const startPos = document.positionAt(queryIndex);
       const endPos = document.positionAt(queryIndex + query.length);
+      const range = new vscode.Range(startPos, endPos);
 
-      const queryRange = new vscode.Range(startPos, endPos);
-
-      const isOptimizing = optimizingRanges.some((item) =>
-        this.rangesEqual(item.range, queryRange)
-      );
-
-      this.addQueryCodeLenses(
-        codeLenses,
-        queryRange,
-        query,
-        fileWorkspace ?? defaultWorkspace,
-        isOptimizing
-      );
-
+      yield { range, text: query };
       lastIndex = queryIndex + query.length;
     }
   }
 
-  private addQueryCodeLenses(
-    codeLenses: vscode.CodeLens[],
-    queryRange: vscode.Range,
-    query: string,
-    workspace: any,
-    isOptimizing: boolean
-  ) {
-    if (isOptimizing) {
-      codeLenses.push(
-        new vscode.CodeLens(queryRange, {
-          title: LanguageService.getMessage("OPTIMIZING_SQL"),
-          command: "",
-        })
-      );
-    } else {
-      codeLenses.push(
-        new vscode.CodeLens(queryRange, {
-          title: LanguageService.getMessage(
-            "codelens.optimize.sql.with.default.workspace"
-          ),
-          command: "pawsql.optimizeWithDefaultWorkspace",
-          arguments: [query, workspace?.workspaceId, queryRange],
-        })
-      );
-
-      codeLenses.push(
-        new vscode.CodeLens(queryRange, {
-          title: LanguageService.getMessage(
-            "codelens.optimize.sql.with.selected.workspace"
-          ),
-          command: "pawsql.optimizeWithSelectedWorkspace",
-          arguments: [query, queryRange],
-        })
-      );
-    }
-  }
-
-  private parseThrottleTimeout: NodeJS.Timeout | null = null;
-  private parseWithThrottle(text: string): Promise<string[]> {
-    return new Promise((resolve) => {
-      if (this.parseThrottleTimeout) {
-        clearTimeout(this.parseThrottleTimeout);
-      }
-
-      this.parseThrottleTimeout = setTimeout(() => {
-        resolve(parse(text));
-      }, 250);
+  // Lens Creation Methods
+  private createInitConfigLens(
+    range: vscode.Range,
+    document: vscode.TextDocument
+  ): vscode.CodeLens {
+    return new vscode.CodeLens(range, {
+      title: LanguageService.getMessage("init.pawsql.config"),
+      command: "pawsql.openSettings",
+      arguments: [document.uri],
     });
   }
 
-  private cleanupStaleOptimizingStates() {
-    const now = Date.now();
-    const STALE_THRESHOLD = 30000; // 30 seconds
-
-    for (const [key, value] of this.state.optimizingRanges) {
-      if (now - value.timestamp > STALE_THRESHOLD) {
-        this.state.optimizingRanges.delete(key);
-      }
-    }
-
-    this.state.isOptimizing = this.state.optimizingRanges.size > 0;
+  private createWorkspaceLens(
+    range: vscode.Range,
+    document: vscode.TextDocument,
+    workspace: Workspace
+  ): vscode.CodeLens {
+    return new vscode.CodeLens(range, {
+      title: `$(pawsql-icon) ${LanguageService.getMessage(
+        "codelens.file.default.workspace.title"
+      )}: ${workspace.dbType}:${workspace.workspaceName}`,
+      command: "pawsql.selectFileDefaultWorkspace",
+      arguments: [document.uri],
+    });
   }
 
+  private createSelectWorkspaceLens(
+    range: vscode.Range,
+    document: vscode.TextDocument
+  ): vscode.CodeLens {
+    return new vscode.CodeLens(range, {
+      title: `$(pawsql-icon) ${LanguageService.getMessage(
+        "codelens.config.file.default.workspace"
+      )}`,
+      command: "pawsql.selectFileDefaultWorkspace",
+      arguments: [document.uri],
+    });
+  }
+
+  private addQueryCodeLenses(
+    codeLenses: vscode.CodeLens[],
+    range: vscode.Range,
+    query: string,
+    workspace: Workspace | undefined,
+    isOptimizing: boolean
+  ): void {
+    if (isOptimizing) {
+      codeLenses.push(this.createOptimizingLens(range));
+    } else {
+      codeLenses.push(
+        this.createDefaultWorkspaceLens(range, query, workspace?.workspaceId),
+        this.createSelectedWorkspaceLens(range, query)
+      );
+    }
+  }
+
+  private createOptimizingLens(range: vscode.Range): vscode.CodeLens {
+    return new vscode.CodeLens(range, {
+      title: LanguageService.getMessage("OPTIMIZING_SQL"),
+      command: "",
+    });
+  }
+
+  private createDefaultWorkspaceLens(
+    range: vscode.Range,
+    query: string,
+    workspaceId?: string
+  ): vscode.CodeLens {
+    return new vscode.CodeLens(range, {
+      title: LanguageService.getMessage(
+        "codelens.optimize.sql.with.default.workspace"
+      ),
+      command: "pawsql.optimizeWithDefaultWorkspace",
+      arguments: [query, workspaceId, range],
+    });
+  }
+
+  private createSelectedWorkspaceLens(
+    range: vscode.Range,
+    query: string
+  ): vscode.CodeLens {
+    return new vscode.CodeLens(range, {
+      title: LanguageService.getMessage(
+        "codelens.optimize.sql.with.selected.workspace"
+      ),
+      command: "pawsql.optimizeWithSelectedWorkspace",
+      arguments: [query, range],
+    });
+  }
+
+  // Optimization State Management
+  public async setOptimizing(
+    range: vscode.Range,
+    isOptimizing: boolean
+  ): Promise<void> {
+    const rangeKey = this.getRangeKey(range);
+
+    if (isOptimizing) {
+      this.optimizingRanges.set(rangeKey, {
+        range,
+        timestamp: Date.now(),
+      });
+    } else {
+      this.optimizingRanges.delete(rangeKey);
+    }
+
+    await this.forceUIUpdate();
+  }
+
+  private isRangeOptimizing(range: vscode.Range): boolean {
+    return Array.from(this.optimizingRanges.values()).some((item) =>
+      this.rangesEqual(item.range, range)
+    );
+  }
+
+  private getRangeKey(range: vscode.Range): string {
+    return `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
+  }
+
+  private rangesEqual(range1: vscode.Range, range2: vscode.Range): boolean {
+    return (
+      range1.start.line === range2.start.line &&
+      range1.start.character === range2.start.character &&
+      range1.end.line === range2.end.line &&
+      range1.end.character === range2.end.character
+    );
+  }
+
+  // UI Updates
   public refresh(): void {
     this._onDidChangeCodeLenses.fire();
   }
 
+  private async forceUIUpdate(): Promise<void> {
+    const updatePromises = [
+      new Promise<void>((resolve) => {
+        if (typeof window !== "undefined" && window.requestAnimationFrame) {
+          window.requestAnimationFrame(() => {
+            this._onDidChangeCodeLenses.fire();
+            resolve();
+          });
+        } else {
+          setImmediate(() => {
+            this._onDidChangeCodeLenses.fire();
+            resolve();
+          });
+        }
+      }),
+      Promise.resolve().then(() => {
+        this._onDidChangeCodeLenses.fire();
+      }),
+    ];
+
+    await Promise.all(updatePromises);
+  }
+
+  // Cleanup and Performance
+  private cleanupStaleOptimizingStates(): void {
+    const now = Date.now();
+    let hasChanges = false;
+
+    for (const [key, value] of this.optimizingRanges.entries()) {
+      if (now - value.timestamp > SqlCodeLensProvider.STALE_THRESHOLD) {
+        this.optimizingRanges.delete(key);
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      this._onDidChangeCodeLenses.fire();
+    }
+  }
+
+  private async parseQueriesWithThrottle(text: string): Promise<string[]> {
+    return parse(text);
+  }
+
   public dispose(): void {
-    if (this.refreshDebounceTimeout) {
-      clearTimeout(this.refreshDebounceTimeout);
-    }
-    if (this.parseThrottleTimeout) {
-      clearTimeout(this.parseThrottleTimeout);
-    }
     this.disposables.forEach((d) => d.dispose());
   }
 }
