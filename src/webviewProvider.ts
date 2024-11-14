@@ -238,7 +238,7 @@ export class WebviewProvider {
   private getWebviewContent(analysisStmtId: string): string {
     const { URLS } = getUrls();
     const queryUrl = `${URLS.QUERY_BASE}/${analysisStmtId}?lang=${vscode.env.language}`;
-    const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}?lang=${vscode.env.language}`;
+    const statementUrl = `${URLS.STATEMENT_BASE}/${analysisStmtId}`;
 
     return `<!DOCTYPE html>
 <html lang=${vscode.env.language}>
