@@ -1,6 +1,6 @@
 {
-  "extension.display.name": "PawSQL Optimizer",
-  "extension.description": "SQL Optimizer, Index Advisor for MySQL/PostgreSQL/Oracle/openGauss and more, Tune SQL by Clicks",
+  "extension.display.name": "PawSQL for VSCode",
+  "extension.description": "SQL Optimizer, Index Advisor for MySQL, PostgreSQL, Oracle, openGauss and more, Tune SQL by Clicks",
   "commands.openSettings": "修改",
   "commands.refreshTree": "刷新",
   "commands.createWorkspace": "创建工作空间",
@@ -37,8 +37,8 @@
   "config.workspace.default.dbPort.description": "数据库端口号",
   "config.workspace.default.dbPort.markdownDescription": "数据库监听的端口号",
 
-  "views.activitybar.pawsqlContainerTitle": "PawSQL Optimizer",
+  "views.activitybar.pawsqlContainerTitle": "PawSQL",
   "views.welcome.noConfiguration": "尚未完成PawSQL优化引擎配置，单击以设置配置。\n\n[立即配置](command:pawsql.openSettings)\n\n",
   "views.welcome.noWorkspace": "未找到工作空间，单击以创建您的工作空间。\n\n[立即创建](command:pawsql.createWorkspace)\n\n",
-  "views.sidebar.pawsqlSidebarName": "PawSQL Optimizer"
+  "views.sidebar.pawsqlSidebarName": "PawSQL"
 }

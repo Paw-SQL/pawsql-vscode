@@ -52,7 +52,7 @@
   "form.config.password.label": "Password",
   "form.config.backendUrl.label": "PawSQL Server",
   "form.config.joinPawSQL": "Join PawSQL",
-  "form.config.description": "PawSQL Client enables developers to access core capabilities of the PawSQL directly within VSCode enviroment. PawSQL provides sophisticated SQL optimization features including smart index recommendations and query rewrites. More about PawSQL's capabilities, please visit ",
+  "form.config.description": "PawSQL VSCode helps you to optimize your SQL quries directly within VSCode enviroment. PawSQL provides sophisticated SQL optimization features including smart index recommendations and query rewrites. More about PawSQL, please visit ",
   "form.config.documentation.link": "docs.pawsql.com",
   "form.config.save": "Save",
   "workspaces.isLoading": "Loading Workspaces",

@@ -1,10 +1,10 @@
-# PawSQL Client
+# PawSQL for VSCode
 
 [English](README.md) | [中文](README_zh-CN.md)
 
 ## 简介
 
-PawSQL Client让开发者能够在VS Code开发环境中直接使用PawSQL引擎强大的SQL优化能力，包括智能索引推荐、查询重写建议、自动化性能验证等。PawSQL Client需要结合PawSQL优化平台（[PawSQL Cloud](https://pawsql.com)或企业私域部署的PawSQL优化平台）一起使用。关于更全面的PawSQL的SQL优化能力，请参考[PawSQL官方文档](https://docs.pawsql.com)。
+PawSQL for VSCode 让开发者能够在VSCode开发环境中直接使用PawSQL引擎强大的SQL优化能力，包括智能索引推荐、查询重写建议、自动化性能验证等。PawSQL for VSCode需要结合PawSQL优化平台（[PawSQL Cloud](https://pawsql.com)或企业私域部署的PawSQL优化平台）一起使用。关于更全面的PawSQL的SQL优化能力，请参考[PawSQL官方文档](https://docs.pawsql.com)。
 
 ![PawSQL Client Demo](/resources/demo.gif)
 
@@ -20,7 +20,7 @@ PawSQL Client让开发者能够在VS Code开发环境中直接使用PawSQL引擎
 
 1. 打开 Visual Studio Code
 2. 转到插件视图 (`Ctrl+Shift+X` 或 `Cmd+Shift+X`)
-3. 搜索 "PawSQL Client" 并点击安装
+3. 搜索 "PawSQL" 并点击安装
 
 ## 初始配置
 
