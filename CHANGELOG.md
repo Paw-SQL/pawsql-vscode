@@ -11,3 +11,5 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Add a signup button to [pawsql.com](https://pawsql.com)
 
 - Update locales
+
+- Add tags

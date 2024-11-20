@@ -8,12 +8,26 @@
 		"name": "PawSQL",
 		"email": "support@pawsql.com"
 	},
-  "version": "0.0.3",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.80.0"
   },
+
+  "keywords": [
+    "sql",
+    "database",
+    "tool",
+    "optimization",
+    "indexing",
+    "PostgreSQL",
+    "MySQL",
+    "Oracle",
+    "openGauss",
+    "query",
+    "performance"
+  ],
+
   "categories": [
-    "Data Science",
     "Programming Languages",
     "Other",
     "Linters",
