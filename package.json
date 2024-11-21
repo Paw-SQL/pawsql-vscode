@@ -16,7 +16,6 @@
   "keywords": [
     "sql",
     "database",
-    "tool",
     "optimization",
     "indexing",
     "PostgreSQL",
@@ -24,7 +23,9 @@
     "Oracle",
     "openGauss",
     "query",
-    "performance"
+    "performance",
+    "tuning",
+    "sql tuning"
   ],
 
   "categories": [
